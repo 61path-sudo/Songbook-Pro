@@ -1,0 +1,5314 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- ✅ AGGIUNGI QUI I 2 NUOVI META TAG: -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-fullscreen">
+
+    <!-- Favicon -->
+<link rel="icon" type="image/png" sizes="32x32" href="favicon.png">
+
+<!-- Apple Touch Icons -->
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<link rel="apple-touch-icon" sizes="152x152" href="apple-touch-icon-152x152.png">
+<link rel="apple-touch-icon" sizes="120x120" href="apple-touch-icon-120x120.png">
+
+<!-- Android/Chrome -->
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192x192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512x512.png">
+
+<!-- Theme color -->
+<meta name="theme-color" content="#2c3e50">
+
+<!-- PWA Manifest (opzionale ma consigliato) -->
+
+    <title>SongBook Pro</title>
+
+    <!-- Firebase SDK -->
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+  import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+  import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection, writeBatch } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAotlNc0vCiLHE-jRoIhY_04hXHXP3YgfY",
+    authDomain: "songbook-pro-90a93.firebaseapp.com",
+    projectId: "songbook-pro-90a93",
+    storageBucket: "songbook-pro-90a93.firebasestorage.app",
+    messagingSenderId: "87955167537",
+    appId: "1:87955167537:web:891932528b0d1c166ab810"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  
+  // Rendi disponibili globalmente
+  window.firebaseAuth = auth;
+  window.firebaseDb = db;
+  window.firebaseSignInWithPopup = signInWithPopup;
+  window.firebaseGoogleProvider = GoogleAuthProvider;
+  window.firebaseOnAuthStateChanged = onAuthStateChanged;
+  window.firebaseSignOut = signOut;
+  window.firebaseDoc = doc;
+  window.firebaseSetDoc = setDoc;
+  window.firebaseGetDoc = getDoc;
+  window.firebaseOnSnapshot = onSnapshot;
+  window.firebaseCollection = collection;
+  window.firebaseWriteBatch = writeBatch;
+</script>
+
+   <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #f8f9fa; }
+        .header { background: #2c3e50; color: white; padding: 20px; text-align: center; }
+        /* Dark Mode Toggle */
+.dark-mode-btn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    border-radius: 50%;
+    width: 45px;
+    height: 45px;
+    font-size: 24px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.dark-mode-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.1);
+}
+
+/* Dark Mode Styles */
+body.dark-mode {
+    background: #1a1a1a;
+    color: #e0e0e0;
+}
+
+body.dark-mode .header {
+    background: #2d3748;
+}
+
+body.dark-mode .tab-nav {
+    background: #2d3748;
+    border-bottom: 1px solid #4a5568;
+}
+
+body.dark-mode .tab-btn {
+    color: #a0aec0;
+}
+
+body.dark-mode .tab-btn.active {
+    color: #63b3ed;
+    background: #1a1a1a;
+    border-bottom: 3px solid #63b3ed;
+}
+
+body.dark-mode .content {
+    background: #1a1a1a;
+}
+
+body.dark-mode #performance-tab {
+    background: #1a1a1a;
+}
+
+body.dark-mode .format-selector {
+    background: #2d3748;
+}
+
+body.dark-mode .format-btn {
+    background: #1a1a1a;
+    color: #63b3ed;
+    border: 2px solid #63b3ed;
+}
+
+body.dark-mode .format-btn.active {
+    background: #63b3ed;
+    color: #1a1a1a;
+}
+
+body.dark-mode .manage-column {
+    background: #2d3748;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+}
+
+body.dark-mode .list-item {
+    border-bottom: 1px solid #4a5568;
+    color: #e0e0e0;
+}
+
+body.dark-mode .list-item:hover {
+    background: #374151;
+}
+
+body.dark-mode .list-item.selected {
+    background: #2c5282;
+}
+
+body.dark-mode input,
+body.dark-mode textarea {
+    background: #2d3748;
+    border: 1px solid #4a5568;
+    color: #e0e0e0;
+}
+
+body.dark-mode input::placeholder,
+body.dark-mode textarea::placeholder {
+    color: #718096;
+}
+
+body.dark-mode .btn-primary {
+    background: #4299e1;
+}
+
+body.dark-mode .btn-primary:hover {
+    background: #3182ce;
+}
+
+body.dark-mode .btn-secondary {
+    background: #2d3748;
+    color: #e0e0e0;
+    border: 1px solid #4a5568;
+}
+
+body.dark-mode .btn-secondary:hover {
+    background: #374151;
+}
+
+body.dark-mode .preview-container {
+    background: #1a1a1a;
+}
+
+body.dark-mode .page {
+    background: #2d3748;
+    color: #e0e0e0;
+}
+
+body.dark-mode .song-text {
+    color: #e0e0e0;
+}
+
+body.dark-mode .artist-item {
+    color: #e0e0e0;
+}
+
+body.dark-mode .artist-item:hover {
+    color: #63b3ed;
+}
+
+body.dark-mode .modal-box {
+    background: #2d3748;
+    color: #e0e0e0;
+}
+
+body.dark-mode .modal-box h3 {
+    color: #e0e0e0;
+}
+
+body.dark-mode .modal-box p {
+    color: #a0aec0;
+}
+
+body.dark-mode #artist-suggestions {
+    background: #2d3748;
+    border: 1px solid #4a5568;
+}
+
+body.dark-mode .suggestion-item:hover {
+    background: #374151;
+}
+
+body.dark-mode .duplicate-list {
+    background: #2d3748;
+    border: 1px solid #4a5568;
+}
+
+body.dark-mode .duplicate-item {
+    border-bottom: 1px solid #4a5568;
+}
+
+/* Mantieni il testo nero su pagina bianca in fullscreen */
+body.dark-mode .fullscreen-active .page {
+    background: white !important;
+    color: black !important;
+}
+
+body.dark-mode .fullscreen-active .song-text {
+    color: black !important;
+}
+
+body.dark-mode .fullscreen-active .artist-item {
+    color: black !important;
+}
+        .tab-nav { display: flex; background: #f8f9fa; border-bottom: 1px solid #e0e0e0; }
+        .tab-btn { flex: 1; padding: 15px; background: none; border: none; cursor: pointer; color: #6c757d; }
+        .tab-btn.active { color: #3498db; background: white; border-bottom: 3px solid #3498db; }
+        .content { padding: 20px; max-width: 1000px; margin: 0 auto; }
+        #performance-tab { 
+            padding: 0 !important; 
+            max-width: none !important; 
+            margin: 0 !important;
+            background: #f8f9fa;
+            min-height: 100vh;
+        }
+        #performance-tab .content { 
+            padding: 0 !important; 
+            max-width: none !important; 
+            margin: 0 !important;
+        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .form-row { display: flex; align-items: center; margin: 15px 0; gap: 15px; }
+        .form-row label { min-width: 100px; font-weight: 600; }
+        .form-row input { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
+        textarea { width: 100%; min-height: 200px; padding: 12px; border: 1px solid #ddd; border-radius: 5px; }
+        .btn { padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-weight: 500; }
+        .btn-primary { background: #3498db; color: white; }
+        .btn-secondary { background: white; color: #666; border: 1px solid #ddd; }
+        .list-item { padding: 12px; border-bottom: 1px solid #eee; cursor: pointer; }
+        .list-item:hover { background: #f8f9fa; }
+        .list-item.selected { background: #e3f2fd; }
+        .manage-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin: 20px 0; }
+        .manage-column { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .preview-container { 
+            background: #f8f9fa; 
+            padding: 20px; 
+            min-height: calc(100vh - 120px);
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+        .page { 
+            background: white; 
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            font-family: 'Times New Roman', serif; 
+            color: black;
+            padding: 20px 20px 40px 20px;  /* 40 sopra, 60 destra, 40 sotto, 60 sinistra */
+            display: none;
+            position: relative;
+        }
+        .page.active { display: block; }
+        .format-selector { 
+            text-align: center; 
+            padding: 20px; 
+            background: #f8f9fa; 
+            border-radius: 8px; 
+            margin: 0 !important;
+            max-width: none !important;
+        }
+        .format-btn { padding: 10px 30px; margin: 0 10px; border: 2px solid #3498db; background: white; color: #3498db; border-radius: 5px; cursor: pointer; font-weight: 600; font-size: 14px; }
+        .format-btn.active { background: #3498db; color: white; }
+        .page-arrow { position: fixed; top: 50%; transform: translateY(-50%); background: rgba(52, 152, 219, 0.8); color: white; border: none; font-size: 48px; width: 80px; height: 120px; cursor: pointer; z-index: 1000; display: none; }
+        .page-arrow:hover { background: rgba(52, 152, 219, 1); }
+        .page-arrow.left { left: 20px; border-radius: 0 20px 20px 0; }
+        .page-arrow.right { right: 20px; border-radius: 20px 0 0 20px; }
+        @media (hover: hover) and (pointer: fine) {
+            .page-arrow { display: block; }
+        }
+        .artist-columns { 
+    display: grid; 
+    grid-template-columns: repeat(3, 1fr); 
+    column-gap: 20px; 
+    width: 100%;
+    align-items: start;
+}
+
+.artist-column { 
+    display: flex; 
+    flex-direction: column;
+    width: 100%;
+    overflow: hidden;
+}
+
+.artist-item { 
+    font-size: 14pt; 
+    padding: 5px 0; 
+    cursor: pointer; 
+    color: black;
+    white-space: nowrap;
+    height: 37px; /* Altezza fissa */
+    line-height: 37px; /* Centra verticalmente */
+    display: flex;
+    align-items: center;
+}
+
+.artist-item.long-name {
+    font-size: 12pt;
+}
+
+.artist-item.very-long-name {
+    font-size: 10pt;
+}
+
+/* Font più grandi per elenco cantanti in A4 */
+.page[style*="width: 793"] .artist-item { font-size: 17pt; }
+        .artist-item:hover { color: #3498db; text-decoration: underline; }
+        .song-text { font-size: 14pt; text-transform: uppercase; line-height: 1.3; white-space: pre-line; color: black; }
+
+/* Font più grandi per A4 */
+.page[style*="width: 793"] .song-text { font-size: 16pt; line-height: 1.4; }
+
+/* Titoli e dettagli più grandi per A4 */
+.page[style*="width: 793"] div[style*="font-size: 18pt"] { font-size: 22pt !important; }
+.page[style*="width: 793"] div[style*="font-size: 16pt"] { font-size: 18pt !important; }
+.page[style*="width: 793"] div[style*="font-size: 15pt"] { font-size: 17pt !important; }
+.page[style*="width: 793"] div[style*="font-size: 14pt"]:not(.song-text) { font-size: 16pt !important; }
+
+/* Modal per Import */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 10000;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-overlay.show {
+    display: flex;
+}
+
+.modal-box {
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    max-width: 500px;
+    width: 90%;
+}
+
+.modal-box h3 {
+    margin: 0 0 15px 0;
+    color: #2c3e50;
+}
+
+.modal-box p {
+    margin: 10px 0;
+    color: #666;
+    line-height: 1.5;
+}
+
+.modal-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 25px;
+    justify-content: flex-end;
+}
+
+.modal-btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+.modal-btn-replace {
+    background: #e74c3c;
+    color: white;
+}
+
+.modal-btn-replace:hover {
+    background: #c0392b;
+}
+
+.modal-btn-add {
+    background: #27ae60;
+    color: white;
+}
+
+.modal-btn-add:hover {
+    background: #229954;
+}
+
+.modal-btn-cancel {
+    background: #95a5a6;
+    color: white;
+}
+
+.modal-btn-cancel:hover {
+    background: #7f8c8d;
+}
+
+/* Modal duplicati */
+.duplicate-list {
+    max-height: 300px;
+    overflow-y: auto;
+    margin: 20px 0;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    background: #f9f9f9;
+}
+
+.duplicate-item {
+    padding: 12px;
+    border-bottom: 1px solid #ddd;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.duplicate-item:last-child {
+    border-bottom: none;
+}
+
+.duplicate-item input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}
+
+.duplicate-info {
+    flex: 1;
+}
+
+.duplicate-title {
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.duplicate-artist {
+    font-size: 12px;
+    color: #666;
+}
+
+.duplicate-action {
+    font-size: 12px;
+    padding: 4px 8px;
+    border-radius: 3px;
+    font-weight: 600;
+}
+
+.action-skip {
+    background: #e74c3c;
+    color: white;
+}
+
+.action-replace {
+    background: #f39c12;
+    color: white;
+}
+
+.modal-box.wide {
+    max-width: 600px;
+}
+
+.bulk-actions {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.bulk-btn {
+    padding: 6px 12px;
+    background: #ecf0f1;
+    border: 1px solid #bdc3c7;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.bulk-btn:hover {
+    background: #bdc3c7;
+}
+
+/* Fullscreen Mode Button */
+.fullscreen-mode-btn {
+    padding: 16px 40px;
+    background: #27ae60;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 18px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3);
+    transition: all 0.3s ease;
+    min-width: 250px;
+    display: none; /* ✅ AGGIUNTO: Nascosto di default */
+}
+
+.fullscreen-mode-btn:hover {
+    background: #229954;
+    box-shadow: 0 6px 20px rgba(39, 174, 96, 0.4);
+    transform: translateY(-2px);
+}
+
+.fullscreen-mode-btn:active {
+    transform: translateY(0);
+}
+
+/* ✅ AGGIUNTO: Mostra solo su tablet/mobile */
+@media (hover: none) and (pointer: coarse) {
+    .fullscreen-mode-btn {
+        display: inline-block;
+    }
+}
+
+/* ✅ AGGIUNTO: Mostra anche su schermi piccoli come backup */
+@media screen and (max-width: 1024px) {
+    .fullscreen-mode-btn {
+        display: inline-block;
+    }
+}
+
+.fullscreen-mode-btn:hover {
+    background: #229954;
+    box-shadow: 0 6px 20px rgba(39, 174, 96, 0.4);
+    transform: translateY(-2px);
+}
+
+.fullscreen-mode-btn:active {
+    transform: translateY(0);
+}
+
+/* Fullscreen Active Styles */
+.fullscreen-active {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    background: white !important;
+    z-index: 9999 !important;
+    overflow: hidden !important;
+    touch-action: pan-x !important; /* BLOCCA scroll verticale */
+    overscroll-behavior: none !important; /* Blocca bounce scroll */
+}
+
+/* Assicurati che il body sia scrollabile normalmente */
+body:not(:has(.fullscreen-active)) {
+    overflow: auto !important;
+}
+
+#performance-tab:not(.fullscreen-active) {
+    position: static !important;
+    height: auto !important;
+    overflow: visible !important;
+}
+
+.fullscreen-active .format-selector {
+    display: none !important;
+}
+
+.fullscreen-active .page-arrow {
+    display: none !important;
+}
+
+.fullscreen-active .preview-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    background: white;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+
+.fullscreen-active .page {
+    margin: 0;
+    width: 100vw !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    max-width: none !important;
+    max-height: none !important;
+    box-shadow: none !important;
+    padding: 40px 60px !important; /* Margini interni per leggibilità */
+}
+
+/* Nascondi TUTTI i controlli fullscreen */
+*:fullscreen {
+    background: white !important;
+}
+
+*:-webkit-full-screen {
+    background: white !important;
+}
+
+*:-moz-full-screen {
+    background: white !important;
+}
+
+*:-ms-fullscreen {
+    background: white !important;
+}
+
+/* Nascondi la X di chiusura fullscreen */
+*:fullscreen::backdrop {
+    background: white !important;
+}
+
+*:-webkit-full-screen::backdrop {
+    background: white !important;
+}
+
+video::-webkit-media-controls {
+    display: none !important;
+}
+
+/* Nascondi controlli fullscreen iOS/Safari */
+::-webkit-full-page-media, 
+:future, 
+:root video {
+    background: white !important;
+}
+
+/* Forza nascondere controlli WebKit (Safari/Chrome) */
+::-webkit-full-screen-controls {
+    display: none !important;
+    visibility: hidden !important;
+}
+
+*::-webkit-media-controls-panel {
+    display: none !important;
+}
+
+*::-webkit-media-controls {
+    display: none !important;
+}
+
+/* Nascondi barra superiore iOS */
+.fullscreen-active {
+    -webkit-overflow-scrolling: touch;
+    -webkit-user-select: none;
+    user-select: none; /* ✅ Aggiunta versione standard */
+}
+
+.fullscreen-exit-hint {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-size: 14px;
+    z-index: 10001;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.fullscreen-exit-hint.show {
+    opacity: 1;
+}
+
+.fullscreen-exit-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 10002;
+    justify-content: center;
+    align-items: center;
+}
+
+.fullscreen-exit-modal.show {
+    display: flex;
+}
+
+.fullscreen-exit-box {
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    text-align: center;
+    max-width: 400px;
+}
+
+.fullscreen-exit-box h3 {
+    margin: 0 0 20px 0;
+    color: #2c3e50;
+}
+
+.fullscreen-exit-buttons {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin-top: 25px;
+}
+
+.fullscreen-exit-buttons button {
+    padding: 12px 30px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.fullscreen-exit-buttons .btn-cancel {
+    background: #95a5a6;
+    color: white;
+}
+
+.fullscreen-exit-buttons .btn-exit {
+    background: #e74c3c;
+    color: white;
+}
+
+/* Firebase UI */
+.firebase-user-info {
+    background: #e8f5e9;
+    padding: 15px;
+    border-radius: 8px;
+    margin: 20px 0;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.firebase-user-info img {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+}
+
+.firebase-sync-status {
+    display: inline-block;
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-left: 10px;
+}
+
+.sync-status-synced {
+    background: #d4edda;
+    color: #155724;
+}
+
+.sync-status-syncing {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.sync-status-offline {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+/* Cestino */
+.trash-separator {
+    width: 2px;
+    background: #ddd;
+    margin: 0 10px;  /* ← Ridotto da 15px a 10px */
+}
+
+.trash-section {
+    flex: 1;
+    background: #fff5f5;
+    padding: 20px;
+    border-radius: 8px;
+}
+
+.trash-list {
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    background: white;
+}
+
+.trash-item {
+    padding: 12px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.trash-item:last-child {
+    border-bottom: none;
+}
+
+.trash-item input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}
+
+.trash-item-info {
+    flex: 1;
+    font-size: 14px;
+    color: #333;
+}
+
+.trash-item-type {
+    font-size: 11px;
+    color: #999;
+    text-transform: uppercase;
+}
+
+/* Dark Mode Cestino */
+body.dark-mode .trash-separator {
+    background: #4a5568;
+}
+
+body.dark-mode .trash-section {
+    background: #3a2828;
+}
+
+body.dark-mode .trash-list {
+    background: #2d3748;
+    border: 1px solid #4a5568;
+}
+
+body.dark-mode .trash-item {
+    border-bottom: 1px solid #4a5568;
+}
+
+body.dark-mode .trash-item-info {
+    color: #e0e0e0;
+}
+
+body.dark-mode .trash-item-type {
+    color: #a0aec0;
+}
+
+/* Forza Gestisci più largo */
+#manage-tab {
+    max-width: 1400px !important;
+    margin: 0 auto !important;
+}
+
+/* Pulsanti rossi per eliminazione */
+#delete-btn {
+    background: #e74c3c !important;
+    color: white !important;
+}
+
+#delete-btn:hover {
+    background: #c0392b !important;
+}
+
+#empty-trash-btn {
+    background: #e74c3c !important;
+    color: white !important;
+}
+
+#empty-trash-btn:hover {
+    background: #c0392b !important;
+}
+
+/* Dark mode - mantieni rosso */
+body.dark-mode #delete-btn,
+body.dark-mode #empty-trash-btn {
+    background: #e74c3c !important;
+}
+
+body.dark-mode #delete-btn:hover,
+body.dark-mode #empty-trash-btn:hover {
+    background: #c0392b !important;
+}
+
+/* Stato disabled per pulsanti */
+#restore-btn:disabled {
+    background: #95a5a6 !important;
+    cursor: not-allowed !important;
+    opacity: 0.6;
+}
+
+#empty-trash-btn:disabled {
+    background: #95a5a6 !important;
+    cursor: not-allowed !important;
+    opacity: 0.6;
+}
+
+body.dark-mode #restore-btn:disabled,
+body.dark-mode #empty-trash-btn:disabled {
+    background: #4a5568 !important;
+}
+
+/* ===== RESPONSIVE MOBILE ===== */
+
+/* iPhone e schermi piccoli (max 768px) */
+@media screen and (max-width: 768px) {
+    /* Header più compatto */
+    .header {
+        padding: 15px 10px;
+    }
+    
+    .header h1 {
+        font-size: 24px;
+    }
+    
+    .header p {
+        font-size: 14px;
+    }
+    
+    /* Dark mode button più piccolo */
+    .dark-mode-btn {
+        width: 35px;
+        height: 35px;
+        font-size: 18px;
+        top: 10px;
+        right: 10px;
+    }
+    
+    /* Tab navigation */
+    .tab-nav {
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+    
+    .tab-btn {
+        font-size: 13px;
+        padding: 12px 10px;
+    }
+    
+    /* Content generale */
+    .content {
+        padding: 10px !important;
+        max-width: 100% !important;
+    }
+    
+    /* === AGGIUNGI TAB === */
+    #add-tab .form-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 5px;
+    }
+    
+    #add-tab .form-row label {
+        min-width: auto;
+        margin-bottom: 5px;
+    }
+    
+    #add-tab .form-row > div {
+        width: 100%;
+    }
+    
+    #add-tab .form-row input {
+        width: 100%;
+    }
+    
+    #add-tab textarea {
+        min-height: 150px;
+    }
+    
+    /* === GESTISCI TAB === */
+    /* Stack verticale invece che orizzontale */
+    #manage-tab > div > div[style*="flex"] {
+        flex-direction: column !important;
+        gap: 20px !important;
+    }
+    
+    /* Gestisci: full width */
+    #manage-tab > div > div > div:first-child {
+        width: 100% !important;
+        flex: none !important;
+    }
+    
+    /* Nascondi separatore */
+    .trash-separator {
+        display: none;
+    }
+    
+    /* Cestino: full width sotto */
+    .trash-section {
+        width: 100% !important;
+        flex: none !important;
+    }
+    
+    /* Grid 1 colonna per Cantanti/Canzoni */
+    .manage-grid {
+        grid-template-columns: 1fr !important;
+        gap: 20px !important;
+    }
+    
+    /* Liste più compatte */
+    #artists-list,
+    #songs-list,
+    .trash-list {
+        max-height: 200px !important;
+    }
+    
+    /* Pulsanti più piccoli */
+    .btn {
+        font-size: 13px;
+        padding: 8px 12px;
+    }
+    
+    /* === PERFORMANCE TAB === */
+    /* Nascondi frecce su mobile (usa swipe) */
+    .page-arrow {
+        display: none !important;
+    }
+    
+    /* Format selector più compatto */
+    .format-selector {
+        padding: 10px;
+    }
+    
+    .format-btn {
+        padding: 8px 15px;
+        font-size: 12px;
+        margin: 0 5px;
+    }
+    
+    /* Fullscreen button più piccolo */
+    .fullscreen-mode-btn {
+        padding: 12px 20px;
+        font-size: 16px;
+        min-width: 200px;
+    }
+    
+    /* Pagine Performance */
+    .page {
+        padding: 15px !important;
+    }
+    
+    /* Indice cantanti: 2 colonne invece di 3 */
+    .artist-columns {
+        grid-template-columns: repeat(2, 1fr) !important;
+        column-gap: 15px !important;
+    }
+    
+    .artist-item {
+        font-size: 12pt !important;
+        height: 32px !important;
+        line-height: 32px !important;
+    }
+    
+    /* Testo canzoni più piccolo */
+    .song-text {
+        font-size: 12pt !important;
+    }
+    
+    /* === EXPORT/IMPORT TAB === */
+    /* Stack verticale per sezioni */
+    #importexport-tab > div {
+        margin: 10px 0 !important;
+        padding: 15px !important;
+    }
+    
+    /* Pulsanti full width */
+    #importexport-tab .btn {
+        width: 100%;
+        margin: 5px 0 !important;
+    }
+    
+    /* === MODAL === */
+    .modal-box {
+        max-width: 90% !important;
+        padding: 20px !important;
+    }
+    
+    .modal-buttons {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .modal-btn {
+        width: 100%;
+    }
+}
+
+/* iPhone molto piccoli (max 375px) */
+@media screen and (max-width: 375px) {
+    .header h1 {
+        font-size: 20px;
+    }
+    
+    .tab-btn {
+        font-size: 11px;
+        padding: 10px 8px;
+    }
+    
+    /* Indice cantanti: 1 colonna */
+    .artist-columns {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+    </style>
+</head>
+<body>
+    <div class="header">
+    <h1>SongBook Pro</h1>
+    <p>Organizza i tuoi testi per concerti</p>
+    <button id="dark-mode-toggle" class="dark-mode-btn" onclick="toggleDarkMode()">🌙</button>
+</div>
+
+    <div class="tab-nav">
+        <button class="tab-btn active" onclick="showTab('add')">Aggiungi</button>
+        <button class="tab-btn" onclick="showTab('manage')">Gestisci</button>
+        <button class="tab-btn" onclick="showTab('performance')">Performance</button>
+        <button class="tab-btn" onclick="showTab('importexport')">Export/Import</button>
+    </div>
+
+    <div class="content">
+        <!-- Aggiungi -->
+        <div id="add-tab" class="tab-content active">
+            <h2 id="add-tab-title">Aggiungi Nuova Canzone</h2>
+            <div class="form-row">
+                <label>Titolo:</label>
+                <input type="text" id="title" placeholder="Titolo della canzone">
+            </div>
+            <div class="form-row">
+                <label>Cantante:</label>
+                <div style="position: relative; flex: 1;">
+                    <input type="text" id="artist" placeholder="Nome cantante" autocomplete="off" oninput="showArtistSuggestions()" onblur="hideArtistSuggestions()" onkeydown="handleArtistKeydown(event)">
+                    <div id="artist-suggestions" style="position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ddd; border-top: none; border-radius: 0 0 5px 5px; max-height: 200px; overflow-y: auto; z-index: 1000; display: none;"></div>
+                </div>
+            </div>
+            <div class="form-row">
+                <label>Dettagli:</label>
+                <div style="flex: 1; display: flex; gap: 10px;">
+                    <input type="text" id="rhythmic" placeholder="Ritmica: es. 4/4, swing, shuffle..." style="flex: 8; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                    <input type="text" id="key" placeholder="Tonalità" maxlength="6" style="flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                    <input type="number" id="tempo" placeholder="BPM" min="40" max="240" style="flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                </div>
+            </div>
+            <div style="margin: 20px 0;">
+                <label><strong>Testo:</strong></label>
+                <textarea id="lyrics" placeholder="Inserisci il testo della canzone..."></textarea>
+            </div>
+            
+            <!-- Metronomo -->
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <strong style="color: #333;">Metronomo:</strong>
+                    <input type="number" id="metronome-bpm" placeholder="BPM" value="120" min="40" max="240" style="width: 80px; padding: 8px; border: 1px solid #ddd; border-radius: 5px;">
+                    <button class="btn btn-secondary" onclick="toggleMetronome()" id="metronome-btn" style="font-weight: 600; color: #333;">▶ Avvia</button>
+                    <span id="metronome-indicator" style="width: 20px; height: 20px; border-radius: 50%; background: #ddd; transition: all 0.05s;"></span>
+                    <button class="btn btn-secondary" onclick="tapTempo()" style="padding: 8px 15px; font-weight: 600; color: #333;">Tap Tempo</button>
+                </div>
+            </div>
+            <div style="text-align: right;">
+    <button class="btn btn-secondary" id="add-cancel-btn" onclick="clearForm()">Cancella</button>
+    <button class="btn btn-primary" id="add-save-btn" onclick="addSong()">Inserisci Canzone</button>
+</div>
+        </div>
+
+        <!-- Gestisci -->
+        <div id="manage-tab" class="tab-content">
+    <div style="max-width: 1400px; margin: 0 auto;">
+        <h2>Gestisci Canzoni</h2>
+    
+    <!-- Contenitore principale -->
+    <div style="display: flex; gap: 5px;">
+        <!-- Sezione Gestisci (sinistra) -->
+        <div style="flex: 1; min-width: 0;">
+            <div style="margin: 20px 0; position: relative;">
+                <input type="text" id="search-box" placeholder="🔍 Cerca cantante o canzone..." oninput="filterManage()" style="width: 100%; padding: 12px 40px 12px 12px; border: 2px solid #3498db; border-radius: 8px; font-size: 16px;">
+                <button id="clear-search" onclick="clearSearch()" style="display: none; position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: #e74c3c; color: white; border: none; border-radius: 50%; width: 28px; height: 28px; cursor: pointer; font-size: 16px; font-weight: bold;">✕</button>
+            </div>
+            
+            <div class="manage-grid">
+                <div class="manage-column">
+                    <h3 id="artists-header" style="text-align: left; margin-bottom: 15px;">Cantanti</h3>
+                    <div id="artists-list" style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd; border-radius: 5px;"></div>
+                </div>
+                <div class="manage-column">
+                    <h3 id="songs-header" style="text-align: left; margin-bottom: 15px;">Canzoni</h3>
+                    <div id="songs-list" style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd; border-radius: 5px;"></div>
+                </div>
+            </div>
+            
+            <div style="text-align: center; margin: 20px 0;">
+    <button class="btn btn-primary" onclick="editSelected()" id="edit-btn" disabled>Modifica</button>
+    <button class="btn btn-secondary" onclick="deleteSelected()" id="delete-btn" disabled>Elimina</button>
+    <button class="btn btn-secondary" onclick="deselectAll()" id="deselect-btn">Deseleziona tutto</button>
+    <button class="btn btn-secondary" onclick="findDuplicates()" style="background: #f39c12; color: white; margin-left: 20px;">🔍 Trova Duplicati</button>
+</div>
+            
+            <div id="selection-info" style="text-align: center; color: #666; font-size: 14px;">
+                Seleziona un cantante o una canzone per modificarla
+            </div>
+        </div>
+        
+        <!-- Linea separatore -->
+        <div class="trash-separator"></div>
+        
+        <!-- Sezione Cestino (destra) -->
+        <div class="trash-section" style="flex: 0 0 400px;">
+            <h3 style="text-align: left; margin-bottom: 15px; font-size: 16px;">🗑️ Cestino (<span id="trash-count">0</span>)</h3>
+            <div id="trash-list" class="trash-list"></div>
+            <div style="text-align: center; margin-top: 20px;">
+                <button class="btn btn-primary" onclick="restoreSelected()" id="restore-btn" disabled style="font-size: 13px; padding: 8px 16px;">Ripristina Selezionati</button>
+                <button class="btn btn-secondary" onclick="emptyTrash()" id="empty-trash-btn" disabled style="font-size: 13px; padding: 8px 16px; margin-top: 10px;">Svuota Cestino</button>
+            </div>
+        </div>
+    </div>
+    </div>
+</div>
+
+        <!-- Performance -->
+        <div id="performance-tab" class="tab-content">
+            <div class="format-selector">
+    <strong style="margin-right: 15px;">Formato pagina:</strong>
+    <button class="format-btn active" onclick="setPageFormat('A4')">A4 (iPad Pro)</button>
+    <button class="format-btn" onclick="setPageFormat('A5')">A5 (iPad 2)</button>
+</div>
+
+<!-- ✅ AGGIUNGI QUI -->
+<div style="text-align: center; padding: 20px 0; background: #f8f9fa;">
+    <button class="fullscreen-mode-btn" onclick="enterFullscreen()">Fullscreen Mode</button>
+</div>
+
+            <div class="preview-container" id="preview-content"></div>
+            <button class="page-arrow left" onclick="prevPage()" id="arrow-left">◀</button>
+            <button class="page-arrow right" onclick="nextPage()" id="arrow-right">▶</button>
+
+            <!-- Fullscreen Exit Modal -->
+    <div id="fullscreen-exit-modal" class="fullscreen-exit-modal">
+        <div class="fullscreen-exit-box">
+            <h3>Uscire da Fullscreen?</h3>
+            <p>Tornerai alla modalità normale.</p>
+            <div class="fullscreen-exit-buttons">
+                <button class="btn-cancel" onclick="cancelExitFullscreen()">Annulla</button>
+                <button class="btn-exit" onclick="confirmExitFullscreen()">Esci</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Fullscreen Exit Hint -->
+    <div id="fullscreen-exit-hint" class="fullscreen-exit-hint">
+        Tieni premuto per 3 secondi per uscire
+    </div>
+</div>
+
+<!-- Export/Import -->
+<div id="importexport-tab" class="tab-content">
+    <h2>Export/Import</h2>
+    
+<!-- Sezione Cloud Sync -->
+    <div style="background: #e3f2fd; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <h3 style="margin-top: 0;">☁️ Sincronizzazione Cloud</h3>
+        
+        <!-- Non loggato -->
+        <div id="firebase-logged-out" style="display: none;">
+            <p>Accedi con Google per sincronizzare automaticamente i tuoi testi su tutti i dispositivi.</p>
+            <div style="text-align: center; margin-top: 15px;">
+                <button class="btn btn-primary" onclick="loginWithGoogle()" style="background: #4285f4;">
+                    <span style="font-size: 18px;">🔐</span> Accedi con Google
+                </button>
+            </div>
+        </div>
+        
+        <!-- Loggato -->
+        <div id="firebase-logged-in" style="display: none;">
+            <div class="firebase-user-info">
+                <img id="user-photo" src="" alt="User">
+                <div style="flex: 1;">
+                    <div><strong id="user-name"></strong></div>
+                    <div style="font-size: 12px; color: #666;" id="user-email"></div>
+                    <div style="margin-top: 5px;">
+                        <span id="sync-status" class="firebase-sync-status sync-status-synced">✓ Sincronizzato</span>
+                    </div>
+                </div>
+                <button class="btn btn-secondary" onclick="logoutFromGoogle()">Esci</button>
+            </div>
+            <p style="font-size: 13px; color: #666; margin-top: 10px;">
+                ℹ️ Tutte le modifiche vengono salvate automaticamente sul cloud e sincronizzate tra i tuoi dispositivi.
+            </p>
+        </div>
+    </div>
+
+    <!-- Sezione Export PDF -->
+    <div style="background: #fff3e0; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <h3 style="margin-top: 0;">Esporta PDF</h3>
+        <p>Scegli il formato di esportazione:</p>
+        <div style="margin: 20px 0;">
+            <label style="display: inline-block; margin: 10px; padding: 20px; border: 2px solid #ddd; border-radius: 8px; cursor: pointer;">
+                <input type="radio" name="format" value="A5" checked> A5 (iPad 2)
+            </label>
+            <label style="display: inline-block; margin: 10px; padding: 20px; border: 2px solid #ddd; border-radius: 8px; cursor: pointer;">
+                <input type="radio" name="format" value="A4"> A4 (iPad Pro)
+            </label>
+        </div>
+        <div style="text-align: center;">
+            <button class="btn btn-primary" onclick="exportPDF()">Genera PDF</button>
+        </div>
+    </div>
+    
+    <!-- Sezione Backup Dati -->
+<div style="background: #f3e5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
+    <h3 style="margin-top: 0;">Backup Dati</h3>
+    <p>Esporta tutti i tuoi testi in un file JSON per backup o trasferimento tra dispositivi.</p>
+    
+    <!-- Campo email per backup -->
+    <div style="margin: 15px 0;">
+        <label><strong>Email per backup:</strong></label>
+        <input type="email" id="backup-email" placeholder="tua@email.com" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin-top: 5px;">
+        <small style="color: #666; font-size: 12px;">Salva il tuo indirizzo email per velocizzare i backup</small>
+    </div>
+    
+    <div style="text-align: center; margin-top: 15px;">
+        <button class="btn btn-primary" onclick="exportDataJSON()" style="margin: 5px;">Esporta Dati (JSON)</button>
+        <button class="btn btn-primary" onclick="importDataJSON()" style="margin: 5px;">Importa Dati (JSON)</button>
+        <button class="btn btn-primary" onclick="sendBackupEmail()" style="margin: 5px; background: #e74c3c;">📧 Invia Backup via Email</button>
+    </div>
+</div>
+    
+    <!-- Sezione Import Testi -->
+    <div style="background: #e3f2fd; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <h3 style="margin-top: 0;">Importa Testi</h3>
+        <p><strong>Formati supportati:</strong> File di testo (.txt)</p>
+        
+        <div style="margin: 20px 0;">
+            <label><strong>Seleziona file:</strong></label>
+            <input type="file" id="import-file" accept=".txt" style="margin: 10px 0; padding: 10px; border: 1px solid #ddd; border-radius: 5px; width: 100%;">
+        </div>
+        
+        <div style="margin: 20px 0;">
+            <label><strong>Anteprima contenuto:</strong></label>
+            <textarea id="import-preview" readonly style="width: 100%; height: 150px; padding: 12px; border: 1px solid #ddd; border-radius: 5px; background: #f9f9f9;"></textarea>
+        </div>
+        
+        <div style="text-align: right;">
+            <button class="btn btn-secondary" onclick="clearImport()">Cancella</button>
+            <button class="btn btn-primary" onclick="processImport()" id="import-btn" disabled>Importa Canzoni</button>
+        </div>
+        
+        <div id="import-results" style="margin-top: 20px; padding: 15px; border-radius: 5px; display: none;"></div>
+    </div>
+</div>
+
+ <!-- Modal Import -->
+    <div id="import-modal" class="modal-overlay">
+        <div class="modal-box">
+            <h3>Importa Canzoni</h3>
+            <p id="modal-message"></p>
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-cancel" onclick="closeImportModal()">Annulla</button>
+                <button class="modal-btn modal-btn-replace" onclick="confirmImport('replace')">Sostituisci</button>
+                <button class="modal-btn modal-btn-add" onclick="confirmImport('add')">Aggiungi</button>
+            </div>
+        </div>
+    </div>
+
+<!-- Modal Duplicati -->
+    <div id="duplicates-modal" class="modal-overlay">
+        <div class="modal-box wide">
+            <h3>Gestione Duplicati</h3>
+            <p id="duplicates-message"></p>
+            
+            <div id="duplicates-list" class="duplicate-list"></div>
+            
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-cancel" onclick="closeDuplicatesModal()">Annulla Import</button>
+                <button class="modal-btn modal-btn-add" onclick="proceedWithDuplicates()">Procedi con Import</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Generico -->
+<div id="generic-modal" class="modal-overlay">
+    <div class="modal-box">
+        <h3 id="generic-modal-title">Conferma</h3>
+        <p id="generic-modal-message"></p>
+        <div class="modal-buttons">
+            <button class="modal-btn modal-btn-cancel" id="generic-modal-cancel">Annulla</button>
+            <button class="modal-btn modal-btn-add" id="generic-modal-confirm">OK</button>
+        </div>
+    </div>
+</div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script>
+        let songs = [];
+        let selectedArtist = null;
+        let selectedSong = null;
+        let selectedSuggestionIndex = -1;
+        let metronomeInterval = null;
+        let metronomeRunning = false;
+        let audioContext = null;
+        let tapTimes = [];
+        let nextTickTime = 0;
+        let metronomeBpm = 120;
+        let pageFormat = 'A4';
+        let currentPage = 0;
+        let totalPages = 0;
+        let allFullscreenPages = [];
+        let currentFullscreenIndex = 0;
+
+        // Funzioni gestione pagine
+        function getPageDimensions() {
+            const mmToPx = 3.7795;
+            if (pageFormat === 'A5') {
+                return { width: 148 * mmToPx, height: 210 * mmToPx };
+            } else {
+                return { width: 210 * mmToPx, height: 297 * mmToPx };
+            }
+        }
+
+// Funzione UNIFICATA per calcolare pagine di una canzone
+function calculateSongPagination(song, format, isPDF = false) {
+    // Assumiamo sempre che ci siano note (o il segnaposto)
+    const hasNotes = true;
+    
+    const lines = song.lyrics.split('\n');
+    
+    // Dimensioni pagina in pixel
+    const dims = getPageDimensions();
+    
+    // Calcola altezze disponibili in pixel per ogni tipo di pagina
+    let firstPageHeight, middlePageHeight, lastPageHeight;
+    
+    if (isPDF) {
+    if (format === 'A5') {
+        firstPageHeight = 650;
+        middlePageHeight = 740;
+        lastPageHeight = 700;
+    } else {
+        firstPageHeight = 750;  // era 750
+        middlePageHeight = 1050;  // era 1000
+        lastPageHeight = 950;  // era 850
+    }
+} else {
+    // PARAMETRI PER PERFORMANCE
+    if (format === 'A5') {
+        firstPageHeight = 680;
+        middlePageHeight = 740;
+        lastPageHeight = 700;
+    } else {
+        firstPageHeight = 780;  // era 770
+        middlePageHeight = 870;  // era 870
+        lastPageHeight = 825;  // era 950
+    }
+}
+    
+    // Crea un div di test CON GLI STESSI STILI della classe .song-text
+    const testDiv = document.createElement('div');
+    testDiv.className = 'song-text';  // USA LA STESSA CLASSE
+    testDiv.style.position = 'absolute';
+    testDiv.style.visibility = 'hidden';
+    testDiv.style.width = (dims.width - 40) + 'px';  // Stessa larghezza della pagina reale
+    document.body.appendChild(testDiv);
+    
+    // Funzione per calcolare altezza reale usando il div di test
+// Funzione per calcolare altezza reale usando il div di test
+function getLineHeight(text) {
+    const trimmed = text.trim();
+    if (trimmed === '') {
+        // Riga vuota: altezza fissa per separazione strofe
+        return 22;  // Stessa altezza di una riga normale
+    }
+    testDiv.textContent = text;
+    const height = testDiv.offsetHeight;
+    return height;
+}
+    
+    const pages = [];
+    let currentLineIndex = 0;
+    
+    // PRIMA PAGINA
+    if (lines.length > 0) {
+        let heightUsed = 0;
+        let firstPageEndIndex = 0;
+        
+        for (let i = 0; i < lines.length; i++) {
+            const lineRealHeight = getLineHeight(lines[i]);
+            if (heightUsed + lineRealHeight <= firstPageHeight) {
+                heightUsed += lineRealHeight;
+                firstPageEndIndex = i + 1;
+            } else {
+                break;
+            }
+        }
+        
+        pages.push({
+            lines: lines.slice(0, firstPageEndIndex),
+            isFirst: true,
+            isLast: firstPageEndIndex >= lines.length,
+            hasFooter: firstPageEndIndex >= lines.length
+        });
+        currentLineIndex = firstPageEndIndex;
+    }
+    
+    // PAGINE SUCCESSIVE
+while (currentLineIndex < lines.length) {
+    // Prima riempi con middlePageHeight
+    let heightUsed = 0;
+    let pageEndIndex = currentLineIndex;
+    
+    for (let i = currentLineIndex; i < lines.length; i++) {
+        const lineRealHeight = getLineHeight(lines[i]);
+        if (heightUsed + lineRealHeight <= middlePageHeight) {
+            heightUsed += lineRealHeight;
+            pageEndIndex = i + 1;
+        } else {
+            break;
+        }
+    }
+    
+    // Se siamo arrivati alla fine, prova a riempire di più con lastPageHeight
+    if (pageEndIndex >= lines.length) {
+        // È l'ultima pagina, riprova con lastPageHeight per recuperare più spazio
+        heightUsed = 0;
+        pageEndIndex = currentLineIndex;
+        
+        for (let i = currentLineIndex; i < lines.length; i++) {
+            const lineRealHeight = getLineHeight(lines[i]);
+            if (heightUsed + lineRealHeight <= lastPageHeight) {
+                heightUsed += lineRealHeight;
+                pageEndIndex = i + 1;
+            } else {
+                break;
+            }
+        }
+    }
+    
+    // Forza almeno una riga se non è riuscito ad aggiungerne
+    if (pageEndIndex === currentLineIndex) {
+        pageEndIndex = currentLineIndex + 1;
+    }
+    
+    const isLastPage = (pageEndIndex >= lines.length);
+    
+    pages.push({
+        lines: lines.slice(currentLineIndex, pageEndIndex),
+        isFirst: false,
+        isLast: isLastPage,
+        hasFooter: isLastPage
+    });
+    
+    currentLineIndex = pageEndIndex;
+}
+    
+    // Rimuovi il div di test
+    document.body.removeChild(testDiv);
+    
+    return pages;
+}
+
+        function createPage(content, pageNum) {
+            const dims = getPageDimensions();
+            return `<div class="page ${pageNum === currentPage ? 'active' : ''}" data-page="${pageNum}" style="width: ${dims.width}px; height: ${dims.height}px;">${content}</div>`;
+        }
+
+        function showPage(pageNum) {
+            currentPage = Math.max(0, Math.min(pageNum, totalPages - 1));
+            document.querySelectorAll('.page').forEach((page, index) => {
+                page.classList.toggle('active', index === currentPage);
+            });
+            
+            const leftArrow = document.getElementById('arrow-left');
+            const rightArrow = document.getElementById('arrow-right');
+            if (leftArrow) leftArrow.style.display = (currentPage === 0 || totalPages <= 1) ? 'none' : 'block';
+            if (rightArrow) rightArrow.style.display = (currentPage === totalPages - 1 || totalPages <= 1) ? 'none' : 'block';
+        }
+
+        function setPageFormat(format) {
+            pageFormat = format;
+            document.querySelectorAll('.format-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if ((format === 'A4' && btn.textContent.includes('A4')) || (format === 'A5' && btn.textContent.includes('A5'))) {
+                    btn.classList.add('active');
+                }
+            });
+            updatePerformance();
+        }
+
+        function nextPage() { if (currentPage < totalPages - 1) showPage(currentPage + 1); }
+        function prevPage() { if (currentPage > 0) showPage(currentPage - 1); }
+
+        function showArtistSuggestions() {
+    const input = document.getElementById('artist');
+    const suggestions = document.getElementById('artist-suggestions');
+    const value = input.value.toLowerCase().trim();
+    
+    if (value.length === 0) {
+        suggestions.style.display = 'none';
+        return;
+    }
+    
+    // Ottieni artisti ordinati per artistSort
+    const artistsMap = new Map();
+    songs.forEach(s => {
+        if (!artistsMap.has(s.artist)) {
+            artistsMap.set(s.artist, s.artistSort || s.artist);
+        }
+    });
+    
+    const artistsArray = Array.from(artistsMap.entries()).map(([artist, artistSort]) => ({
+        artist,
+        artistSort
+    }));
+    
+    artistsArray.sort((a, b) => a.artistSort.localeCompare(b.artistSort));
+    
+    const filtered = artistsArray.filter(item => 
+        item.artist.toLowerCase().includes(value) ||
+        item.artistSort.toLowerCase().includes(value)
+    );
+    
+    if (filtered.length === 0) {
+        suggestions.style.display = 'none';
+        return;
+    }
+    
+    suggestions.innerHTML = filtered.map((item, index) => 
+        `<div class="suggestion-item" data-index="${index}" onmousedown="selectArtistSuggestion('${item.artist.replace(/'/g, "\\'")}')" style="padding: 10px; cursor: pointer; border-bottom: 1px solid #eee;">${item.artistSort}</div>`
+    ).join('');
+    
+    suggestions.style.display = 'block';
+    selectedSuggestionIndex = -1;
+}
+        
+        function hideArtistSuggestions() {
+            setTimeout(() => {
+                document.getElementById('artist-suggestions').style.display = 'none';
+            }, 150);
+        }
+        
+        function selectArtistSuggestion(artist) {
+            document.getElementById('artist').value = artist;
+            document.getElementById('artist-suggestions').style.display = 'none';
+            selectedSuggestionIndex = -1;
+        }
+        
+        function handleArtistKeydown(event) {
+            const suggestions = document.getElementById('artist-suggestions');
+            const items = suggestions.querySelectorAll('.suggestion-item');
+            
+            if (suggestions.style.display === 'none' || items.length === 0) {
+                return;
+            }
+            
+            switch(event.key) {
+                case 'ArrowDown':
+                    event.preventDefault();
+                    selectedSuggestionIndex = Math.min(selectedSuggestionIndex + 1, items.length - 1);
+                    updateSuggestionHighlight(items);
+                    break;
+                    
+                case 'ArrowUp':
+                    event.preventDefault();
+                    selectedSuggestionIndex = Math.max(selectedSuggestionIndex - 1, -1);
+                    updateSuggestionHighlight(items);
+                    break;
+                    
+                case 'Enter':
+                    event.preventDefault();
+                    if (selectedSuggestionIndex >= 0) {
+                        const selectedArtist = items[selectedSuggestionIndex].textContent;
+                        selectArtistSuggestion(selectedArtist);
+                    }
+                    break;
+                    
+                case 'Escape':
+                    suggestions.style.display = 'none';
+                    selectedSuggestionIndex = -1;
+                    break;
+            }
+        }
+        
+        function updateSuggestionHighlight(items) {
+            items.forEach((item, index) => {
+                if (index === selectedSuggestionIndex) {
+                    item.style.backgroundColor = '#e3f2fd';
+                } else {
+                    item.style.backgroundColor = 'white';
+                }
+            });
+        }
+
+        function loadData() {
+    try {
+        const savedData = localStorage.getItem('songbookData');
+        if (savedData) {
+            songs = JSON.parse(savedData);
+            
+            // Migrazione: aggiungi artistSort alle canzoni esistenti che non ce l'hanno
+            let needsSave = false;
+            songs = songs.map(song => {
+                if (!song.artistSort) {
+                    needsSave = true;
+                    return {
+                        ...song,
+                        artistSort: convertToSortName(song.artist)
+                    };
+                }
+                return song;
+            });
+            
+            // Salva se abbiamo aggiunto artistSort
+            if (needsSave) {
+                saveData();
+                console.log(`Migrati ${songs.length} canzoni con artistSort`);
+            }
+            
+            console.log(`Caricate ${songs.length} canzoni dal salvataggio locale`);
+        }
+    } catch (error) {
+        console.error('Errore nel caricamento dei dati:', error);
+        songs = [];
+    }
+}
+
+// Cestino
+let trash = [];
+const MAX_TRASH_ITEMS = 10;
+
+function loadTrash() {
+    try {
+        const savedTrash = localStorage.getItem('songbookTrash');
+        if (savedTrash) {
+            trash = JSON.parse(savedTrash);
+        }
+    } catch (error) {
+        console.error('Errore caricamento cestino:', error);
+        trash = [];
+    }
+}
+
+function saveTrash() {
+    try {
+        localStorage.setItem('songbookTrash', JSON.stringify(trash));
+        updateTrashUI();
+    } catch (error) {
+        console.error('Errore salvataggio cestino:', error);
+    }
+}
+
+function addToTrash(item) {
+    // Aggiungi timestamp
+    item.deletedAt = new Date().toISOString();
+    
+    // Aggiungi in cima
+    trash.unshift(item);
+    
+    // Limita a 10 elementi
+    if (trash.length > MAX_TRASH_ITEMS) {
+        trash = trash.slice(0, MAX_TRASH_ITEMS);
+    }
+    
+    saveTrash();
+}
+
+function updateTrashUI() {
+    const trashList = document.getElementById('trash-list');
+    const trashCount = document.getElementById('trash-count');
+    const restoreBtn = document.getElementById('restore-btn');
+    const emptyBtn = document.getElementById('empty-trash-btn');
+    
+    if (!trashList) return;
+    
+    trashCount.textContent = trash.length;
+    emptyBtn.disabled = trash.length === 0;
+    
+    if (trash.length === 0) {
+        trashList.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">Cestino vuoto</div>';
+        restoreBtn.disabled = true;
+        return;
+    }
+    
+    trashList.innerHTML = trash.map((item, index) => {
+        if (item.type === 'song') {
+            return `
+                <div class="trash-item">
+                    <input type="checkbox" id="trash-${index}" onchange="updateRestoreButton()">
+                    <div class="trash-item-info">
+                        <div>"${item.data.title}"</div>
+                        <div class="trash-item-type">${item.data.artist}</div>
+                    </div>
+                </div>
+            `;
+        } else if (item.type === 'artist') {
+            return `
+                <div class="trash-item">
+                    <input type="checkbox" id="trash-${index}" onchange="updateRestoreButton()">
+                    <div class="trash-item-info">
+                        <div>${item.data.artist}</div>
+                        <div class="trash-item-type">${item.data.songs.length} canzoni</div>
+                    </div>
+                </div>
+            `;
+        }
+    }).join('');
+    
+    updateRestoreButton();
+}
+
+function updateRestoreButton() {
+    const restoreBtn = document.getElementById('restore-btn');
+    const checkboxes = document.querySelectorAll('#trash-list input[type="checkbox"]:checked');
+    restoreBtn.disabled = checkboxes.length === 0;
+}
+
+function restoreSelected() {
+    const checkboxes = document.querySelectorAll('#trash-list input[type="checkbox"]:checked');
+    const indices = Array.from(checkboxes).map(cb => parseInt(cb.id.replace('trash-', '')));
+    
+    if (indices.length === 0) return;
+    
+    const itemsToRestore = indices.map(i => trash[i]);
+    const message = indices.length === 1 
+        ? 'Ripristinare questo elemento?' 
+        : `Ripristinare ${indices.length} elementi?`;
+    
+    showModal('', message, () => {
+        saveUndoState();
+        
+        // Ripristina in ordine inverso per mantenere gli indici corretti
+        indices.sort((a, b) => b - a).forEach(index => {
+            const item = trash[index];
+            
+            if (item.type === 'song') {
+                songs.push(item.data);
+            } else if (item.type === 'artist') {
+                songs.push(...item.data.songs);
+            }
+            
+            trash.splice(index, 1);
+        });
+        
+        saveData();
+        saveTrash();
+        
+        if (syncEnabled && currentUser) {
+            saveToFirebaseImmediate();
+        }
+        
+        updateManage();
+        showModal('', `${indices.length} elemento/i ripristinato/i con successo!`, null, false);
+    }, true);
+}
+
+function emptyTrash() {
+    if (trash.length === 0) return;
+    
+    showModal('', `Svuotare il cestino? Questa azione eliminerà definitivamente ${trash.length} elemento/i.`, () => {
+        trash = [];
+        saveTrash();
+        showModal('', 'Cestino svuotato!', null, false);
+    }, true);
+}
+
+// Sistema Undo/Redo
+let undoStack = [];
+let redoStack = [];
+const MAX_UNDO_STATES = 10;
+
+function saveUndoState() {
+    // Salva lo stato attuale
+    undoStack.push(JSON.parse(JSON.stringify(songs)));
+    
+    // Limita a 10 stati
+    if (undoStack.length > MAX_UNDO_STATES) {
+        undoStack.shift();
+    }
+    
+    // Pulisci redo quando fai una nuova azione
+    redoStack = [];
+}
+
+function undo() {
+    if (undoStack.length === 0) {
+        console.log('Niente da annullare');
+        return;
+    }
+    
+    // Salva stato attuale in redo
+    redoStack.push(JSON.parse(JSON.stringify(songs)));
+    if (redoStack.length > MAX_UNDO_STATES) {
+        redoStack.shift();
+    }
+    
+    // Ripristina stato precedente
+    songs = undoStack.pop();
+    saveData();
+    
+    // Aggiorna interfaccia se in Gestisci
+    if (document.getElementById('manage-tab').classList.contains('active')) {
+        updateManage();
+    }
+    
+    console.log('Annullato - Stati rimanenti:', undoStack.length);
+}
+
+function redo() {
+    if (redoStack.length === 0) {
+        console.log('Niente da ripetere');
+        return;
+    }
+    
+    // Salva stato attuale in undo
+    undoStack.push(JSON.parse(JSON.stringify(songs)));
+    if (undoStack.length > MAX_UNDO_STATES) {
+        undoStack.shift();
+    }
+    
+    // Ripristina stato successivo
+    songs = redoStack.pop();
+    saveData();
+    
+    // Aggiorna interfaccia se in Gestisci
+    if (document.getElementById('manage-tab').classList.contains('active')) {
+        updateManage();
+    }
+    
+    console.log('Ripetuto - Stati rimanenti:', redoStack.length);
+}
+
+// Dark Mode
+function toggleDarkMode() {
+    const body = document.body;
+    const isDark = body.classList.toggle('dark-mode');
+    
+    // Cambia icona
+    const btn = document.getElementById('dark-mode-toggle');
+    btn.textContent = isDark ? '☀️' : '🌙';
+    
+    // Salva preferenza
+    localStorage.setItem('darkMode', isDark ? 'enabled' : 'disabled');
+}
+
+// Carica preferenza dark mode all'avvio
+function loadDarkMode() {
+    const darkMode = localStorage.getItem('darkMode');
+    if (darkMode === 'enabled') {
+        document.body.classList.add('dark-mode');
+        const btn = document.getElementById('dark-mode-toggle');
+        if (btn) btn.textContent = '☀️';
+    }
+}
+
+// Listener tastiera
+document.addEventListener('keydown', (e) => {
+    // Controlla se l'utente è in un campo di input/textarea
+    const isInInputField = e.target.tagName === 'INPUT' || 
+                           e.target.tagName === 'TEXTAREA' || 
+                           e.target.isContentEditable;
+    
+    // Cmd+Z (Mac) o Ctrl+Z (Windows)
+    if ((e.metaKey || e.ctrlKey) && e.key === 'z' && !e.shiftKey) {
+        // Se NON è in un campo di input, usa il nostro undo del database
+        if (!isInInputField) {
+            e.preventDefault();
+            undo();
+        }
+        // Se è in un campo di input, lascia che funzioni normalmente (non fare preventDefault)
+    }
+    
+    // Cmd+Shift+Z (Mac) o Ctrl+Y (Windows)
+    if ((e.metaKey && e.shiftKey && e.key === 'z') || (e.ctrlKey && e.key === 'y')) {
+        if (!isInInputField) {
+            e.preventDefault();
+            redo();
+        }
+    }
+});
+
+function saveData() {
+    try {
+        localStorage.setItem('songbookData', JSON.stringify(songs));
+        console.log(`Salvate ${songs.length} canzoni`);
+    } catch (error) {
+        console.error('Errore nel salvataggio dei dati:', error);
+        alert('Errore nel salvataggio dei dati. Lo spazio di archiviazione potrebbe essere pieno.');
+    }
+}
+
+        function showTab(tabName) {
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+    document.getElementById(tabName + '-tab').classList.add('active');
+    
+    const targetBtn = document.querySelector(`.tab-btn[onclick="showTab('${tabName}')"]`);
+    if (targetBtn) {
+        targetBtn.classList.add('active');
+    }
+    
+    // Cambia larghezza content per Gestisci
+    const content = document.querySelector('.content');
+    if (tabName === 'manage') {
+        content.style.maxWidth = '1400px';
+    } else {
+        content.style.maxWidth = '1000px';
+    }
+    
+    if (tabName === 'manage') {
+        updateManage();
+        updateTrashUI();
+    }
+    if (tabName === 'performance') updatePerformance();
+}
+
+        function addSong() {
+    const title = document.getElementById('title').value.trim();
+    const artist = document.getElementById('artist').value.trim();
+    const rhythmic = document.getElementById('rhythmic').value.trim();
+    const key = document.getElementById('key').value.trim();
+    const tempo = document.getElementById('tempo').value.trim();
+    const lyrics = document.getElementById('lyrics').value.trim();
+
+    if (!title || !artist || !lyrics) {
+        showModal('', 'Compila almeno Titolo, Cantante e Testo!', null, false);
+        return;
+    }
+    
+    // ✅ SALVA LO STATO PRIMA DI MODIFICARE
+    saveUndoState();
+    
+    let notes = [];
+    if (rhythmic) notes.push(rhythmic);
+    if (key) notes.push(key);
+    if (tempo) notes.push(tempo + ' BPM');
+    const notesString = notes.join(' | ');
+
+    const artistSort = convertToSortName(artist);
+
+    // Controlla se siamo in modalità modifica
+    if (window.editingSongId) {
+        // MODIFICA: rimuovi la vecchia versione e aggiungi la nuova
+        songs = songs.filter(s => s.id !== window.editingSongId);
+        songs.push({
+            id: window.editingSongId,
+            title: title,
+            artist: artist,
+            artistSort: artistSort,
+            notes: notesString,
+            lyrics: lyrics
+        });
+        
+        saveData();
+        
+        // Salva su Firebase
+        if (syncEnabled && currentUser) {
+            saveToFirebaseImmediate();
+        }
+        
+        // Aggiorna selectedSong
+        selectedSong = songs.find(s => s.id === window.editingSongId);
+        
+        // Reset modalità modifica
+        window.editingSongId = null;
+        document.getElementById('add-tab-title').textContent = 'Aggiungi Nuova Canzone';
+        document.getElementById('add-save-btn').textContent = 'Inserisci Canzone';
+        document.getElementById('add-cancel-btn').textContent = 'Cancella';
+        
+        // Svuota form senza conferma
+        document.getElementById('title').value = '';
+        document.getElementById('artist').value = '';
+        document.getElementById('rhythmic').value = '';
+        document.getElementById('key').value = '';
+        document.getElementById('tempo').value = '';
+        document.getElementById('lyrics').value = '';
+        stopMetronome();
+        
+        showModal('', 'Canzone modificata con successo!', null, false);
+        
+    } else {
+        // INSERIMENTO NUOVO: aggiungi normalmente
+        songs.push({
+            id: Date.now(),
+            title: title,
+            artist: artist,
+            artistSort: artistSort,
+            notes: notesString,
+            lyrics: lyrics
+        });
+        
+        saveData();
+        
+        // Salva su Firebase
+        if (syncEnabled && currentUser) {
+            saveToFirebaseImmediate();
+        }
+        
+        // Svuota form normalmente
+        document.getElementById('title').value = '';
+        document.getElementById('artist').value = '';
+        document.getElementById('rhythmic').value = '';
+        document.getElementById('key').value = '';
+        document.getElementById('tempo').value = '';
+        document.getElementById('lyrics').value = '';
+        stopMetronome();
+        
+        showModal('', 'Canzone aggiunta con successo!', null, false);
+    }
+
+    saveData();
+    
+    // Salva su Firebase
+    if (syncEnabled && currentUser) {
+        saveToFirebaseImmediate();
+    }
+    
+    clearForm();
+}
+
+        function clearForm() {
+    // Controlla se siamo in modalità modifica
+    if (window.editingSongId) {
+        // Annulla modifica: chiedi conferma con modal
+        showModal(
+    '',
+    'Annullare le modifiche?',
+            () => {
+                window.editingSongId = null;
+                document.getElementById('add-tab-title').textContent = 'Aggiungi Nuova Canzone';
+                document.getElementById('add-save-btn').textContent = 'Inserisci Canzone';
+                document.getElementById('add-cancel-btn').textContent = 'Cancella';
+                
+                document.getElementById('title').value = '';
+                document.getElementById('artist').value = '';
+                document.getElementById('rhythmic').value = '';
+                document.getElementById('key').value = '';
+                document.getElementById('tempo').value = '';
+                document.getElementById('lyrics').value = '';
+                stopMetronome();
+                
+                showTab('manage');
+                updateManage();
+            },
+            true
+        );
+    } else {
+        // Modalità inserimento normale: svuota solo i campi
+        document.getElementById('title').value = '';
+        document.getElementById('artist').value = '';
+        document.getElementById('rhythmic').value = '';
+        document.getElementById('key').value = '';
+        document.getElementById('tempo').value = '';
+        document.getElementById('lyrics').value = '';
+        stopMetronome();
+    }
+}
+
+        function resetSelections() {
+            selectedArtist = null;
+            selectedSong = null;
+            document.getElementById('edit-btn').disabled = true;
+            document.getElementById('edit-btn').textContent = 'Modifica';
+            document.getElementById('delete-btn').disabled = true;
+            document.getElementById('selection-info').textContent = 'Seleziona un cantante o una canzone per modificarla';
+        }
+
+        function deselectAll() {
+            resetSelections();
+            updateManage();
+        }
+
+        function findDuplicates() {
+    // Trova duplicati per titolo (ignora artista)
+    const titleMap = new Map();
+    const duplicates = [];
+    
+    songs.forEach(song => {
+        const titleKey = song.title.toLowerCase().trim();
+        
+        if (titleMap.has(titleKey)) {
+            // Duplicato trovato
+            const existing = titleMap.get(titleKey);
+            
+            // Controlla se già in lista duplicati
+            let dupGroup = duplicates.find(d => d.title === titleKey);
+            
+            if (!dupGroup) {
+                dupGroup = {
+                    title: titleKey,
+                    displayTitle: song.title,
+                    songs: [existing]
+                };
+                duplicates.push(dupGroup);
+            }
+            
+            dupGroup.songs.push(song);
+        } else {
+            titleMap.set(titleKey, song);
+        }
+    });
+    
+    if (duplicates.length === 0) {
+        showModal('', '✓ Nessun duplicato trovato!', null, false);
+        return;
+    }
+    
+    // Mostra modal con duplicati
+    showDuplicatesManageModal(duplicates);
+}
+
+function showDuplicatesManageModal(duplicates) {
+    const totalDups = duplicates.reduce((sum, d) => sum + d.songs.length, 0);
+    
+    const message = `Trovati <strong>${duplicates.length} titoli duplicati</strong> (${totalDups} canzoni totali).<br><br>` +
+                   `Seleziona le canzoni da <strong>eliminare</strong>:`;
+    
+    document.getElementById('duplicates-message').innerHTML = message;
+    
+    window.duplicatesToDelete = new Set();
+    
+    const listHtml = duplicates.map((dupGroup, groupIndex) => {
+        return `
+            <div style="background: #f9f9f9; padding: 10px; margin: 10px 0; border-radius: 5px;">
+                <div style="font-weight: 600; margin-bottom: 8px; color: #2c3e50;">
+                    "${dupGroup.displayTitle.toUpperCase()}" - ${dupGroup.songs.length} copie:
+                </div>
+                ${dupGroup.songs.map((song, songIndex) => {
+                    const id = `dup-${groupIndex}-${songIndex}`;
+                    return `
+                        <div class="duplicate-item" style="margin-left: 20px;">
+                            <input type="checkbox" id="${id}" onchange="toggleDuplicateForDeletion(${song.id}, this.checked)">
+                            <div class="duplicate-info">
+                                <div class="duplicate-artist">${song.artist}</div>
+                                <div style="font-size: 11px; color: #666;">
+                                    ${song.notes || 'Nessun dettaglio'}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        `;
+    }).join('');
+    
+    document.getElementById('duplicates-list').innerHTML = listHtml;
+    
+    // Cambia pulsanti modal
+    const modalButtons = document.querySelector('#duplicates-modal .modal-buttons');
+    modalButtons.innerHTML = `
+        <button class="modal-btn modal-btn-cancel" onclick="closeDuplicatesModal()">Annulla</button>
+        <button class="modal-btn modal-btn-replace" onclick="confirmDeleteDuplicates()">Elimina Selezionati</button>
+    `;
+    
+    document.getElementById('duplicates-modal').classList.add('show');
+    addDuplicatesModalKeyListener();
+}
+
+function toggleDuplicateForDeletion(songId, checked) {
+    if (checked) {
+        window.duplicatesToDelete.add(songId);
+    } else {
+        window.duplicatesToDelete.delete(songId);
+    }
+}
+
+function confirmDeleteDuplicates() {
+    if (!window.duplicatesToDelete || window.duplicatesToDelete.size === 0) {
+        showModal('', 'Nessuna canzone selezionata!', null, false);
+        return;
+    }
+    
+    const count = window.duplicatesToDelete.size;
+    
+    showModal(
+        '',
+        `Eliminare ${count} canzon${count > 1 ? 'i' : 'e'} duplicate?`,
+        () => {
+            saveUndoState();
+            
+            // Sposta nel cestino
+            songs.filter(s => window.duplicatesToDelete.has(s.id)).forEach(song => {
+                addToTrash({
+                    type: 'song',
+                    data: song
+                });
+            });
+            
+            // Rimuovi da songs
+            songs = songs.filter(s => !window.duplicatesToDelete.has(s.id));
+            
+            saveData();
+            
+            if (syncEnabled && currentUser) {
+                saveToFirebaseImmediate();
+            }
+            
+            closeDuplicatesModal();
+            updateManage();
+            
+            showModal('', `✓ ${count} canzon${count > 1 ? 'i' : 'e'} eliminat${count > 1 ? 'e' : 'a'}!`, null, false);
+            
+            window.duplicatesToDelete = null;
+        },
+        true
+    );
+}
+
+        function updateManage() {
+    const searchTerm = document.getElementById('search-box')?.value.toLowerCase() || '';
+    
+    // Mostra/nascondi pulsante X
+    const clearBtn = document.getElementById('clear-search');
+    if (clearBtn) {
+        clearBtn.style.display = searchTerm ? 'block' : 'none';
+    }
+    
+    // Crea lista unica di artisti con versione sort
+    const artistsMap = new Map();
+    songs.forEach(s => {
+        if (!artistsMap.has(s.artist)) {
+            artistsMap.set(s.artist, s.artistSort || s.artist);
+        }
+    });
+
+    // Crea array di oggetti artist/artistSort e ordina
+    const artistsArray = Array.from(artistsMap.entries()).map(([artist, artistSort]) => ({
+        artist,
+        artistSort
+    }));
+
+    artistsArray.sort((a, b) => a.artistSort.localeCompare(b.artistSort));
+
+    // Filtra artisti in base alla ricerca
+    const filteredArtists = artistsArray.filter(item => 
+        searchTerm === '' || 
+        item.artistSort.toLowerCase().includes(searchTerm) ||
+        item.artist.toLowerCase().includes(searchTerm)
+    );
+
+    // Aggiorna header cantanti con contatore
+    const artistsHeader = document.getElementById('artists-header');
+    if (artistsHeader) {
+        artistsHeader.textContent = `Cantanti (${filteredArtists.length})`;
+    }
+
+    const artistsList = document.getElementById('artists-list');
+    
+    artistsList.innerHTML = filteredArtists.map(item => {
+        const count = songs.filter(s => s.artist === item.artist).length;
+        return `<div class="list-item ${selectedArtist === item.artist ? 'selected' : ''}" onclick="selectArtist('${item.artist.replace(/'/g, "\\'")}')">${item.artistSort} (${count} canzoni)</div>`;
+    }).join('');
+
+    updateSongsList();
+}
+
+function filterManage() {
+    updateManage();
+}
+
+        function updateSongsList() {
+    const searchTerm = document.getElementById('search-box')?.value.toLowerCase() || '';
+    const songsList = document.getElementById('songs-list');
+    const filteredSongs = selectedArtist ? songs.filter(s => s.artist === selectedArtist) : songs;
+    
+    // Filtra in base alla ricerca
+    const searchFilteredSongs = filteredSongs.filter(song =>
+        searchTerm === '' ||
+        song.title.toLowerCase().includes(searchTerm) ||
+        song.artist.toLowerCase().includes(searchTerm) ||
+        (song.artistSort && song.artistSort.toLowerCase().includes(searchTerm))
+    );
+    
+    const sortedSongs = searchFilteredSongs.sort((a, b) => a.title.localeCompare(b.title));
+    
+    // Aggiorna header canzoni con contatore
+    const songsHeader = document.getElementById('songs-header');
+    if (songsHeader) {
+        songsHeader.textContent = `Canzoni (${searchFilteredSongs.length})`;
+    }
+    
+    songsList.innerHTML = sortedSongs.map(song => 
+        `<div class="list-item ${selectedSong?.id === song.id ? 'selected' : ''}" onclick="selectSong(${song.id})">${song.title.toUpperCase()} - ${song.artist.toUpperCase()}</div>`
+    ).join('');
+}
+
+function clearSearch() {
+    document.getElementById('search-box').value = '';
+    filterManage();
+}
+
+        function selectArtist(artist) {
+            selectedArtist = artist;
+            selectedSong = null;
+            updateManage();
+            document.getElementById('edit-btn').disabled = false;
+            document.getElementById('edit-btn').textContent = 'Rinomina';
+            document.getElementById('delete-btn').disabled = false;
+            document.getElementById('selection-info').textContent = `Selezionato: ${artist}`;
+        }
+
+        function selectSong(id) {
+            selectedSong = songs.find(s => s.id === id);
+            updateManage();
+            document.getElementById('edit-btn').disabled = false;
+            document.getElementById('edit-btn').textContent = 'Modifica';
+            document.getElementById('delete-btn').disabled = false;
+            document.getElementById('selection-info').textContent = `Selezionata: ${selectedSong.title}`;
+        }
+
+        function editSelected() {
+    if (selectedSong) {
+        // Prima chiedi conferma
+        showModal(
+            '',
+            'Vuoi modificare questa canzone?',
+            () => {
+                // Solo se clicca OK, carica i dati
+                document.getElementById('title').value = selectedSong.title;
+                document.getElementById('artist').value = selectedSong.artist;
+                
+                // Parsing delle note
+                const noteParts = selectedSong.notes ? selectedSong.notes.split('|').map(s => s.trim()) : [];
+                let rhythmic = '', key = '', tempo = '';
+
+                noteParts.forEach(part => {
+    const trimmedPart = part.trim();
+    
+    if (trimmedPart.includes('BPM')) {
+        // È il tempo
+        tempo = trimmedPart.replace(' BPM', '').replace('BPM', '').trim();
+    } else if (/^(DO|RE|MI|FA|SOL|LA|SI|[A-G])[#b]?m?[-]?$/i.test(trimmedPart) && trimmedPart.length <= 10) {
+        // È la tonalità (nota musicale)
+        key = trimmedPart;
+    } else if (trimmedPart.length > 0 && !tempo && !rhythmic) {
+        // È la ritmica (primo elemento rimanente)
+        rhythmic = trimmedPart;
+    } else if (trimmedPart.length > 0 && rhythmic && !key) {
+        // Potrebbe essere tonalità scritta in modo non standard
+        key = trimmedPart;
+    } else if (trimmedPart.length > 0) {
+        // Fallback: aggiungi a rhythmic
+        rhythmic = rhythmic ? rhythmic + ' ' + trimmedPart : trimmedPart;
+    }
+});
+
+                document.getElementById('rhythmic').value = rhythmic;
+                document.getElementById('key').value = key;
+                document.getElementById('tempo').value = tempo;
+                
+                document.getElementById('lyrics').value = selectedSong.lyrics;
+                
+                // Cambia titolo e pulsanti per modalità "modifica"
+                document.getElementById('add-tab-title').textContent = 'Modifica Canzone';
+                document.getElementById('add-save-btn').textContent = 'Modifica Canzone';
+                document.getElementById('add-cancel-btn').textContent = 'Annulla';
+                
+                window.editingSongId = selectedSong.id;
+                
+                showTab('add');
+                document.querySelector('.tab-btn[onclick="showTab(\'add\')"]').classList.add('active');
+            },
+            true
+        );
+        
+    } else if (selectedArtist) {
+        // Rinomina artista con modal personalizzato
+        showModalWithInput(
+            'Rinomina Artista',
+            'Nuovo nome cantante:',
+            selectedArtist,
+            (newArtist) => {
+                if (newArtist && newArtist.trim()) {
+                    saveUndoState();
+                    const newArtistTrimmed = newArtist.trim();
+                    const newArtistSort = convertToSortName(newArtistTrimmed);
+                    
+                    songs.forEach(song => {
+                        if (song.artist === selectedArtist) {
+                            song.artist = newArtistTrimmed;
+                            song.artistSort = newArtistSort;
+                        }
+                    });
+                    selectedArtist = newArtistTrimmed;
+                    saveData();
+                    
+                    // Salva immediatamente su Firebase
+                    if (syncEnabled && currentUser) {
+                        saveToFirebaseImmediate();
+                    }
+                    
+                    updateManage();
+                }
+            }
+        );
+    }
+}
+
+        function deleteSelected() {
+    if (selectedSong) {
+        showModal(
+            '',
+            'Eliminare questa canzone?',
+            () => {
+                saveUndoState();
+                
+                // Aggiungi al cestino
+                addToTrash({
+                    type: 'song',
+                    data: selectedSong
+                });
+                
+                songs = songs.filter(s => s.id !== selectedSong.id);
+                resetSelections();
+                saveData();
+                
+                if (syncEnabled && currentUser) {
+                    saveToFirebaseImmediate();
+                }
+                
+                updateManage();
+            },
+            true
+        );
+    } else if (selectedArtist) {
+        const artistSongs = songs.filter(s => s.artist === selectedArtist);
+        
+        showModal(
+            '',
+            `Eliminare ${selectedArtist} e tutte le sue ${artistSongs.length} canzoni?`,
+            () => {
+                saveUndoState();
+                
+                // Aggiungi al cestino
+                addToTrash({
+                    type: 'artist',
+                    data: {
+                        artist: selectedArtist,
+                        songs: artistSongs
+                    }
+                });
+                
+                songs = songs.filter(s => s.artist !== selectedArtist);
+                resetSelections();
+                saveData();
+                
+                if (syncEnabled && currentUser) {
+                    saveToFirebaseImmediate();
+                }
+                
+                updateManage();
+            },
+            true
+        );
+    }
+}
+
+        function updatePerformance() {
+    const artistsMap = new Map();
+    songs.forEach(s => {
+        if (!artistsMap.has(s.artist)) {
+            artistsMap.set(s.artist, s.artistSort || s.artist);
+        }
+    });
+    
+    const artistsArray = Array.from(artistsMap.entries()).map(([artist, artistSort]) => ({
+        artist, artistSort
+    }));
+    artistsArray.sort((a, b) => a.artistSort.localeCompare(b.artistSort));
+    const artists = artistsArray.map(item => item.artist);
+    
+    const previewContent = document.getElementById('preview-content');
+    
+    if (artists.length === 0) {
+        const content = '<div style="text-align: center; padding: 50px;"><p>Nessuna canzone aggiunta ancora</p></div>';
+        previewContent.innerHTML = createPage(content, 0);
+        totalPages = 1;
+        currentPage = 0;
+        showPage(0);
+        return;
+    }
+
+    // Calcola quanti artisti per pagina indice
+    const dims = getPageDimensions();
+    const firstPageHeight = dims.height - 100; // Prima pagina (con header "ELENCO CANTANTI")
+    const otherPagesHeight = dims.height - 10; // Altre pagine (senza header)
+    
+    // Crea div di test per calcolare altezze
+    const testDiv = document.createElement('div');
+    testDiv.className = 'artist-item';
+    testDiv.style.position = 'absolute';
+    testDiv.style.visibility = 'hidden';
+    testDiv.style.width = ((dims.width - 40) / 3) + 'px';
+    document.body.appendChild(testDiv);
+    
+    document.body.removeChild(testDiv);
+    
+// Valori diversi per A4 e A5
+let itemsPerColFirstPage, itemsPerColOtherPages;
+
+if (pageFormat === 'A5') {
+    itemsPerColFirstPage = 19;  // Modifica questi valori per A5
+    itemsPerColOtherPages = 20;
+} else { // A4
+    itemsPerColFirstPage = 27;
+    itemsPerColOtherPages = 29;
+}
+
+const itemsFirstPage = itemsPerColFirstPage * 3;
+const itemsOtherPages = itemsPerColOtherPages * 3;
+    
+    // Calcola totale pagine necessarie
+    let remainingArtists = artists.length - itemsFirstPage;
+    const additionalPages = remainingArtists > 0 ? Math.ceil(remainingArtists / itemsOtherPages) : 0;
+    const totalIndexPages = 1 + additionalPages;
+    
+    console.log(`Artisti: ${artists.length}, Prima pagina: ${itemsFirstPage}, Altre: ${itemsOtherPages}, Pagine indice: ${totalIndexPages}`);
+    
+    // Crea pagine indice
+    const indexPages = [];
+    
+    for (let pageNum = 0; pageNum < totalIndexPages; pageNum++) {
+        let startIndex, endIndex;
+        
+        if (pageNum === 0) {
+            // Prima pagina
+            startIndex = 0;
+            endIndex = Math.min(itemsFirstPage, artists.length);
+        } else {
+            // Pagine successive
+            startIndex = itemsFirstPage + ((pageNum - 1) * itemsOtherPages);
+            endIndex = Math.min(startIndex + itemsOtherPages, artists.length);
+        }
+        
+        const pageArtists = artists.slice(startIndex, endIndex);
+        
+        // Distribuisci in 3 colonne: riempi colonna per colonna
+const itemsPerCol = pageNum === 0 ? itemsPerColFirstPage : itemsPerColOtherPages;
+const columns = [[], [], []];
+
+pageArtists.forEach((artist, i) => {
+    const colIndex = Math.floor(i / itemsPerCol);
+    if (colIndex < 3) {
+        columns[colIndex].push(artist);
+    }
+});
+        
+        // Crea div di test per calcolare larghezze
+        const testDivFont = document.createElement('div');
+        testDivFont.style.position = 'absolute';
+        testDivFont.style.visibility = 'hidden';
+        testDivFont.style.whiteSpace = 'nowrap';
+        document.body.appendChild(testDivFont);
+        
+        const columnWidth = (dims.width - 40) / 3;
+        
+        const indexContent = `
+            ${pageNum === 0 ? '<div style="text-align: center; font-size: 18pt; font-weight: bold; margin-bottom: 30px;">ELENCO CANTANTI</div>' : ''}
+            <div class="artist-columns">
+                ${columns.map(col => `
+                    <div class="artist-column">
+                        ${col.map(artist => {
+                            const artistSort = songs.find(s => s.artist === artist)?.artistSort || artist;
+                            
+                            testDivFont.style.fontSize = '14pt';
+                            testDivFont.textContent = artistSort;
+                            const textWidth = testDivFont.offsetWidth;
+                            
+                            let fontSize = 14;
+                            if (textWidth > columnWidth) {
+                                fontSize = Math.max(5, Math.floor(14 * (columnWidth / textWidth)));
+                            }
+                            
+                            return `<div class="artist-item" style="font-size: ${fontSize}pt;" onclick="showArtist('${artist.replace(/'/g, "\\'")}')">${artistSort}</div>`;
+                        }).join('')}
+                    </div>
+                `).join('')}
+            </div>
+        `;
+        
+        document.body.removeChild(testDivFont);
+        
+        indexPages.push(indexContent);
+    }
+    
+    // Crea HTML per tutte le pagine indice
+    let allPagesHtml = '';
+    indexPages.forEach((content, index) => {
+        allPagesHtml += createPage(content, index);
+    });
+    
+    previewContent.innerHTML = allPagesHtml;
+    totalPages = totalIndexPages;
+    currentPage = 0;
+    showPage(0);
+}
+
+        function showArtist(artist) {
+    const artistSongs = songs.filter(s => s.artist === artist).sort((a,b) => a.title.localeCompare(b.title));
+    const previewContent = document.getElementById('preview-content');
+    const dims = getPageDimensions();
+    
+    // Calcola quante canzoni entrano per pagina
+    const headerHeight = 80; // Spazio per header artista
+    const footerHeight = 60; // Spazio per footer
+    const availableHeight = dims.height - headerHeight - footerHeight;
+    const itemHeight = 10; // Altezza per ogni titolo (in mm circa 10mm = 37px)
+    
+    let songsPerPage;
+    if (pageFormat === 'A5') {
+        songsPerPage = 16; // Modifica questo valore per A5
+    } else { // A4
+        songsPerPage = 22; // Modifica questo valore per A4
+    }
+    
+    const totalPages = Math.ceil(artistSongs.length / songsPerPage);
+    
+    // Crea tutte le pagine
+    let allPagesHtml = '';
+    
+    for (let pageNum = 0; pageNum < totalPages; pageNum++) {
+        const startIndex = pageNum * songsPerPage;
+        const endIndex = Math.min(startIndex + songsPerPage, artistSongs.length);
+        const pageSongs = artistSongs.slice(startIndex, endIndex);
+        
+        const content = `
+            <div style="text-align: center; font-size: 18pt; font-weight: bold; border-top: 2px solid black; border-bottom: 2px solid black; padding: 15px 0; margin-bottom: 30px;">
+                ${artist.toUpperCase()}
+            </div>
+            <div>
+                ${pageSongs.map(song => `<div class="artist-item" onclick="showSong(${song.id})" style="font-size: 16pt;">${song.title.toUpperCase()}</div>`).join('')}
+            </div>
+            <div style="position: absolute; bottom: 20px; left: 0; right: 0; text-align: center; border-top: 1px solid black; padding-top: 15px;">
+                <span style="cursor: pointer; font-size: 16pt;" onclick="updatePerformance()">Torna ad Elenco cantanti</span>
+            </div>
+        `;
+        
+        allPagesHtml += createPage(content, pageNum);
+    }
+    
+    previewContent.innerHTML = allPagesHtml;
+    currentPage = 0;
+    showPage(0);
+}
+
+        function showSong(id) {
+    const song = songs.find(s => s.id === id);
+    if (!song) {
+        updatePerformance();
+        return;
+    }
+    
+    // Parse notes per visualizzazione
+    const noteParts = song.notes ? song.notes.split('|').map(s => s.trim()) : [];
+    let rhythmic = '', key = '', tempo = '';
+
+    noteParts.forEach(part => {
+        if (part.includes('BPM')) {
+            tempo = part.replace(' BPM', '').trim();
+        } else if (part.length <= 6 && /^(DO|RE|MI|FA|SOL|LA|SI|[A-G])[#b]?[-m]?$/i.test(part)) {
+            key = part;
+        } else {
+            rhythmic = part;
+        }
+    });
+    
+    let notesHtml = '';
+if (rhythmic || key || tempo) {
+    const parts = [];
+    if (rhythmic) parts.push(`<span style="color: #27ae60;">${rhythmic}</span>`);
+    if (key) parts.push(`<span style="color: #c0392b;">${key}</span>`);
+    if (tempo) parts.push(`<span style="color: #2980b9;">${tempo}</span>`);
+    
+    notesHtml = `<div style="font-size: 15pt; margin-top: 2px; margin-bottom: 2px; font-weight: 600;">${parts.join(' <span style="color: black;">|</span> ')}</div>`;
+} else {
+    // Se non ci sono dettagli, inserisci uno spazio segnaposto
+    notesHtml = `<div style="font-size: 15pt; margin-top: 2px; margin-bottom: 2px; font-weight: 600; color: #999;">[ Dettagli da aggiungere ]</div>`;
+}
+    
+    // USA LA FUNZIONE UNIFICATA
+    const pagination = calculateSongPagination(song, pageFormat);
+    
+    // Footer HTML
+    const footerHtml = `
+        <div style="position: absolute; bottom: 20px; left: 0; right: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; border-top: 1px solid black; padding-top: 15px;">
+            <div style="text-align: center; cursor: pointer; font-size: 16pt;" onclick="updatePerformance()">Torna ad Elenco cantanti</div>
+            <div style="text-align: center; cursor: pointer; font-size: 16pt;" onclick="showArtist('${song.artist.replace(/'/g, "\\'")}')" >Torna al cantante</div>
+        </div>
+    `;
+    
+    // Costruisci pagine HTML
+    const htmlPages = pagination.map(page => {
+        let content = '';
+        
+        if (page.isFirst) {
+    // Header completo solo prima pagina
+    content = `
+        <div style="text-align: center; margin-bottom: 25px;">
+            <div style="font-size: 18pt; font-weight: bold; margin-bottom: 2px;">"${song.title.toUpperCase()}"</div>
+            <div style="font-size: 10pt; margin-bottom: 2px;">(${song.artist.toUpperCase()})</div>
+            ${notesHtml}
+        </div>
+        <div class="song-text">${page.lines.join('\n')}</div>
+    `;
+        } else {
+            // Pagine successive: solo testo
+            content = `<div class="song-text" style="margin-top: 20px;">${page.lines.join('\n')}</div>`;
+        }
+        
+        // Aggiungi footer solo se è l'ultima pagina
+        if (page.hasFooter) {
+            content += footerHtml;
+        }
+        
+        return content;
+    });
+    
+    const previewContent = document.getElementById('preview-content');
+    previewContent.innerHTML = htmlPages.map((content, index) => createPage(content, index)).join('');
+    
+    totalPages = htmlPages.length;
+    currentPage = 0;
+    showPage(0);
+    
+    // Gestione frecce
+    if (totalPages > 1) {
+        document.getElementById('arrow-left').style.display = 'none';
+        document.getElementById('arrow-right').style.display = 'block';
+    } else {
+        document.getElementById('arrow-left').style.display = 'none';
+        document.getElementById('arrow-right').style.display = 'none';
+    }
+}
+
+function exportPDF() {
+     console.log('=== EXPORT PDF CHIAMATO ===');  // AGGIUNGI QUESTA RIGA
+    const format = document.querySelector('input[name="format"]:checked').value;
+    console.log('Formato selezionato:', format);  // AGGIUNGI ANCHE QUESTA
+    
+    if (songs.length === 0) {
+        alert('Non ci sono canzoni da esportare!');
+        return;
+    }
+    
+    const defaultName = `songbook_${format}_${new Date().toISOString().split('T')[0]}`;
+    const fileName = prompt('Nome del PDF:', defaultName);
+    
+    if (!fileName) return;
+    
+    alert('Generazione PDF in corso... Attendere.');
+    
+    setTimeout(() => {
+        try {
+            generatePDFWithJsPDF(format, fileName);
+        } catch (error) {
+            console.error('Errore:', error);
+            alert('Errore nella generazione del PDF.');
+        }
+    }, 100);
+}
+
+function generatePDFWithJsPDF(format, fileName) {
+    const { jsPDF } = window.jspdf;
+    
+    // Dimensioni pagina in mm
+    const pageSize = format === 'A5' ? [148, 210] : [210, 297];
+    const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: pageSize
+    });
+    
+    const pageWidth = pageSize[0];
+    const pageHeight = pageSize[1];
+    const margin = 10;
+    const contentWidth = pageWidth - (margin * 2);
+    
+// AGGIUNGI QUESTE RIGHE DI TEST QUI
+    console.log('Format:', format);
+    console.log('PageSize:', pageSize);
+    console.log('PageHeight:', pageHeight);
+    console.log('Footer position:', pageHeight - 15);
+    console.log('Margin:', margin);
+
+    // Ottieni artisti ordinati
+    const artistsMap = new Map();
+    songs.forEach(s => {
+        if (!artistsMap.has(s.artist)) {
+            artistsMap.set(s.artist, s.artistSort || s.artist);
+        }
+    });
+    
+    const artistsArray = Array.from(artistsMap.entries()).map(([artist, artistSort]) => ({
+        artist, artistSort
+    }));
+    artistsArray.sort((a, b) => a.artistSort.localeCompare(b.artistSort));
+    const artists = artistsArray.map(item => item.artist);
+    
+    // Mappa per tracciare i numeri di pagina
+    const pageMap = {
+        index: 1,
+        artists: new Map(),
+        songs: new Map()
+    };
+    
+    let currentPage = 1;
+    
+    // 1. INDICE CANTANTI
+pdf.setFont('times', 'bold');
+pdf.setFontSize(18);
+pdf.text('ELENCO CANTANTI', pageWidth / 2, 12, { align: 'center' });  // Stesso valore di topMargin
+
+let y = margin + 17;
+const colWidth = contentWidth / 3;
+let col = 0;
+
+pdf.setFont('times', 'normal');
+pdf.setFontSize(14);
+
+const footerHeight = 15;  // Spazio per il footer
+const bottomLimit = pageHeight - margin - footerHeight;
+
+artists.forEach(artist => {
+    const artistSort = songs.find(s => s.artist === artist)?.artistSort || artist;
+    const x = 4 + (col * (contentWidth / 3));  // Margine 4 + larghezza colonna
+    
+    // Controlla se c'è spazio per questa riga
+    if (y + 7 > bottomLimit) {
+        col++;
+        y = margin + 17;
+        
+        if (col >= 3) {
+    pdf.setLineWidth(0.2);
+    // Aggiungi footer alla pagina corrente
+    pdf.setFont('times', 'normal');
+    pdf.setFontSize(16);
+    const lineY = pageHeight - 15;
+const textY = lineY + ((pageHeight - lineY) / 2);  // Metà tra linea e bordo
+pdf.line(-1, lineY, pageWidth + 1, lineY);
+pdf.text('Indice', pageWidth / 2, textY, { align: 'center' });
+    
+    pdf.addPage();
+    currentPage++;
+    col = 0;
+    y = margin + 10;
+}
+    }
+    
+    pdf.text(artistSort, x, y);
+    y += 7;
+});
+
+// Footer dell'ultima pagina dell'indice
+pdf.setLineWidth(0.2);
+pdf.setFont('times', 'normal');
+pdf.setFontSize(16);
+const lineY = pageHeight - 15;
+const textY = lineY + ((pageHeight - lineY) / 2);  // Metà tra linea e bordo
+pdf.line(-1, lineY, pageWidth + 1, lineY);
+pdf.text('Indice', pageWidth / 2, textY, { align: 'center' });
+    
+    // 2. PER OGNI ARTISTA: PAGINA + CANZONI
+artists.forEach(artist => {
+    const artistSongs = songs.filter(s => s.artist === artist).sort((a,b) => a.title.localeCompare(b.title));
+    const artistSort = songs.find(s => s.artist === artist)?.artistSort || artist;
+    
+    // Pagina artista con elenco canzoni
+    pdf.addPage();
+    currentPage++;
+    pageMap.artists.set(artist, currentPage);
+    
+    pdf.setFont('times', 'bold');
+    pdf.setFontSize(18);
+    const artistText = artistSort.toUpperCase();
+    pdf.text(artistText, pageWidth / 2, 14, { align: 'center' });
+    
+    // Linee sopra e sotto
+    pdf.setLineWidth(0.4);
+    pdf.line(4, 5, pageWidth - 4, 5);
+    pdf.line(4, 20, pageWidth - 4, 20);
+    
+    y = 35;
+    pdf.setLineWidth(0.2);  // AGGIUNGI SOLO QUESTA per resettare lo spessore
+    pdf.setFont('times', 'normal');
+    pdf.setFontSize(16);
+    
+    const footerHeight = 15;
+    const bottomLimit = pageHeight - margin - footerHeight;
+    
+    artistSongs.forEach(song => {
+        if (y + 10 > bottomLimit) {
+            pdf.addPage();
+            currentPage++;
+            y = margin + 10;
+        }
+        pdf.text(song.title, 4, y);
+        y += 10;
+    });
+    
+    // Aggiungi footer alla pagina artista
+pdf.setLineWidth(0.2);
+pdf.setFont('times', 'normal');
+pdf.setFontSize(16);
+const lineY = pageHeight - 15;
+const textY = lineY + ((pageHeight - lineY) / 2);  // Metà tra linea e bordo
+pdf.line(-1, lineY, pageWidth + 1, lineY);
+pdf.text('Torna all\'indice', pageWidth / 2, textY, { align: 'center' });
+
+const linkHeight = pageHeight - lineY;
+pdf.link(0, lineY, pageWidth, linkHeight, { pageNumber: 1 });  // Link a pagina 1 (indice)
+        
+        // SUBITO DOPO: tutte le canzoni dell'artista
+        artistSongs.forEach(song => {
+            pdf.addPage();
+            currentPage++;
+            const songStartPage = currentPage;
+            pageMap.songs.set(song.id, songStartPage);
+            
+            const pagesAdded = addSongToPDF(pdf, song, pageWidth, pageHeight, margin, format);
+            currentPage += pagesAdded - 1; // -1 perché addPage è già stato fatto
+        });
+    });
+    
+    // 3. AGGIUNGI I LINK dopo aver generato tutte le pagine
+    addLinksToIndex(pdf, artists, pageMap, pageWidth, pageHeight, margin);
+    addLinksToArtistPages(pdf, artists, songs, pageMap, pageWidth, pageHeight, margin);
+    addLinksToSongs(pdf, songs, pageMap, pageWidth, pageHeight, margin, format);
+    
+    pdf.save(`${fileName}.pdf`);
+    alert('PDF generato con successo con link interattivi!');
+}
+
+function addSongToPDF(pdf, song, pageWidth, pageHeight, margin, format) {
+    const artistSort = song.artistSort || song.artist;
+    
+    // Parse notes
+    const noteParts = song.notes ? song.notes.split('|').map(s => s.trim()) : [];
+    let rhythmic = '', key = '', tempo = '';
+    
+    noteParts.forEach(part => {
+        if (part.includes('BPM')) {
+            tempo = part.replace(' BPM', '').trim();
+        } else if (part.length <= 6 && /^(DO|RE|MI|FA|SOL|LA|SI|[A-G])[#b]?[-m]?$/i.test(part)) {
+            key = part;
+        } else {
+            rhythmic = part;
+        }
+    });
+    
+    const hasNotes = rhythmic || key || tempo;
+    
+    // USA LA STESSA FUNZIONE UNIFICATA
+    const pagination = calculateSongPagination(song, format, true);  // true = è PDF
+    
+    // PARAMETRI PDF (diversi per A4 e A5)
+const topMargin = 12;
+const sideMargin = 4;
+const lineHeightMM = format === 'A5' ? 6.5 : 7.5;
+const maxLineWidth = pageWidth - (sideMargin * 2);
+
+pdf.setFont('times', 'normal');
+pdf.setFontSize(format === 'A5' ? 14 : 16);  // 16pt per A4
+    
+    let pageCount = 1;
+    
+    // Itera sulle pagine calcolate dalla funzione unificata
+    pagination.forEach((page, pageIndex) => {
+        if (pageIndex > 0) {
+            pdf.addPage();
+            pageCount++;
+        }
+        
+        let y = topMargin;
+        
+        // HEADER solo prima pagina
+        if (page.isFirst) {
+            // Titolo
+            pdf.setFont('times', 'bold');
+            pdf.setFontSize(18);
+            pdf.text(`"${song.title.toUpperCase()}"`, pageWidth / 2, y, { align: 'center' });
+            y += 5;
+            
+            // Artista
+            pdf.setFont('times', 'normal');
+            pdf.setFontSize(10);
+            pdf.text(`(${song.artist.toUpperCase()})`, pageWidth / 2, y, { align: 'center' });
+            y += 6;
+            
+            // Note colorate (o segnaposto)
+if (hasNotes) {
+    const parts = [];
+    const colors = [];
+    
+    if (rhythmic) { parts.push(rhythmic); colors.push([39, 174, 96]); }
+    if (key) { parts.push(key); colors.push([192, 57, 43]); }
+    if (tempo) { parts.push(tempo); colors.push([41, 128, 185]); }
+    
+    pdf.setFontSize(15);
+    pdf.setFont('times', 'bold');
+    
+    const separator = ' | ';
+    let totalWidth = 0;
+    parts.forEach((part, i) => {
+        totalWidth += pdf.getTextWidth(part);
+        if (i < parts.length - 1) totalWidth += pdf.getTextWidth(separator);
+    });
+    
+    let x = (pageWidth - totalWidth) / 2;
+    
+    parts.forEach((part, i) => {
+        pdf.setTextColor(colors[i][0], colors[i][1], colors[i][2]);
+        pdf.text(part, x, y);
+        x += pdf.getTextWidth(part);
+        
+        if (i < parts.length - 1) {
+            pdf.setTextColor(0, 0, 0);
+            pdf.text(separator, x, y);
+            x += pdf.getTextWidth(separator);
+        }
+    });
+    
+    pdf.setTextColor(0, 0, 0);
+    y += 6;
+} else {
+    // Segnaposto quando non ci sono dettagli
+    pdf.setFontSize(15);
+    pdf.setFont('times', 'italic');
+    pdf.setTextColor(150, 150, 150);
+    pdf.text('[ Dettagli da aggiungere ]', pageWidth / 2, y, { align: 'center' });
+    pdf.setTextColor(0, 0, 0);
+    pdf.setFont('times', 'normal');
+    y += 6;
+}
+
+y += 8;
+        }
+        
+        // TESTO
+        pdf.setFont('times', 'normal');
+        pdf.setFontSize(14);
+        
+        page.lines.forEach(line => {
+    if (line.trim() === '') {
+        // Riga vuota: salta semplicemente di lineHeightMM
+        y += lineHeightMM;
+    } else {
+        const wrappedLines = pdf.splitTextToSize(line.toUpperCase(), maxLineWidth);
+        wrappedLines.forEach(wrappedLine => {
+            pdf.text(wrappedLine, sideMargin, y);
+            y += lineHeightMM;
+        });
+    }
+});
+        
+        // FOOTER solo ultima pagina
+        if (page.hasFooter) {
+            addFooterToPage(pdf, pageWidth, pageHeight, sideMargin);
+        }
+    });
+    
+    return pageCount;
+}
+
+function addFooterToPage(pdf, pageWidth, pageHeight, sideMargin) {
+    const lineY = pageHeight - 15;  // Stessa altezza degli altri footer
+    const textY = lineY + ((pageHeight - lineY) / 2);  // Centrato tra linea e bordo
+    
+    // Linea
+    pdf.setLineWidth(0.2);
+    pdf.line(-1, lineY, pageWidth + 1, lineY);
+    
+    // Testo
+    pdf.setFont('times', 'normal');
+    pdf.setFontSize(16);
+    pdf.setTextColor(0, 0, 0);
+    
+    pdf.text('Torna all\'indice', pageWidth / 4, textY, { align: 'center' });
+    pdf.text('Torna al cantante', (pageWidth * 3) / 4, textY, { align: 'center' });
+}
+
+// Funzioni per aggiungere link interattivi al PDF
+function addLinksToIndex(pdf, artists, pageMap, pageWidth, pageHeight, margin) {
+    pdf.setPage(1);
+    
+    let y = margin + 17;
+    const contentWidth = pageWidth - (margin * 2);
+    const colWidth = contentWidth / 3;
+    let col = 0;
+    let currentPage = 1;
+    
+    const footerHeight = 15;
+    const bottomLimit = pageHeight - margin - footerHeight;
+    
+    artists.forEach(artist => {
+        const artistSort = songs.find(s => s.artist === artist)?.artistSort || artist;
+        const x = 4 + (col * colWidth);
+        const artistPage = pageMap.artists.get(artist);
+        
+        if (y + 7 > bottomLimit) {
+            col++;
+            y = margin + 17;
+            
+            if (col >= 3) {
+                currentPage++;
+                pdf.setPage(currentPage);
+                col = 0;
+                y = margin + 17;
+            }
+        }
+        
+        // MODIFICATO: usa la larghezza effettiva del testo invece di colWidth
+        pdf.setFont('times', 'normal');
+        pdf.setFontSize(14);
+        const textWidth = pdf.getTextWidth(artistSort);
+        
+        // Link solo sull'area del testo, non su tutta la colonna
+        pdf.link(x, y - 3.5, textWidth + 2, 6, { pageNumber: artistPage });
+        
+        y += 7;
+    });
+}
+
+function addLinksToArtistPages(pdf, artists, songs, pageMap, pageWidth, pageHeight, margin) {
+    artists.forEach(artist => {
+        const artistPage = pageMap.artists.get(artist);
+        const artistSongs = songs.filter(s => s.artist === artist).sort((a,b) => a.title.localeCompare(b.title));
+        
+        pdf.setPage(artistPage);
+        
+        let y = 35;  // AGGIORNATO: titoli partono da qui
+        let currentArtistPage = artistPage;
+        
+        const footerHeight = 15;
+        const bottomLimit = pageHeight - margin - footerHeight;
+        
+        artistSongs.forEach(song => {
+            if (y + 10 > bottomLimit) {
+                currentArtistPage++;
+                pdf.setPage(currentArtistPage);
+                y = margin + 10;
+            }
+            
+            const songPage = pageMap.songs.get(song.id);
+            // Link sull'area del titolo della canzone
+            pdf.link(margin, y - 5, pageWidth - margin * 2, 10, { pageNumber: songPage });
+            
+            y += 10;
+        });
+    });
+}
+
+function addLinksToSongs(pdf, songs, pageMap, pageWidth, pageHeight, margin, format) {
+    songs.forEach(song => {
+        const songStartPage = pageMap.songs.get(song.id);
+        if (!songStartPage) return;
+        
+        // Usa la stessa funzione di paginazione per calcolare quante pagine ha la canzone
+        const pagination = calculateSongPagination(song, format, true);
+        const totalSongPages = pagination.length;
+        
+        // L'ultima pagina della canzone ha il footer con i link
+        const lastPageOfSong = songStartPage + totalSongPages - 1;
+        pdf.setPage(lastPageOfSong);
+        
+        // Coordinate del footer (usando gli stessi valori di addFooterToPage)
+        const lineY = pageHeight - 15;
+        const textY = lineY + ((pageHeight - lineY) / 2);
+        const linkHeight = (pageHeight - lineY);  // Altezza del footer
+        const linkY = lineY;  // I link partono dalla linea
+        
+        // Link "Torna all'indice" (metà sinistra)
+        const leftLinkWidth = (pageWidth / 2);
+        pdf.link(0, linkY, leftLinkWidth, linkHeight, { pageNumber: pageMap.index });
+        
+        // Link "Torna al cantante" (metà destra)
+        const artistPage = pageMap.artists.get(song.artist);
+        if (artistPage) {
+            pdf.link(pageWidth / 2, linkY, leftLinkWidth, linkHeight, { pageNumber: artistPage });
+        }
+    });
+}
+
+// Metronomo functions
+function toggleMetronome() {
+    if (metronomeRunning) {
+        stopMetronome();
+    } else {
+        startMetronome();
+    }
+}
+
+function startMetronome() {
+    metronomeBpm = parseInt(document.getElementById('metronome-bpm').value) || 120;
+    
+    if (!audioContext) {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    
+    metronomeRunning = true;
+    document.getElementById('metronome-btn').textContent = '⏸ Pausa';
+    
+    nextTickTime = audioContext.currentTime;
+    scheduleMetronome();
+}
+
+function scheduleMetronome() {
+    if (!metronomeRunning) return;
+    
+    const currentTime = audioContext.currentTime;
+    const secondsPerBeat = 60.0 / metronomeBpm;
+    
+    while (nextTickTime < currentTime + 0.1) {
+        playMetronomeClick(nextTickTime);
+        nextTickTime += secondsPerBeat;
+    }
+    
+    setTimeout(scheduleMetronome, 25);
+}
+
+function stopMetronome() {
+    metronomeRunning = false;
+    document.getElementById('metronome-btn').textContent = '▶ Avvia';
+    document.getElementById('metronome-indicator').style.background = '#ddd';
+}
+
+function playMetronomeClick(time) {
+    if (!time) time = audioContext.currentTime;
+    
+    const delay = (time - audioContext.currentTime) * 1000;
+    setTimeout(() => {
+        const indicator = document.getElementById('metronome-indicator');
+        indicator.style.background = '#3498db';
+        setTimeout(() => {
+            indicator.style.background = '#ddd';
+        }, 50);
+    }, Math.max(0, delay));
+    
+    const attack = audioContext.createOscillator();
+    const attackGain = audioContext.createGain();
+    
+    attack.connect(attackGain);
+    attackGain.connect(audioContext.destination);
+    
+    attack.type = 'square';
+    attack.frequency.setValueAtTime(2400, time);
+    attack.frequency.exponentialRampToValueAtTime(800, time + 0.005);
+    
+    attackGain.gain.setValueAtTime(0.5, time);
+    attackGain.gain.exponentialRampToValueAtTime(0.01, time + 0.01);
+    
+    attack.start(time);
+    attack.stop(time + 0.01);
+}
+
+function tapTempo() {
+    const now = Date.now();
+    tapTimes.push(now);
+    
+    if (tapTimes.length > 4) {
+        tapTimes.shift();
+    }
+    
+    if (tapTimes.length >= 2) {
+        const intervals = [];
+        for (let i = 1; i < tapTimes.length; i++) {
+            intervals.push(tapTimes[i] - tapTimes[i-1]);
+        }
+        const avgInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length;
+        const bpm = Math.round(60000 / avgInterval);
+        
+        document.getElementById('metronome-bpm').value = bpm;
+        document.getElementById('tempo').value = bpm;
+    }
+    
+    setTimeout(() => {
+        if (tapTimes.length > 0 && Date.now() - tapTimes[tapTimes.length - 1] > 2000) {
+            tapTimes = [];
+        }
+    }, 2100);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadDarkMode();  // ← AGGIUNGI QUESTA RIGA
+    loadTrash();
+    
+    // Inizializza Firebase
+    setTimeout(initFirebaseAuth, 500);
+    const tempoInput = document.getElementById('tempo');
+    const metronomeBpmInput = document.getElementById('metronome-bpm');
+    
+    if (tempoInput && metronomeBpmInput) {
+        tempoInput.addEventListener('input', function() {
+            if (this.value) {
+                metronomeBpmInput.value = this.value;
+            }
+        });
+        
+        metronomeBpmInput.addEventListener('input', function() {
+            if (this.value) {
+                tempoInput.value = this.value;
+            }
+        });
+    }
+
+    const fileInput = document.getElementById('import-file');
+    if (fileInput) {
+        fileInput.addEventListener('change', handleFileSelect);
+    }
+
+    loadBackupEmail(); // Carica email salvata
+    
+    // Salva email quando cambia
+    const emailInput = document.getElementById('backup-email');
+    if (emailInput) {
+        emailInput.addEventListener('blur', saveBackupEmail);
+    }
+
+    loadData();
+});
+
+function convertToSortName(artist) {
+    // Converte "F. Califano" in "Califano F."
+    // Gestisce anche "M. Bella", "G. Bella", ecc.
+    const parts = artist.trim().split(/\s+/);
+    
+    if (parts.length >= 2) {
+        // Assume formato "Iniziale. Cognome" o "Nome Cognome"
+        const firstPart = parts[0];
+        const lastName = parts.slice(1).join(' ');
+        
+        // Se la prima parte è un'iniziale (es. "F.")
+        if (firstPart.match(/^[A-Z]\.?$/i)) {
+            return `${lastName} ${firstPart}`.toUpperCase();
+        }
+    }
+    
+    // Se non segue il pattern, restituisci come è
+    return artist.toUpperCase();
+}
+
+function parseSongBlock(block) {
+    console.log('=== INIZIO parseSongBlock ===');
+    const lines = block.split('\n');
+    
+    let titleIndex = -1;
+    let title = '';
+    
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        
+        if (line.includes('\u201C') || line.includes('\u201D') || line.includes('\u0022') || line.includes('"')) {
+            titleIndex = i;
+            console.log(`TROVATO TITOLO alla riga ${i}`);
+            break;
+        }
+    }
+    
+    let rhythmic = '', key = '', tempo = '';
+    
+    if (titleIndex >= 0) {
+        const titleLine = lines[titleIndex];
+        
+        let titleMatch = titleLine.match(/[\u201C\u201D\u0022"]([^\u201C\u201D\u0022"]+)[\u201C\u201D\u0022"]/);
+        
+        if (!titleMatch) {
+            titleMatch = titleLine.match(/"([^"]+)"/);
+        }
+        
+        if (titleMatch) {
+            title = titleMatch[1];
+            
+            const afterTitle = titleLine.substring(titleMatch.index + titleMatch[0].length)
+                .replace(/\t/g, ' ')
+                .trim();
+            
+            const parts = afterTitle.split(/\s+/).filter(p => p.length > 0);
+            
+            parts.forEach(part => {
+                if (/^\d+$/.test(part)) {
+                    tempo = part;
+                } else if (/^(DO|RE|MI|FA|SOL|LA|SI|[A-G])[#b]?-?$/i.test(part) && part.length <= 5) {
+                    key = part;
+                } else if (/[a-zA-Z]/.test(part)) {
+                    rhythmic = part;
+                }
+            });
+        }
+    }
+    
+    let artist = '';
+    for (let i = titleIndex + 1; i < Math.min(titleIndex + 5, lines.length); i++) {
+        const match = lines[i].match(/\(([^)]+)\)/);
+        if (match) {
+            artist = match[1];
+            break;
+        }
+    }
+    
+    const lyricsStartIndex = titleIndex + 1;
+    let lyricsLines = [];
+    let foundArtist = false;
+    
+    for (let i = lyricsStartIndex; i < lines.length; i++) {
+        if (lines[i].match(/^\([^)]+\)$/)) {
+            foundArtist = true;
+            continue;
+        }
+        if (foundArtist) {
+            lyricsLines.push(lines[i]);
+        }
+    }
+    
+    const lyrics = lyricsLines.join('\n').trim();
+    
+    let notes = [];
+    if (rhythmic) notes.push(rhythmic);
+    if (key) notes.push(key);
+    if (tempo) notes.push(tempo + ' BPM');
+    
+    const artistSort = convertToSortName(artist);
+    
+    return { 
+        title, 
+        artist,
+        artistSort,
+        notes: notes.join(' | '), 
+        lyrics 
+    };
+}
+
+function processImport() {
+    const content = document.getElementById('import-preview').value;
+    if (!content.trim()) {
+        alert('Nessun contenuto da importare!');
+        return;
+    }
+    
+    const lines = content.split('\n');
+    const songStarts = [];
+    
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        
+        if (line.includes('\u201C') || line.includes('\u201D') || line.includes('\u0022') || line.includes('"')) {
+            let foundArtist = false;
+            for (let j = i + 1; j <= Math.min(i + 3, lines.length - 1); j++) {
+                const nextLine = lines[j].trim();
+                if (nextLine.match(/^\([^)]+\)$/)) {
+                    foundArtist = true;
+                    break;
+                }
+            }
+            
+            if (foundArtist) {
+                songStarts.push(i);
+            }
+        }
+    }
+    
+    console.log('Titoli trovati:', songStarts.length);
+    
+    if (songStarts.length === 0) {
+        alert('Nessun titolo trovato nel file');
+        return;
+    }
+    
+    const songBlocks = [];
+    
+    for (let i = 0; i < songStarts.length; i++) {
+        const start = songStarts[i];
+        const end = i < songStarts.length - 1 ? songStarts[i + 1] : lines.length;
+        const block = lines.slice(start, end).join('\n').trim();
+        if (block) songBlocks.push(block);
+    }
+    
+    console.log('Blocchi creati:', songBlocks.length);
+    
+    // Parsa tutte le canzoni
+    const parsedSongs = [];
+    let parseErrors = [];
+    
+    songBlocks.forEach((block, index) => {
+        const song = parseSongBlock(block);
+        
+        if (song.title && song.artist && song.lyrics) {
+            parsedSongs.push({
+                index: index,
+                title: song.title,
+                artist: song.artist,
+                artistSort: song.artistSort || convertToSortName(song.artist),
+                notes: song.notes,
+                lyrics: song.lyrics
+            });
+        } else {
+            parseErrors.push(`Canzone ${index + 1}: mancano dati`);
+        }
+    });
+    
+    // Cerca duplicati (stesso titolo, ignora artista)
+    const duplicates = [];
+    parsedSongs.forEach((importSong, index) => {
+        const exactMatch = songs.find(s => 
+            s.title.toLowerCase() === importSong.title.toLowerCase()
+        );
+        
+        if (exactMatch) {
+            duplicates.push({
+                index: index,
+                imported: importSong,
+                existing: exactMatch,
+                type: exactMatch.artist.toLowerCase() === importSong.artist.toLowerCase() ? 'exact' : 'possible'
+            });
+        }
+    });
+    
+    // Salva dati temporanei
+    window.pendingTxtImport = parsedSongs;
+    window.txtParseErrors = parseErrors;
+    
+    if (duplicates.length > 0) {
+        // Mostra modal duplicati
+        showTxtDuplicatesModal(duplicates, parsedSongs.length);
+    } else {
+        // Nessun duplicato, importa tutto
+        confirmTxtImport(parsedSongs, parseErrors);
+    }
+}
+
+function showTxtDuplicatesModal(duplicates, totalImported) {
+    duplicatesMap = new Map();
+    
+    const message = `Trovate <strong>${totalImported} canzoni</strong> da importare.<br>` +
+                   `<strong style="color: #e74c3c;">${duplicates.length} duplicati</strong> rilevati.<br><br>` +
+                   `Seleziona i duplicati che vuoi <strong>sostituire</strong> (gli altri verranno saltati):`;
+    
+    document.getElementById('duplicates-message').innerHTML = message;
+    
+    const listHtml = duplicates.map(dup => {
+        duplicatesMap.set(dup.index, { replace: false, data: dup });
+        const typeLabel = dup.type === 'exact' 
+            ? '<span style="color: #e74c3c; font-weight: 600;">DUPLICATO ESATTO</span>' 
+            : '<span style="color: #f39c12; font-weight: 600;">ARTISTA DIVERSO</span>';
+        const comparison = dup.type === 'possible' 
+            ? `<div style="font-size: 11px; color: #e74c3c; margin-top: 4px;">⚠ Artista: "${dup.existing.artist}" → "${dup.imported.artist}"</div>`
+            : '';
+        
+        return `
+            <div class="duplicate-item">
+                <input type="checkbox" id="dup-${dup.index}" onchange="toggleDuplicate(${dup.index}, this.checked)">
+                <div class="duplicate-info">
+                    <div>${typeLabel}</div>
+                    <div class="duplicate-title">${dup.imported.title}</div>
+                    <div class="duplicate-artist">${dup.imported.artist}</div>
+                    ${comparison}
+                </div>
+                <span class="duplicate-action action-skip" id="action-${dup.index}">Salta</span>
+            </div>
+        `;
+    }).join('');
+    
+    document.getElementById('duplicates-list').innerHTML = listHtml;
+    
+    // Cambia il pulsante "Procedi"
+    const proceedBtn = document.querySelector('#duplicates-modal .modal-btn-add');
+    proceedBtn.onclick = proceedTxtWithDuplicates;
+    
+    document.getElementById('duplicates-modal').classList.add('show');
+    addDuplicatesModalKeyListener();
+}
+
+function proceedTxtWithDuplicates() {
+    if (!window.pendingTxtImport) return;
+    
+    let addedCount = 0;
+    let replacedCount = 0;
+    let skippedCount = 0;
+    
+    // Processa duplicati
+    duplicatesMap.forEach((value, index) => {
+        if (value.replace) {
+            // Rimuovi esistente
+            songs = songs.filter(s => s.id !== value.data.existing.id);
+            
+            // Aggiungi nuova
+            songs.push({
+                ...window.pendingTxtImport[index],
+                id: Date.now() + Math.random() + index
+            });
+            replacedCount++;
+        } else {
+            skippedCount++;
+        }
+    });
+    
+    // Aggiungi canzoni NON duplicate
+    window.pendingTxtImport.forEach((song, index) => {
+        if (!duplicatesMap.has(index)) {
+            songs.push({
+                ...song,
+                id: Date.now() + Math.random() + index
+            });
+            addedCount++;
+        }
+    });
+    
+    saveData();
+    
+    if (syncEnabled && currentUser) {
+        saveToFirebaseImmediate();
+    }
+    
+    closeDuplicatesModal();
+    
+    showImportResults(addedCount + replacedCount, window.txtParseErrors, {
+        added: addedCount,
+        replaced: replacedCount,
+        skipped: skippedCount
+    });
+    
+    window.pendingTxtImport = null;
+    window.txtParseErrors = null;
+    
+    if (document.getElementById('manage-tab').classList.contains('active')) {
+        updateManage();
+    }
+}
+
+function confirmTxtImport(parsedSongs, parseErrors) {
+    parsedSongs.forEach((song, index) => {
+        songs.push({
+            ...song,
+            id: Date.now() + Math.random() + index
+        });
+    });
+    
+    saveData();
+    
+    if (syncEnabled && currentUser) {
+        saveToFirebaseImmediate();
+    }
+    
+    showImportResults(parsedSongs.length, parseErrors);
+    
+    if (document.getElementById('manage-tab').classList.contains('active')) {
+        updateManage();
+    }
+}
+
+function showImportResults(importedCount, errors, details) {
+    const resultsDiv = document.getElementById('import-results');
+    let resultsHtml = `<h3>Risultati Import</h3>`;
+    
+    if (details) {
+        resultsHtml += `<p><strong>Import completato!</strong></p>`;
+        if (details.added > 0) resultsHtml += `<p>✓ ${details.added} canzoni nuove aggiunte</p>`;
+        if (details.replaced > 0) resultsHtml += `<p>✓ ${details.replaced} canzoni sostituite</p>`;
+        if (details.skipped > 0) resultsHtml += `<p>• ${details.skipped} duplicati saltati</p>`;
+        resultsHtml += `<p><strong>Totale canzoni: ${songs.length}</strong></p>`;
+    } else {
+        resultsHtml += `<p><strong>${importedCount} canzoni importate con successo!</strong></p>`;
+    }
+    
+    if (errors.length > 0) {
+        resultsHtml += `<p><strong>Errori (${errors.length}):</strong></p><ul>`;
+        errors.forEach(error => resultsHtml += `<li>${error}</li>`);
+        resultsHtml += `</ul>`;
+    }
+    
+    resultsDiv.innerHTML = resultsHtml;
+    resultsDiv.style.display = 'block';
+    resultsDiv.style.background = importedCount > 0 ? '#d4edda' : '#f8d7da';
+    resultsDiv.style.border = `1px solid ${importedCount > 0 ? '#c3e6cb' : '#f5c6cb'}`;
+    resultsDiv.style.color = importedCount > 0 ? '#155724' : '#721c24';
+}
+
+function clearImport() {
+    document.getElementById('import-file').value = '';
+    document.getElementById('import-preview').value = '';
+    document.getElementById('import-btn').disabled = true;
+    document.getElementById('import-results').style.display = 'none';
+}
+
+function handleFileSelect(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    const preview = document.getElementById('import-preview');
+    const importBtn = document.getElementById('import-btn');
+    
+    reader.onload = function(e) {
+    const content = e.target.result;
+    // Rimuovi il limite di 2000 caratteri
+    preview.value = content;
+    importBtn.disabled = false;
+};
+    
+    reader.readAsText(file, 'UTF-8');
+}
+
+function exportDataJSON() {
+    if (songs.length === 0) {
+        alert('Non ci sono canzoni da esportare!');
+        return;
+    }
+    
+    // Chiedi il nome del file all'utente
+    const defaultName = `songbook_backup_${new Date().toISOString().split('T')[0]}`;
+    const fileName = prompt('Nome del file (senza estensione .json):', defaultName);
+    
+    if (!fileName) {
+        return; // L'utente ha annullato
+    }
+    
+    const dataStr = JSON.stringify(songs, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${fileName}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+    
+    alert(`Esportate ${songs.length} canzoni con successo!`);
+}
+
+let pendingImportData = null;
+let duplicatesMap = new Map();
+
+function importDataJSON() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    
+    input.onchange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            try {
+                const importedSongs = JSON.parse(event.target.result);
+                
+                if (!Array.isArray(importedSongs)) {
+                    alert('File JSON non valido!');
+                    return;
+                }
+                
+                // Salva i dati importati temporaneamente
+                pendingImportData = importedSongs;
+                
+                // Cerca duplicati esatti e possibili
+const duplicates = [];
+importedSongs.forEach((importSong, index) => {
+    const exactMatch = songs.find(s => 
+        s.title.toLowerCase() === importSong.title.toLowerCase() && 
+        s.artist.toLowerCase() === importSong.artist.toLowerCase()
+    );
+    
+    const titleMatch = songs.find(s => 
+        s.title.toLowerCase() === importSong.title.toLowerCase() &&
+        s.artist.toLowerCase() !== importSong.artist.toLowerCase()
+    );
+    
+    if (exactMatch) {
+        duplicates.push({
+            index: index,
+            imported: importSong,
+            existing: exactMatch,
+            type: 'exact'
+        });
+    } else if (titleMatch) {
+        duplicates.push({
+            index: index,
+            imported: importSong,
+            existing: titleMatch,
+            type: 'possible'
+        });
+    }
+});
+                
+                if (duplicates.length > 0) {
+                    // Mostra modal duplicati
+                    showDuplicatesModal(duplicates, importedSongs.length);
+                } else {
+                    // Nessun duplicato, procedi normalmente
+                    showStandardImportModal(importedSongs.length);
+                }
+                
+            } catch (error) {
+                console.error('Errore nell\'importazione:', error);
+                alert('Errore nel file JSON. Verifica che sia un file valido.');
+            }
+        };
+        reader.readAsText(file);
+    };
+    
+    input.click();
+}
+
+function showDuplicatesModal(duplicates, totalImported) {
+    duplicatesMap = new Map();
+    
+    const message = `Trovate <strong>${totalImported} canzoni</strong> da importare.<br>` +
+                   `<strong style="color: #e74c3c;">${duplicates.length} duplicati</strong> rilevati.<br><br>` +
+                   `Seleziona i duplicati che vuoi <strong>sostituire</strong> (gli altri verranno saltati):`;
+    
+    document.getElementById('duplicates-message').innerHTML = message;
+    
+    const listHtml = duplicates.map(dup => {
+    duplicatesMap.set(dup.index, { replace: false, data: dup });
+    const typeLabel = dup.type === 'exact' 
+        ? '<span style="color: #e74c3c; font-weight: 600;">DUPLICATO ESATTO</span>' 
+        : '<span style="color: #f39c12; font-weight: 600;">POSSIBILE DUPLICATO</span>';
+    const comparison = dup.type === 'possible' 
+        ? `<div style="font-size: 11px; color: #e74c3c; margin-top: 4px;">⚠ Artista diverso: "${dup.existing.artist}" → "${dup.imported.artist}"</div>`
+        : '';
+    
+    return `
+        <div class="duplicate-item">
+            <input type="checkbox" id="dup-${dup.index}" onchange="toggleDuplicate(${dup.index}, this.checked)">
+            <div class="duplicate-info">
+                <div>${typeLabel}</div>
+                <div class="duplicate-title">${dup.imported.title}</div>
+                <div class="duplicate-artist">${dup.imported.artist}</div>
+                ${comparison}
+            </div>
+            <span class="duplicate-action action-skip" id="action-${dup.index}">Salta</span>
+        </div>
+    `;
+}).join('');
+    
+    document.getElementById('duplicates-list').innerHTML = listHtml;
+    document.getElementById('duplicates-modal').classList.add('show');
+}
+
+function showStandardImportModal(totalImported) {
+    const message = `Trovate <strong>${totalImported} canzoni</strong> nel file.<br>` +
+                   `Attualmente hai <strong>${songs.length} canzoni</strong>.<br><br>` +
+                   `Cosa vuoi fare?`;
+    
+    document.getElementById('modal-message').innerHTML = message;
+    document.getElementById('import-modal').classList.add('show');
+}
+
+function toggleDuplicate(index, checked) {
+    const action = document.getElementById(`action-${index}`);
+    if (checked) {
+        action.textContent = 'Sostituisci';
+        action.className = 'duplicate-action action-replace';
+        duplicatesMap.get(index).replace = true;
+    } else {
+        action.textContent = 'Salta';
+        action.className = 'duplicate-action action-skip';
+        duplicatesMap.get(index).replace = false;
+    }
+}
+
+function selectAllDuplicates(select) {
+    duplicatesMap.forEach((value, index) => {
+        const checkbox = document.getElementById(`dup-${index}`);
+        if (checkbox) {
+            checkbox.checked = select;
+            toggleDuplicate(index, select);
+        }
+    });
+}
+
+function proceedWithDuplicates() {
+    if (!pendingImportData) return;
+    
+    let addedCount = 0;
+    let replacedCount = 0;
+    let skippedCount = 0;
+    
+    // Processa i duplicati secondo le scelte
+    duplicatesMap.forEach((value, index) => {
+        if (value.replace) {
+            // Rimuovi la canzone esistente (usa l'ID della canzone trovata nel duplicato)
+            songs = songs.filter(s => s.id !== value.data.existing.id);
+            
+            // Aggiungi la nuova canzone importata
+            songs.push({
+                ...pendingImportData[index],
+                id: Date.now() + Math.random() + index
+            });
+            replacedCount++;
+        } else {
+            // Salta: non fare nulla
+            skippedCount++;
+        }
+    });
+    
+    // Aggiungi tutte le canzoni NON duplicate
+    pendingImportData.forEach((song, index) => {
+        if (!duplicatesMap.has(index)) {
+            songs.push({
+                ...song,
+                id: Date.now() + Math.random() + index
+            });
+            addedCount++;
+        }
+    });
+    
+    saveData();
+    closeDuplicatesModal();
+    
+    let message = `Import completato!\n\n`;
+    if (addedCount > 0) message += `✓ ${addedCount} canzoni nuove aggiunte\n`;
+    if (replacedCount > 0) message += `✓ ${replacedCount} canzoni sostituite\n`;
+    if (skippedCount > 0) message += `• ${skippedCount} duplicati saltati\n`;
+    message += `\nTotale canzoni: ${songs.length}`;
+    
+    alert(message);
+    
+    if (document.getElementById('manage-tab').classList.contains('active')) {
+        updateManage();
+    }
+}
+
+function closeDuplicatesModal() {
+    document.getElementById('duplicates-modal').classList.remove('show');
+    pendingImportData = null;
+    duplicatesMap.clear();
+}
+
+// Aggiungi listener tastiera al modal duplicati
+function addDuplicatesModalKeyListener() {
+    const handleKeyPress = (e) => {
+        const modal = document.getElementById('duplicates-modal');
+        if (!modal.classList.contains('show')) return;
+        
+        if (e.key === 'Escape') {
+            e.preventDefault();
+            closeDuplicatesModal();
+        }
+    };
+    
+    document.addEventListener('keydown', handleKeyPress);
+}
+
+// Modal generico per conferme/alert
+function showModal(title, message, onConfirm, showCancel = true) {
+    const titleElement = document.getElementById('generic-modal-title');
+    
+    if (title) {
+        titleElement.textContent = title;
+        titleElement.style.display = 'block';
+    } else {
+        titleElement.style.display = 'none';
+    }
+    
+    document.getElementById('generic-modal-message').innerHTML = message;
+    
+    const cancelBtn = document.getElementById('generic-modal-cancel');
+    const confirmBtn = document.getElementById('generic-modal-confirm');
+    
+    cancelBtn.style.display = showCancel ? 'inline-block' : 'none';
+    
+    // Reset event listeners
+    const newConfirmBtn = confirmBtn.cloneNode(true);
+    confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+    
+    const newCancelBtn = cancelBtn.cloneNode(true);
+    cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
+    
+    // Funzioni per chiudere
+    const closeModal = () => {
+        document.getElementById('generic-modal').classList.remove('show');
+        document.removeEventListener('keydown', handleKeyPress);
+    };
+    
+    const confirmAction = () => {
+        closeModal();
+        if (onConfirm) onConfirm();
+    };
+    
+    // Handler tastiera
+    const handleKeyPress = (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            confirmAction();
+        } else if (e.key === 'Escape') {
+            e.preventDefault();
+            closeModal();
+        }
+    };
+    
+    // Event listeners pulsanti
+    document.getElementById('generic-modal-confirm').onclick = confirmAction;
+    document.getElementById('generic-modal-cancel').onclick = closeModal;
+    
+    // Listener tastiera
+    document.addEventListener('keydown', handleKeyPress);
+    
+    document.getElementById('generic-modal').classList.add('show');
+    
+    // Focus sul pulsante conferma per accessibilità
+    setTimeout(() => {
+        document.getElementById('generic-modal-confirm').focus();
+    }, 100);
+}
+
+// Modal con input per rinominare
+function showModalWithInput(title, message, defaultValue, onConfirm) {
+    const modalHtml = `
+        <div id="input-modal" class="modal-overlay show">
+            <div class="modal-box">
+                <h3>${title}</h3>
+                <p>${message}</p>
+                <input type="text" id="modal-input-field" value="${defaultValue}" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin: 15px 0;">
+                <div class="modal-buttons">
+                    <button class="modal-btn modal-btn-cancel" id="input-cancel-btn">Annulla</button>
+                    <button class="modal-btn modal-btn-add" id="input-confirm-btn">OK</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    const existingModal = document.getElementById('input-modal');
+    if (existingModal) existingModal.remove();
+    
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    
+    const inputField = document.getElementById('modal-input-field');
+    const confirmBtn = document.getElementById('input-confirm-btn');
+    const cancelBtn = document.getElementById('input-cancel-btn');
+    
+    // Funzioni
+    const closeModal = () => {
+        const modal = document.getElementById('input-modal');
+        if (modal) modal.remove();
+        document.removeEventListener('keydown', handleKeyPress);
+    };
+    
+    const confirmAction = () => {
+        const value = inputField.value;
+        closeModal();
+        if (onConfirm) onConfirm(value);
+    };
+    
+    // Handler tastiera
+    const handleKeyPress = (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            confirmAction();
+        } else if (e.key === 'Escape') {
+            e.preventDefault();
+            closeModal();
+        }
+    };
+    
+    // Event listeners
+    confirmBtn.onclick = confirmAction;
+    cancelBtn.onclick = closeModal;
+    document.addEventListener('keydown', handleKeyPress);
+    
+    // Focus e seleziona tutto
+    setTimeout(() => {
+        inputField.focus();
+        inputField.select();
+    }, 100);
+}
+
+function closeInputModal() {
+    const modal = document.getElementById('input-modal');
+    if (modal) modal.remove();
+    window.inputModalCallback = null;
+}
+
+function confirmInputModal() {
+    const value = document.getElementById('modal-input-field').value;
+    if (window.inputModalCallback) {
+        window.inputModalCallback(value);
+    }
+    closeInputModal();
+}
+
+function confirmImport(action) {
+    if (!pendingImportData) return;
+    
+    if (action === 'replace') {
+    songs = pendingImportData.map((song, index) => ({
+        ...song,
+        artistSort: song.artistSort || convertToSortName(song.artist),
+        id: Date.now() + Math.random() + index
+    }));
+        alert(`Sostituite tutte le canzoni!\nTotale: ${songs.length} canzoni`);
+    } else if (action === 'add') {
+    const newSongs = pendingImportData.map((song, index) => ({
+        ...song,
+        artistSort: song.artistSort || convertToSortName(song.artist),
+        id: Date.now() + Math.random() + index
+    }));
+        songs = [...songs, ...newSongs];
+        alert(`Aggiunte ${pendingImportData.length} canzoni!\nTotale: ${songs.length} canzoni`);
+    }
+    
+    saveData();
+    pendingImportData = null;
+    closeImportModal();
+    
+    if (document.getElementById('manage-tab').classList.contains('active')) {
+        updateManage();
+    }
+}
+
+function closeImportModal() {
+    document.getElementById('import-modal').classList.remove('show');
+    pendingImportData = null;
+}
+
+// Salva/carica email per backup
+function saveBackupEmail() {
+    const email = document.getElementById('backup-email').value;
+    if (email) {
+        localStorage.setItem('backupEmail', email);
+    }
+}
+
+function loadBackupEmail() {
+    const savedEmail = localStorage.getItem('backupEmail');
+    if (savedEmail) {
+        document.getElementById('backup-email').value = savedEmail;
+    }
+}
+
+// Funzione per inviare backup via email
+function sendBackupEmail() {
+    const emailInput = document.getElementById('backup-email');
+    const email = emailInput.value.trim();
+    
+    if (!email) {
+        alert('Inserisci prima il tuo indirizzo email!');
+        emailInput.focus();
+        return;
+    }
+    
+    // Valida email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        alert('Inserisci un indirizzo email valido!');
+        emailInput.focus();
+        return;
+    }
+    
+    // Salva email per la prossima volta
+    saveBackupEmail();
+    
+    if (songs.length === 0) {
+        alert('Non ci sono canzoni da esportare!');
+        return;
+    }
+    
+    // Genera i file
+    const timestamp = new Date().toISOString().split('T')[0];
+    
+    // 1. Scarica JSON
+    const jsonData = JSON.stringify(songs, null, 2);
+    const jsonBlob = new Blob([jsonData], { type: 'application/json' });
+    const jsonUrl = URL.createObjectURL(jsonBlob);
+    const jsonLink = document.createElement('a');
+    jsonLink.href = jsonUrl;
+    jsonLink.download = `songbook_backup_${timestamp}.json`;
+    jsonLink.click();
+    URL.revokeObjectURL(jsonUrl);
+    
+    // Aspetta un attimo prima dei PDF
+    setTimeout(() => {
+        // 2. Genera e scarica PDF A5
+        generateAndDownloadPDF('A5', `songbook_A5_${timestamp}`);
+        
+        // 3. Genera e scarica PDF A4 (dopo A5)
+        setTimeout(() => {
+            generateAndDownloadPDF('A4', `songbook_A4_${timestamp}`);
+            
+            // 4. Apri Mail con messaggio precompilato
+            setTimeout(() => {
+                openMailWithBackup(email, timestamp);
+            }, 500);
+        }, 1000);
+    }, 500);
+}
+
+function generateAndDownloadPDF(format, fileName) {
+    const { jsPDF } = window.jspdf;
+    
+    const pageSize = format === 'A5' ? [148, 210] : [210, 297];
+    const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: pageSize
+    });
+    
+    const pageWidth = pageSize[0];
+    const pageHeight = pageSize[1];
+    const margin = 10;
+    
+    // Ottieni artisti ordinati (stessa logica di exportPDF)
+    const artistsMap = new Map();
+    songs.forEach(s => {
+        if (!artistsMap.has(s.artist)) {
+            artistsMap.set(s.artist, s.artistSort || s.artist);
+        }
+    });
+    
+    const artistsArray = Array.from(artistsMap.entries()).map(([artist, artistSort]) => ({
+        artist, artistSort
+    }));
+    artistsArray.sort((a, b) => a.artistSort.localeCompare(b.artistSort));
+    const artists = artistsArray.map(item => item.artist);
+    
+    const pageMap = {
+        index: 1,
+        artists: new Map(),
+        songs: new Map()
+    };
+    
+    let currentPage = 1;
+    
+    // INDICE
+    pdf.setFont('times', 'bold');
+    pdf.setFontSize(18);
+    pdf.text('ELENCO CANTANTI', pageWidth / 2, 12, { align: 'center' });
+    
+    let y = margin + 17;
+    const colWidth = (pageWidth - (margin * 2)) / 3;
+    let col = 0;
+    
+    pdf.setFont('times', 'normal');
+    pdf.setFontSize(14);
+    
+    const footerHeight = 15;
+    const bottomLimit = pageHeight - margin - footerHeight;
+    
+    artists.forEach(artist => {
+        const artistSort = songs.find(s => s.artist === artist)?.artistSort || artist;
+        const x = 4 + (col * colWidth);
+        
+        if (y + 7 > bottomLimit) {
+            col++;
+            y = margin + 17;
+            
+            if (col >= 3) {
+                pdf.setLineWidth(0.2);
+                pdf.setFont('times', 'normal');
+                pdf.setFontSize(16);
+                const lineY = pageHeight - 15;
+                const textY = lineY + ((pageHeight - lineY) / 2);
+                pdf.line(-1, lineY, pageWidth + 1, lineY);
+                pdf.text('Indice', pageWidth / 2, textY, { align: 'center' });
+                
+                pdf.addPage();
+                currentPage++;
+                col = 0;
+                y = margin + 17;
+            }
+        }
+        
+        pdf.text(artistSort, x, y);
+        y += 7;
+    });
+    
+    // Footer ultima pagina indice
+    pdf.setLineWidth(0.2);
+    pdf.setFont('times', 'normal');
+    pdf.setFontSize(16);
+    const lineY = pageHeight - 15;
+    const textY = lineY + ((pageHeight - lineY) / 2);
+    pdf.line(-1, lineY, pageWidth + 1, lineY);
+    pdf.text('Indice', pageWidth / 2, textY, { align: 'center' });
+    
+    // PAGINE ARTISTI E CANZONI (versione semplificata per backup)
+    artists.forEach(artist => {
+        const artistSongs = songs.filter(s => s.artist === artist).sort((a,b) => a.title.localeCompare(b.title));
+        const artistSort = songs.find(s => s.artist === artist)?.artistSort || artist;
+        
+        pdf.addPage();
+        currentPage++;
+        pageMap.artists.set(artist, currentPage);
+        
+        pdf.setFont('times', 'bold');
+        pdf.setFontSize(18);
+        pdf.text(artistSort.toUpperCase(), pageWidth / 2, 14, { align: 'center' });
+        
+        pdf.setLineWidth(0.4);
+        pdf.line(4, 5, pageWidth - 4, 5);
+        pdf.line(4, 20, pageWidth - 4, 20);
+        
+        y = 35;
+        pdf.setLineWidth(0.2);
+        pdf.setFont('times', 'normal');
+        pdf.setFontSize(16);
+        
+        artistSongs.forEach(song => {
+            if (y + 10 > bottomLimit) {
+                pdf.addPage();
+                currentPage++;
+                y = margin + 10;
+            }
+            pdf.text(song.title, 4, y);
+            y += 10;
+        });
+        
+        pdf.setLineWidth(0.2);
+        pdf.setFont('times', 'normal');
+        pdf.setFontSize(16);
+        const lineY2 = pageHeight - 15;
+        const textY2 = lineY2 + ((pageHeight - lineY2) / 2);
+        pdf.line(-1, lineY2, pageWidth + 1, lineY2);
+        pdf.text('Torna all\'indice', pageWidth / 2, textY2, { align: 'center' });
+        
+        // Aggiungi canzoni
+        artistSongs.forEach(song => {
+            pdf.addPage();
+            currentPage++;
+            const songStartPage = currentPage;
+            pageMap.songs.set(song.id, songStartPage);
+            
+            const pagesAdded = addSongToPDF(pdf, song, pageWidth, pageHeight, margin, format);
+            currentPage += pagesAdded - 1;
+        });
+    });
+    
+    // Salva PDF
+    pdf.save(`${fileName}.pdf`);
+}
+
+function openMailWithBackup(email, timestamp) {
+    const subject = `Backup SongBook Pro - ${timestamp}`;
+    const body = `Ciao,
+
+Ecco il backup completo del tuo SongBook Pro del ${timestamp}.
+
+File scaricati:
+1. songbook_backup_${timestamp}.json (database completo)
+2. songbook_A5_${timestamp}.pdf (per iPad 2)
+3. songbook_A4_${timestamp}.pdf (per iPad Pro)
+
+Allega i 3 file a questa email e inviala per avere un backup permanente.
+
+Totale canzoni: ${songs.length}
+
+---
+SongBook Pro
+`;
+    
+    const mailtoLink = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    window.location.href = mailtoLink;
+    
+    alert('File scaricati! Ora si aprirà Mail.\nAllega i 3 file dalla cartella Download e invia.');
+}
+
+// ===== FIREBASE SYNC =====
+let currentUser = null;
+let syncEnabled = false;
+let syncTimeout = null;
+
+// Inizializza Firebase Auth
+function initFirebaseAuth() {
+    if (!window.firebaseAuth) {
+        console.log('Firebase non ancora caricato, riprovo...');
+        setTimeout(initFirebaseAuth, 100);
+        return;
+    }
+    
+    window.firebaseOnAuthStateChanged(window.firebaseAuth, (user) => {
+        currentUser = user;
+        updateFirebaseUI();
+        
+        if (user) {
+            console.log('Utente loggato:', user.email);
+            syncEnabled = true;
+            loadFromFirebase();
+        } else {
+            console.log('Utente non loggato');
+            syncEnabled = false;
+        }
+    });
+}
+
+function updateFirebaseUI() {
+    const loggedOut = document.getElementById('firebase-logged-out');
+    const loggedIn = document.getElementById('firebase-logged-in');
+    
+    if (currentUser) {
+        loggedOut.style.display = 'none';
+        loggedIn.style.display = 'block';
+        document.getElementById('user-name').textContent = currentUser.displayName;
+        document.getElementById('user-email').textContent = currentUser.email;
+        document.getElementById('user-photo').src = currentUser.photoURL;
+    } else {
+        loggedOut.style.display = 'block';
+        loggedIn.style.display = 'none';
+    }
+}
+
+function loginWithGoogle() {
+    const provider = new window.firebaseGoogleProvider();
+    window.firebaseSignInWithPopup(window.firebaseAuth, provider)
+        .then((result) => {
+            console.log('Login riuscito!', result.user.email);
+            alert('Login riuscito! Ora i tuoi dati sono sincronizzati sul cloud.');
+        })
+        .catch((error) => {
+            console.error('Errore login:', error);
+            alert('Errore durante il login: ' + error.message);
+        });
+}
+
+function logoutFromGoogle() {
+    if (confirm('Vuoi uscire? I dati rimarranno salvati localmente sul dispositivo.')) {
+        window.firebaseSignOut(window.firebaseAuth)
+            .then(() => {
+                console.log('Logout riuscito');
+                alert('Logout effettuato. I dati sono ancora disponibili localmente.');
+            })
+            .catch((error) => {
+                console.error('Errore logout:', error);
+            });
+    }
+}
+
+function setSyncStatus(status) {
+    const statusEl = document.getElementById('sync-status');
+    if (!statusEl) return;
+    
+    statusEl.className = 'firebase-sync-status';
+    
+    switch(status) {
+        case 'synced':
+            statusEl.classList.add('sync-status-synced');
+            statusEl.textContent = '✓ Sincronizzato';
+            break;
+        case 'syncing':
+            statusEl.classList.add('sync-status-syncing');
+            statusEl.textContent = '⟳ Sincronizzazione...';
+            break;
+        case 'offline':
+            statusEl.classList.add('sync-status-offline');
+            statusEl.textContent = '✗ Offline';
+            break;
+    }
+}
+
+function saveToFirebase() {
+    if (!syncEnabled || !currentUser) {
+        return;
+    }
+    
+    // Debounce: aspetta 1 secondo prima di salvare
+    if (syncTimeout) {
+        clearTimeout(syncTimeout);
+    }
+    
+    syncTimeout = setTimeout(() => {
+        saveToFirebaseImmediate();
+    }, 1000);
+}
+
+function saveToFirebaseImmediate() {
+    if (!syncEnabled || !currentUser) {
+        return;
+    }
+    
+    // Cancella timeout pendente
+    if (syncTimeout) {
+        clearTimeout(syncTimeout);
+        syncTimeout = null;
+    }
+    
+    setSyncStatus('syncing');
+    
+    // Usa batch per scrivere tutte le canzoni
+    const batch = window.firebaseWriteBatch(window.firebaseDb);
+    const userSongsCollection = window.firebaseCollection(window.firebaseDb, 'users', currentUser.uid, 'songs');
+    
+    // Prima elimina tutte le canzoni esistenti (per gestire le cancellazioni)
+    // Questo è un placeholder - Firebase non permette di eliminare collection intere facilmente
+    // Per ora sovrascriviamo semplicemente tutto
+    
+    // Salva ogni canzone come documento separato
+    songs.forEach(song => {
+        const songDoc = window.firebaseDoc(userSongsCollection, String(song.id));
+        batch.set(songDoc, song);
+    });
+    
+    // Salva anche metadata con lista ID e timestamp
+    const metaDoc = window.firebaseDoc(window.firebaseDb, 'users', currentUser.uid);
+    batch.set(metaDoc, {
+        songIds: songs.map(s => s.id),
+        lastModified: new Date().toISOString(),
+        deviceInfo: navigator.userAgent,
+        totalSongs: songs.length
+    });
+    
+    batch.commit()
+        .then(() => {
+            console.log('Dati salvati su Firebase (documenti separati)');
+            setSyncStatus('synced');
+        })
+        .catch((error) => {
+            console.error('Errore salvataggio Firebase:', error);
+            setSyncStatus('offline');
+        });
+}
+
+function loadFromFirebase() {
+    if (!currentUser) return;
+    
+    setSyncStatus('syncing');
+    
+    const metaDoc = window.firebaseDoc(window.firebaseDb, 'users', currentUser.uid);
+    
+    window.firebaseGetDoc(metaDoc)
+        .then(async (docSnap) => {
+            if (docSnap.exists()) {
+                const metadata = docSnap.data();
+                const cloudSongIds = metadata.songIds || [];
+                
+                console.log(`Cloud: ${cloudSongIds.length} canzoni, Locale: ${songs.length} canzoni`);
+                
+                if (cloudSongIds.length === 0 && songs.length === 0) {
+                    console.log('Nessun dato da sincronizzare');
+                    setSyncStatus('synced');
+                    return;
+                } else if (cloudSongIds.length === 0 && songs.length > 0) {
+                    console.log('Carico dati locali sul cloud...');
+                    saveToFirebaseImmediate();
+                    return;
+                } else if (cloudSongIds.length > 0 && songs.length === 0) {
+                    console.log('Scarico dati dal cloud...');
+                    await loadAllSongsFromCloud(cloudSongIds);
+                    setSyncStatus('synced');
+                    return;
+                } else {
+                    console.log('Merge automatico in corso...');
+                    await mergeWithCloud(cloudSongIds);
+                    setSyncStatus('synced');
+                    return;
+                }
+            } else {
+                console.log('Primo accesso, salvo dati locali su cloud...');
+                saveToFirebaseImmediate();
+            }
+        })
+        .catch((error) => {
+            console.error('Errore caricamento Firebase:', error);
+            setSyncStatus('offline');
+        });
+}
+
+async function loadAllSongsFromCloud(songIds) {
+    const userSongsCollection = window.firebaseCollection(window.firebaseDb, 'users', currentUser.uid, 'songs');
+    const cloudSongs = [];
+    
+    // Carica tutte le canzoni
+    for (const songId of songIds) {
+        const songDoc = window.firebaseDoc(userSongsCollection, String(songId));
+        const songSnap = await window.firebaseGetDoc(songDoc);
+        
+        if (songSnap.exists()) {
+            cloudSongs.push(songSnap.data());
+        }
+    }
+    
+    songs = cloudSongs;
+    saveData();
+    
+    if (document.getElementById('manage-tab').classList.contains('active')) {
+        updateManage();
+    }
+}
+
+async function mergeWithCloud(cloudSongIds) {
+    const userSongsCollection = window.firebaseCollection(window.firebaseDb, 'users', currentUser.uid, 'songs');
+    const cloudSongs = [];
+    
+    // Carica tutte le canzoni dal cloud
+    for (const songId of cloudSongIds) {
+        const songDoc = window.firebaseDoc(userSongsCollection, String(songId));
+        const songSnap = await window.firebaseGetDoc(songDoc);
+        
+        if (songSnap.exists()) {
+            cloudSongs.push(songSnap.data());
+        }
+    }
+    
+    const mergedSongs = [...songs];
+    let addedCount = 0;
+    
+    cloudSongs.forEach(cloudSong => {
+        const exists = mergedSongs.find(s => 
+            s.title.toLowerCase() === cloudSong.title.toLowerCase() && 
+            s.artist.toLowerCase() === cloudSong.artist.toLowerCase()
+        );
+        
+        if (!exists) {
+            mergedSongs.push({
+                ...cloudSong,
+                id: Date.now() + Math.random()
+            });
+            addedCount++;
+        }
+    });
+    
+    songs = mergedSongs;
+    saveData();
+    saveToFirebaseImmediate();
+    
+    if (addedCount > 0) {
+        console.log(`Merge completato: aggiunte ${addedCount} canzoni dal cloud`);
+        alert(`✓ Sincronizzazione completata!\n\nTotale canzoni: ${songs.length}\n(${addedCount} nuove dal cloud)`);
+    } else {
+        console.log('Merge completato: nessuna nuova canzone');
+    }
+    
+    if (document.getElementById('manage-tab').classList.contains('active')) {
+        updateManage();
+    }
+}
+
+function generateAllPagesForBook() {
+    allFullscreenPages = [];
+    
+    // Ottieni artisti ordinati
+    const artistsMap = new Map();
+    songs.forEach(s => {
+        if (!artistsMap.has(s.artist)) {
+            artistsMap.set(s.artist, s.artistSort || s.artist);
+        }
+    });
+    
+    const artistsArray = Array.from(artistsMap.entries()).map(([artist, artistSort]) => ({
+        artist, artistSort
+    }));
+    artistsArray.sort((a, b) => a.artistSort.localeCompare(b.artistSort));
+    const artists = artistsArray.map(item => item.artist);
+    
+    // 1. PAGINA INDICE
+    const itemsPerColumn = Math.ceil(artists.length / 3);
+    const columns = [[], [], []];
+    
+    artists.forEach((artist, i) => {
+        const columnIndex = Math.floor(i / itemsPerColumn);
+        if (columnIndex < 3) columns[columnIndex].push(artist);
+    });
+    
+    const indexContent = `
+        <div style="text-align: center; font-size: 18pt; font-weight: bold; margin-bottom: 30px;">ELENCO CANTANTI</div>
+        <div class="artist-columns">
+            ${columns.map(col => `
+                <div class="artist-column">
+                    ${col.map(artist => {
+                        const artistSort = songs.find(s => s.artist === artist)?.artistSort || artist;
+                        return `<div class="artist-item">${artistSort}</div>`;
+                    }).join('')}
+                </div>
+            `).join('')}
+        </div>
+    `;
+    
+    allFullscreenPages.push({
+        type: 'index',
+        content: indexContent
+    });
+    
+        // 2. PER OGNI ARTISTA: pagina artista + tutte le canzoni
+artists.forEach(artist => {
+    const artistSongs = songs.filter(s => s.artist === artist).sort((a,b) => a.title.localeCompare(b.title));
+    const artistSort = songs.find(s => s.artist === artist)?.artistSort || artist;
+    
+    // Pagina artista
+    const escapedArtist = artist.replace(/'/g, "\\'");
+    const artistContent = `
+        <div style="text-align: center; font-size: 18pt; font-weight: bold; border-top: 2px solid black; border-bottom: 2px solid black; padding: 15px 0; margin-bottom: 30px;">
+            ${artistSort.toUpperCase()}
+        </div>
+        <div>
+            ${artistSongs.map(song => `<div class="artist-item" style="font-size: 16pt;">${song.title}</div>`).join('')}
+        </div>
+        <div style="position: absolute; bottom: 20px; left: 0; right: 0; text-align: center; border-top: 1px solid black; padding-top: 15px;">
+            <span style="cursor: pointer; font-size: 16pt;" data-action="index">Torna all'indice</span>
+        </div>
+    `;
+    
+    allFullscreenPages.push({
+        type: 'artist',
+        artist: artist,
+        content: artistContent
+    });
+    
+    // Tutte le pagine di tutte le canzoni
+    artistSongs.forEach(song => {
+        const songPages = generateSongPagesForBook(song);
+        allFullscreenPages.push(...songPages);
+    });
+});
+}
+
+function generateSongPagesForBook(song) {
+    const pages = [];
+    
+    // Parse notes
+    const noteParts = song.notes ? song.notes.split('|').map(s => s.trim()) : [];
+    let rhythmic = '', key = '', tempo = '';
+    
+    noteParts.forEach(part => {
+        if (part.includes('BPM')) {
+            tempo = part.replace(' BPM', '').trim();
+        } else if (part.length <= 6 && /^(DO|RE|MI|FA|SOL|LA|SI|[A-G])[#b]?[-m]?$/i.test(part)) {
+            key = part;
+        } else {
+            rhythmic = part;
+        }
+    });
+    
+    let notesHtml = '';
+    if (rhythmic || key || tempo) {
+        const parts = [];
+        if (rhythmic) parts.push(`<span style="color: #27ae60;">${rhythmic}</span>`);
+        if (key) parts.push(`<span style="color: #c0392b;">${key}</span>`);
+        if (tempo) parts.push(`<span style="color: #2980b9;">${tempo}</span>`);
+        
+        notesHtml = `<div style="font-size: 15pt; margin-top: 2px; margin-bottom: 2px; font-weight: 600;">${parts.join(' <span style="color: black;">|</span> ')}</div>`;
+    } else {
+        notesHtml = `<div style="font-size: 15pt; margin-top: 2px; margin-bottom: 2px; font-weight: 600; color: #999;">[ Dettagli da aggiungere ]</div>`;
+    }
+    
+    // Calcola paginazione
+    const pagination = calculateSongPagination(song, pageFormat);
+    
+    // ✅ FOOTER HTML con link (senza onclick, gestiamo con touch events)
+const footerHtml = `
+    <div style="position: absolute; bottom: 20px; left: 0; right: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; border-top: 1px solid black; padding-top: 15px;">
+        <div style="text-align: center; cursor: pointer; font-size: 16pt;" data-action="index">Torna all'indice</div>
+        <div style="text-align: center; cursor: pointer; font-size: 16pt;" data-action="artist" data-artist="${song.artist}">Torna al cantante</div>
+    </div>
+`;
+    
+    pagination.forEach((page, pageIndex) => {
+        let content = '';
+        
+        if (page.isFirst) {
+            content = `
+                <div style="text-align: center; margin-bottom: 25px;">
+                    <div style="font-size: 18pt; font-weight: bold; margin-bottom: 2px;">"${song.title.toUpperCase()}"</div>
+                    <div style="font-size: 10pt; margin-bottom: 2px;">(${song.artist.toUpperCase()})</div>
+                    ${notesHtml}
+                </div>
+                <div class="song-text">${page.lines.join('\n')}</div>
+            `;
+        } else {
+            content = `<div class="song-text" style="margin-top: 20px;">${page.lines.join('\n')}</div>`;
+        }
+        
+        // ✅ Aggiungi footer solo all'ULTIMA pagina della canzone
+        if (page.isLast || pageIndex === pagination.length - 1) {
+            content += footerHtml;
+        }
+        
+        pages.push({
+            type: 'song',
+            songId: song.id,
+            songTitle: song.title,
+            artist: song.artist,
+            pageNum: pageIndex + 1,
+            totalPages: pagination.length,
+            content: content
+        });
+    });
+    
+    return pages;
+}
+
+function showBookPage(index) {
+    currentFullscreenIndex = Math.max(0, Math.min(index, allFullscreenPages.length - 1));
+    
+    const previewContent = document.getElementById('preview-content');
+    const page = allFullscreenPages[currentFullscreenIndex];
+    
+    const pageHtml = `<div class="page active" style="width: 100vw; height: 100vh;">${page.content}</div>`;
+    
+    previewContent.innerHTML = pageHtml;
+    
+    // Aggiungi event listeners per i link dopo aver inserito il contenuto
+    setTimeout(() => {
+        addFullscreenLinkHandlers();
+    }, 50);
+    
+    console.log(`Pagina ${currentFullscreenIndex + 1}/${allFullscreenPages.length} - Tipo: ${page.type}`);
+}
+
+function addFullscreenLinkHandlers() {
+    // Handler per gli artisti nell'indice E per i titoli delle canzoni nelle pagine artisti
+    const artistItems = document.querySelectorAll('.artist-item');
+    artistItems.forEach(item => {
+        let touchStartTime = 0;
+        
+        item.addEventListener('touchstart', (e) => {
+            touchStartTime = Date.now();
+        }, { passive: true });
+        
+        item.addEventListener('touchend', (e) => {
+            const touchDuration = Date.now() - touchStartTime;
+            
+            // Solo tap brevi (< 300ms) sono considerati click
+            if (touchDuration < 300) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const itemText = item.textContent.trim();
+                const currentPage = allFullscreenPages[currentFullscreenIndex];
+                
+                // Se siamo nell'indice, cerca la pagina dell'artista
+                if (currentPage.type === 'index') {
+                    const artistPageIndex = allFullscreenPages.findIndex(p => 
+                        p.type === 'artist' && p.artist && 
+                        (p.artist === itemText || 
+                         (songs.find(s => s.artist === p.artist)?.artistSort === itemText))
+                    );
+                    
+                    if (artistPageIndex >= 0) {
+                        showBookPage(artistPageIndex);
+                    }
+                }
+                // Se siamo in una pagina artista, cerca la canzone
+                else if (currentPage.type === 'artist') {
+                    // itemText è il titolo della canzone
+                    const songPageIndex = allFullscreenPages.findIndex(p => 
+                        p.type === 'song' && 
+                        p.songTitle === itemText &&
+                        p.artist === currentPage.artist
+                    );
+                    
+                    if (songPageIndex >= 0) {
+                        showBookPage(songPageIndex);
+                    }
+                }
+            }
+        });
+    });
+    
+    // Handler per "Torna all'indice"
+    document.querySelectorAll('[data-action="index"]').forEach(link => {
+        let touchStartTime = 0;
+        
+        link.addEventListener('touchstart', (e) => {
+            touchStartTime = Date.now();
+        }, { passive: true });
+        
+        link.addEventListener('touchend', (e) => {
+            const touchDuration = Date.now() - touchStartTime;
+            
+            if (touchDuration < 300) {
+                e.preventDefault();
+                e.stopPropagation();
+                showBookPage(0); // Torna alla prima pagina (indice)
+            }
+        });
+    });
+    
+    // Handler per "Torna al cantante"
+    document.querySelectorAll('[data-action="artist"]').forEach(link => {
+        let touchStartTime = 0;
+        
+        link.addEventListener('touchstart', (e) => {
+            touchStartTime = Date.now();
+        }, { passive: true });
+        
+        link.addEventListener('touchend', (e) => {
+            const touchDuration = Date.now() - touchStartTime;
+            
+            if (touchDuration < 300) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                // Trova l'artista della canzone corrente
+                const currentPage = allFullscreenPages[currentFullscreenIndex];
+                if (currentPage.artist) {
+                    const artistPageIndex = allFullscreenPages.findIndex(p => 
+                        p.type === 'artist' && p.artist === currentPage.artist
+                    );
+                    
+                    if (artistPageIndex >= 0) {
+                        showBookPage(artistPageIndex);
+                    }
+                }
+            }
+        });
+    });
+}
+
+// ===== FULLSCREEN MODE =====
+let isFullscreen = false;
+let longPressTimer = null;
+let touchStartX = 0;
+let touchStartY = 0;
+let touchCurrentX = 0;
+let isSwiping = false;
+
+let bookTouchStartX = 0;
+let bookTouchStartY = 0;
+let bookTouchCurrentX = 0;
+let bookIsSwiping = false;
+
+function exitFullscreenAndGoToIndex() {
+    exitFullscreen();
+    setTimeout(() => {
+        updatePerformance();
+    }, 200);
+}
+
+function exitFullscreenAndGoToArtist(artist) {
+    exitFullscreen();
+    setTimeout(() => {
+        showArtist(artist);
+    }, 200);
+}
+
+function handleBookTouchStart(e) {
+    if (!isFullscreen) return;
+    
+    bookTouchStartX = e.touches[0].clientX;
+    bookTouchStartY = e.touches[0].clientY;
+    bookTouchCurrentX = bookTouchStartX;
+    bookIsSwiping = false;
+}
+
+    function handleBookTouchMove(e) {
+    if (!isFullscreen) return;
+    
+    bookTouchCurrentX = e.touches[0].clientX;
+    const touchCurrentY = e.touches[0].clientY;
+    
+    const diffX = Math.abs(bookTouchCurrentX - bookTouchStartX);
+    const diffY = Math.abs(touchCurrentY - bookTouchStartY);
+    
+    // BLOCCA COMPLETAMENTE qualsiasi movimento verticale
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // SOLO swipe orizzontale significativo
+    if (diffX > 30 && diffX > diffY * 2) {
+        bookIsSwiping = true;
+    }
+    
+    return false;
+}
+
+function handleBookTouchEnd(e) {
+    if (!isFullscreen || !bookIsSwiping) return;
+    
+    const diffX = bookTouchCurrentX - bookTouchStartX;
+    const threshold = 80;
+    
+    if (Math.abs(diffX) > threshold) {
+        if (diffX > 0) {
+            // Swipe destra → pagina precedente
+            showBookPage(currentFullscreenIndex - 1);
+        } else {
+            // Swipe sinistra → pagina successiva
+            showBookPage(currentFullscreenIndex + 1);
+        }
+    }
+    
+    bookIsSwiping = false;
+}
+
+function enterFullscreen() {
+    // NON usare requestFullscreen() nativo - simula fullscreen
+    
+    // BLOCCA completamente lo scroll del body
+    document.body.style.position = 'fixed';
+    document.body.style.width = '100%';
+    document.body.style.height = '100%';
+    document.body.style.overflow = 'hidden';
+    document.body.style.top = '0';
+    document.body.style.left = '0';
+
+    const performanceTab = document.getElementById('performance-tab');
+    const previewContainer = document.getElementById('preview-content');
+    
+    // Genera tutte le pagine in sequenza (come un libro)
+    generateAllPagesForBook();
+    
+    // Aggiungi classe fullscreen SENZA usare API nativa
+    performanceTab.classList.add('fullscreen-active');
+    
+    // Nascondi header e tabs
+    document.querySelector('.header').style.display = 'none';
+    document.querySelector('.tab-nav').style.display = 'none';
+    
+    // Scroll a 0 per iOS
+    setTimeout(() => {
+        window.scrollTo(0, 0);
+    }, 100);
+    
+    isFullscreen = true;
+    
+    // Mostra la prima pagina
+    showBookPage(0);
+    
+    // Event listeners per swipe (BLOCCATO verso il basso)
+    previewContainer.addEventListener('touchstart', handleBookTouchStart, { passive: false });
+    previewContainer.addEventListener('touchmove', handleBookTouchMove, { passive: false });
+    previewContainer.addEventListener('touchend', handleBookTouchEnd, { passive: false });
+    
+    // Long press per uscire
+    previewContainer.addEventListener('touchstart', handleLongPressStart);
+    previewContainer.addEventListener('touchend', handleLongPressEnd);
+    previewContainer.addEventListener('touchmove', handleLongPressCancel);
+    
+    console.log('Fullscreen Book Mode attivato -', allFullscreenPages.length, 'pagine totali');
+}
+
+function exitFullscreen() {
+    // RIPRISTINA scroll del body
+    document.body.style.position = '';
+    document.body.style.width = '';
+    document.body.style.height = '';
+    document.body.style.overflow = '';
+    document.body.style.top = '';
+    document.body.style.left = '';
+
+    const performanceTab = document.getElementById('performance-tab');
+    const previewContainer = document.getElementById('preview-content');
+    
+    // Rimuovi classe fullscreen
+    performanceTab.classList.remove('fullscreen-active');
+    
+    // Ripristina header e tabs
+    document.querySelector('.header').style.display = 'block';
+    document.querySelector('.tab-nav').style.display = 'flex';
+    
+    isFullscreen = false;
+    
+    // Rimuovi event listeners
+    previewContainer.removeEventListener('touchstart', handleBookTouchStart);
+    previewContainer.removeEventListener('touchmove', handleBookTouchMove);
+    previewContainer.removeEventListener('touchend', handleBookTouchEnd);
+    previewContainer.removeEventListener('touchstart', handleLongPressStart);
+    previewContainer.removeEventListener('touchend', handleLongPressEnd);
+    previewContainer.removeEventListener('touchmove', handleLongPressCancel);
+    
+    // FORZA IL REFRESH COMPLETO
+    const currentFormat = pageFormat;
+    pageFormat = currentFormat === 'A4' ? 'A5' : 'A4';
+    updatePerformance();
+    setTimeout(() => {
+        pageFormat = currentFormat;
+        updatePerformance();
+    }, 50);
+    
+    console.log('Fullscreen disattivato - Link ripristinati');
+}
+
+// Long press per uscire
+function handleLongPressStart(e) {
+    // NON attivare long press se si clicca su un link/elemento cliccabile
+    const target = e.target;
+    if (target.classList.contains('artist-item') || 
+        target.hasAttribute('data-action') || 
+        target.closest('[data-action]') ||
+        target.closest('.artist-item')) {
+        return;
+    }
+    
+    const hint = document.getElementById('fullscreen-exit-hint');
+    hint.classList.add('show');
+    
+    longPressTimer = setTimeout(() => {
+        hint.classList.remove('show');
+        showExitModal();
+    }, 3000);
+}
+
+function handleLongPressEnd(e) {
+    if (longPressTimer) {
+        clearTimeout(longPressTimer);
+        longPressTimer = null;
+    }
+    const hint = document.getElementById('fullscreen-exit-hint');
+    hint.classList.remove('show');
+}
+
+function handleLongPressCancel(e) {
+    // Se si sta muovendo su un link, cancella il timer
+    const target = e.target;
+    if (target.classList.contains('artist-item') || 
+        target.hasAttribute('data-action') || 
+        target.closest('[data-action]') ||
+        target.closest('.artist-item')) {
+        if (longPressTimer) {
+            clearTimeout(longPressTimer);
+            longPressTimer = null;
+        }
+    }
+    
+    if (longPressTimer) {
+        clearTimeout(longPressTimer);
+        longPressTimer = null;
+    }
+    const hint = document.getElementById('fullscreen-exit-hint');
+    hint.classList.remove('show');
+}
+
+function showExitModal() {
+    const modal = document.getElementById('fullscreen-exit-modal');
+    modal.classList.add('show');
+}
+
+function cancelExitFullscreen() {
+    const modal = document.getElementById('fullscreen-exit-modal');
+    modal.classList.remove('show');
+}
+
+function confirmExitFullscreen() {
+    const modal = document.getElementById('fullscreen-exit-modal');
+    modal.classList.remove('show');
+    exitFullscreen();
+}
+
+// Swipe gesture handling
+function handleTouchStart(e) {
+    if (!isFullscreen) return;
+    
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+    touchCurrentX = touchStartX;
+    isSwiping = false;
+}
+
+function handleTouchMove(e) {
+    if (!isFullscreen) return;
+    
+    touchCurrentX = e.touches[0].clientX;
+    const touchCurrentY = e.touches[0].clientY;
+    
+    const diffX = Math.abs(touchCurrentX - touchStartX);
+    const diffY = Math.abs(touchCurrentY - touchStartY);
+    
+    // Riconosci swipe orizzontale (non verticale)
+    if (diffX > 10 && diffX > diffY) {
+        isSwiping = true;
+        e.preventDefault();
+    }
+}
+
+function handleTouchEnd(e) {
+    if (!isFullscreen || !isSwiping) return;
+    
+    const diffX = touchCurrentX - touchStartX;
+    const threshold = 50;
+    
+    // Swipe SOLO se ci sono più pagine nella canzone corrente
+    if (Math.abs(diffX) > threshold && totalPages > 1) {
+        if (diffX > 0) {
+            // Swipe destra → pagina precedente
+            if (currentPage > 0) {
+                showPage(currentPage - 1);
+            }
+        } else {
+            // Swipe sinistra → pagina successiva
+            if (currentPage < totalPages - 1) {
+                showPage(currentPage + 1);
+            }
+        }
+    }
+    
+    isSwiping = false;
+}
+
+    </script>
+</body>
+</html>
