@@ -4540,19 +4540,31 @@ function initFirebaseAuth() {
         return;
     }
     
-    window.firebaseOnAuthStateChanged(window.firebaseAuth, (user) => {
-        currentUser = user;
-        updateFirebaseUI();
-        
-        if (user) {
-            console.log('Utente loggato:', user.email);
-            syncEnabled = true;
-            loadFromFirebase();
-        } else {
-            console.log('Utente non loggato');
-            syncEnabled = false;
-        }
-    });
+    // Prima controlla se c'è un redirect result in pending
+    window.firebaseGetRedirectResult(window.firebaseAuth)
+        .then((result) => {
+            if (result && result.user) {
+                console.log('Login redirect completato:', result.user.email);
+            }
+            
+            // Poi attiva il listener normale
+            window.firebaseOnAuthStateChanged(window.firebaseAuth, (user) => {
+                currentUser = user;
+                updateFirebaseUI();
+                
+                if (user) {
+                    console.log('Utente loggato:', user.email);
+                    syncEnabled = true;
+                    loadFromFirebase();
+                } else {
+                    console.log('Utente non loggato');
+                    syncEnabled = false;
+                }
+            });
+        })
+        .catch((error) => {
+            console.error('Errore redirect result:', error);
+        });
 }
 
 // Gestisci il risultato del redirect (per mobile)
