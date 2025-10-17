@@ -4540,42 +4540,19 @@ function initFirebaseAuth() {
         return;
     }
     
-    // Prima controlla se c'è un redirect result in pending
-    window.firebaseGetRedirectResult(window.firebaseAuth)
-        .then((result) => {
-            if (result && result.user) {
-                console.log('Login redirect completato:', result.user.email);
-                // Mostra tab Export/Import così l'utente vede il risultato
-                showTab('importexport');
-            }
-            
-            // Poi attiva il listener normale
-            window.firebaseOnAuthStateChanged(window.firebaseAuth, (user) => {
-                currentUser = user;
-                updateFirebaseUI();
-                
-                if (user) {
-                    console.log('Utente loggato:', user.email);
-                    syncEnabled = true;
-                    
-                    // Non chiamare loadFromFirebase se stiamo tornando da redirect
-                    if (!result || !result.user) {
-                        loadFromFirebase();
-                    } else {
-                        // Primo login dopo redirect
-                        setTimeout(() => {
-                            loadFromFirebase();
-                        }, 500);
-                    }
-                } else {
-                    console.log('Utente non loggato');
-                    syncEnabled = false;
-                }
-            });
-        })
-        .catch((error) => {
-            console.error('Errore redirect result:', error);
-        });
+    window.firebaseOnAuthStateChanged(window.firebaseAuth, (user) => {
+        currentUser = user;
+        updateFirebaseUI();
+        
+        if (user) {
+            console.log('Utente loggato:', user.email);
+            syncEnabled = true;
+            loadFromFirebase();
+        } else {
+            console.log('Utente non loggato');
+            syncEnabled = false;
+        }
+    });
 }
 
 // Gestisci il risultato del redirect (per mobile)
@@ -4593,13 +4570,6 @@ window.firebaseGetRedirectResult = async function() {
             console.error('Errore redirect:', error);
         });
 };
-
-// Controlla se c'è un redirect result all'avvio
-setTimeout(() => {
-    if (window.firebaseGetRedirectResult) {
-        window.firebaseGetRedirectResult();
-    }
-}, 1000);
 
 function updateFirebaseUI() {
     const loggedOut = document.getElementById('firebase-logged-out');
