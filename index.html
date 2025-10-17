@@ -4545,6 +4545,8 @@ function initFirebaseAuth() {
         .then((result) => {
             if (result && result.user) {
                 console.log('Login redirect completato:', result.user.email);
+                // Mostra tab Export/Import così l'utente vede il risultato
+                showTab('importexport');
             }
             
             // Poi attiva il listener normale
@@ -4555,7 +4557,16 @@ function initFirebaseAuth() {
                 if (user) {
                     console.log('Utente loggato:', user.email);
                     syncEnabled = true;
-                    loadFromFirebase();
+                    
+                    // Non chiamare loadFromFirebase se stiamo tornando da redirect
+                    if (!result || !result.user) {
+                        loadFromFirebase();
+                    } else {
+                        // Primo login dopo redirect
+                        setTimeout(() => {
+                            loadFromFirebase();
+                        }, 500);
+                    }
                 } else {
                     console.log('Utente non loggato');
                     syncEnabled = false;
