@@ -30,7 +30,7 @@
     <!-- Firebase SDK -->
 <script type="module">
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-  import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+  import { getAuth, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
   import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection, writeBatch } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
   const firebaseConfig = {
@@ -50,6 +50,8 @@
   window.firebaseAuth = auth;
   window.firebaseDb = db;
   window.firebaseSignInWithPopup = signInWithPopup;
+  window.firebaseSignInWithRedirect = signInWithRedirect;
+window.firebaseGetRedirectResult = getRedirectResult;
   window.firebaseGoogleProvider = GoogleAuthProvider;
   window.firebaseOnAuthStateChanged = onAuthStateChanged;
   window.firebaseSignOut = signOut;
@@ -324,6 +326,8 @@ body.dark-mode .fullscreen-active .artist-item {
     flex-direction: column;
     width: 100%;
     overflow: hidden;
+    border-left: 2px solid #cccccc; /* Linea a sinistra */
+    padding-left: 10px; /* Spazio tra linea e testo */
 }
 
 .artist-item { 
@@ -336,6 +340,17 @@ body.dark-mode .fullscreen-active .artist-item {
     line-height: 37px; /* Centra verticalmente */
     display: flex;
     align-items: center;
+    pointer-events: none; /* Disabilita click sull'intero item */
+}
+
+.artist-item > * {
+    pointer-events: auto; /* Riabilita solo sul contenuto */
+}
+
+/* Fullscreen: distanziamento diverso */
+.fullscreen-active .artist-item {
+    height: 42px;
+    line-height: 42px;
 }
 
 .artist-item.long-name {
@@ -632,7 +647,7 @@ body:not(:has(.fullscreen-active)) {
     max-width: none !important;
     max-height: none !important;
     box-shadow: none !important;
-    padding: 40px 60px !important; /* Margini interni per leggibilità */
+    padding: 20px 30px !important; /* Margini interni per leggibilità */
 }
 
 /* Nascondi TUTTI i controlli fullscreen */
@@ -1142,6 +1157,29 @@ body.dark-mode #empty-trash-btn:disabled {
     .artist-columns {
         grid-template-columns: 1fr !important;
     }
+}
+
+/* Animazione voltata pagina - effetto slide con ombra */
+.fullscreen-active .page {
+    transition: transform 0.4s cubic-bezier(0.4, 0.0, 0.2, 1), opacity 0.4s ease;
+    position: relative;
+}
+
+.fullscreen-active .page.page-exit {
+    transform: translateX(-100%);
+    opacity: 0;
+    box-shadow: -10px 0 30px rgba(0,0,0,0.3);
+}
+
+.fullscreen-active .page.page-enter {
+    transform: translateX(100%);
+    opacity: 0;
+}
+
+.fullscreen-active .page.active {
+    transform: translateX(0);
+    opacity: 1;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
 }
 
     </style>
@@ -4517,6 +4555,29 @@ function initFirebaseAuth() {
     });
 }
 
+// Gestisci il risultato del redirect (per mobile)
+window.firebaseGetRedirectResult = async function() {
+    const { getRedirectResult } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js');
+    
+    getRedirectResult(window.firebaseAuth)
+        .then((result) => {
+            if (result && result.user) {
+                console.log('Login redirect riuscito!', result.user.email);
+                alert('Login riuscito! Ora i tuoi dati sono sincronizzati sul cloud.');
+            }
+        })
+        .catch((error) => {
+            console.error('Errore redirect:', error);
+        });
+};
+
+// Controlla se c'è un redirect result all'avvio
+setTimeout(() => {
+    if (window.firebaseGetRedirectResult) {
+        window.firebaseGetRedirectResult();
+    }
+}, 1000);
+
 function updateFirebaseUI() {
     const loggedOut = document.getElementById('firebase-logged-out');
     const loggedIn = document.getElementById('firebase-logged-in');
@@ -4535,15 +4596,29 @@ function updateFirebaseUI() {
 
 function loginWithGoogle() {
     const provider = new window.firebaseGoogleProvider();
-    window.firebaseSignInWithPopup(window.firebaseAuth, provider)
-        .then((result) => {
-            console.log('Login riuscito!', result.user.email);
-            alert('Login riuscito! Ora i tuoi dati sono sincronizzati sul cloud.');
-        })
-        .catch((error) => {
-            console.error('Errore login:', error);
-            alert('Errore durante il login: ' + error.message);
-        });
+    
+    // Usa redirect su mobile/tablet, popup su desktop
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    
+    if (isMobile) {
+        // Su mobile usa redirect
+        window.firebaseSignInWithRedirect(window.firebaseAuth, provider)
+            .catch((error) => {
+                console.error('Errore login:', error);
+                alert('Errore durante il login: ' + error.message);
+            });
+    } else {
+        // Su desktop usa popup
+        window.firebaseSignInWithPopup(window.firebaseAuth, provider)
+            .then((result) => {
+                console.log('Login riuscito!', result.user.email);
+                alert('Login riuscito! Ora i tuoi dati sono sincronizzati sul cloud.');
+            })
+            .catch((error) => {
+                console.error('Errore login:', error);
+                alert('Errore durante il login: ' + error.message);
+            });
+    }
 }
 
 function logoutFromGoogle() {
@@ -4775,33 +4850,78 @@ function generateAllPagesForBook() {
     artistsArray.sort((a, b) => a.artistSort.localeCompare(b.artistSort));
     const artists = artistsArray.map(item => item.artist);
     
-    // 1. PAGINA INDICE
-    const itemsPerColumn = Math.ceil(artists.length / 3);
+    // 1. PAGINA INDICE (multipagina se necessario)
+let itemsPerColFirstPage, itemsPerColOtherPages;
+
+if (pageFormat === 'A5') {
+    itemsPerColFirstPage = 19;
+    itemsPerColOtherPages = 20;
+} else { // A4
+    itemsPerColFirstPage = 27;
+    itemsPerColOtherPages = 29;
+}
+
+const itemsFirstPage = itemsPerColFirstPage * 3;
+const itemsOtherPages = itemsPerColOtherPages * 3;
+
+// Calcola totale pagine necessarie
+let remainingArtists = artists.length - itemsFirstPage;
+const additionalPages = remainingArtists > 0 ? Math.ceil(remainingArtists / itemsOtherPages) : 0;
+const totalIndexPages = 1 + additionalPages;
+
+// Crea pagine indice
+for (let pageNum = 0; pageNum < totalIndexPages; pageNum++) {
+    let startIndex, endIndex;
+    
+    if (pageNum === 0) {
+        startIndex = 0;
+        endIndex = Math.min(itemsFirstPage, artists.length);
+    } else {
+        startIndex = itemsFirstPage + ((pageNum - 1) * itemsOtherPages);
+        endIndex = Math.min(startIndex + itemsOtherPages, artists.length);
+    }
+    
+    const pageArtists = artists.slice(startIndex, endIndex);
+    
+    // Distribuisci in 3 colonne
+    const itemsPerCol = pageNum === 0 ? itemsPerColFirstPage : itemsPerColOtherPages;
     const columns = [[], [], []];
     
-    artists.forEach((artist, i) => {
-        const columnIndex = Math.floor(i / itemsPerColumn);
-        if (columnIndex < 3) columns[columnIndex].push(artist);
+    pageArtists.forEach((artist, i) => {
+        const colIndex = Math.floor(i / itemsPerCol);
+        if (colIndex < 3) {
+            columns[colIndex].push(artist);
+        }
     });
     
     const indexContent = `
-        <div style="text-align: center; font-size: 18pt; font-weight: bold; margin-bottom: 30px;">ELENCO CANTANTI</div>
-        <div class="artist-columns">
-            ${columns.map(col => `
-                <div class="artist-column">
-                    ${col.map(artist => {
-                        const artistSort = songs.find(s => s.artist === artist)?.artistSort || artist;
-                        return `<div class="artist-item">${artistSort}</div>`;
-                    }).join('')}
-                </div>
-            `).join('')}
-        </div>
-    `;
+    ${pageNum === 0 ? '<div style="text-align: center; font-size: 32pt; font-weight: bold; margin-bottom: 30px;">ELENCO CANTANTI</div>' : ''}
+    <div class="artist-columns">
+        ${columns.map(col => `
+            <div class="artist-column">
+                ${col.map(artist => {
+                    const artistSort = songs.find(s => s.artist === artist)?.artistSort || artist;
+                    
+                    // Calcola dimensione font in base alla lunghezza
+                    let fontSize = 20;
+                    if (artistSort.length > 25) {
+                        fontSize = 16;
+                    } else if (artistSort.length > 20) {
+                        fontSize = 18;
+                    }
+                    
+                    return `<div class="artist-item" style="font-size: ${fontSize}pt;"><span class="artist-link">${artistSort}</span></div>`;
+                }).join('')}
+            </div>
+        `).join('')}
+    </div>
+`;
     
     allFullscreenPages.push({
         type: 'index',
         content: indexContent
     });
+}
     
         // 2. PER OGNI ARTISTA: pagina artista + tutte le canzoni
 artists.forEach(artist => {
@@ -4811,14 +4931,14 @@ artists.forEach(artist => {
     // Pagina artista
     const escapedArtist = artist.replace(/'/g, "\\'");
     const artistContent = `
-        <div style="text-align: center; font-size: 18pt; font-weight: bold; border-top: 2px solid black; border-bottom: 2px solid black; padding: 15px 0; margin-bottom: 30px;">
+        <div style="text-align: center; font-size: 26pt; font-weight: bold; border-top: 2px solid black; border-bottom: 2px solid black; padding: 15px 0; margin-bottom: 30px;">
             ${artistSort.toUpperCase()}
         </div>
         <div>
-            ${artistSongs.map(song => `<div class="artist-item" style="font-size: 16pt;">${song.title}</div>`).join('')}
+            ${artistSongs.map(song => `<div class="artist-item" style="font-size: 20pt;"><span class="song-link" data-song-id="${song.id}">${song.title.toUpperCase()}</span></div>`).join('')}
         </div>
         <div style="position: absolute; bottom: 20px; left: 0; right: 0; text-align: center; border-top: 1px solid black; padding-top: 15px;">
-            <span style="cursor: pointer; font-size: 16pt;" data-action="index">Torna all'indice</span>
+            <span style="cursor: pointer; font-size: 18pt;" data-action="index">Torna ad Elenco cantanti</span>
         </div>
     `;
     
@@ -4860,9 +4980,9 @@ function generateSongPagesForBook(song) {
         if (key) parts.push(`<span style="color: #c0392b;">${key}</span>`);
         if (tempo) parts.push(`<span style="color: #2980b9;">${tempo}</span>`);
         
-        notesHtml = `<div style="font-size: 15pt; margin-top: 2px; margin-bottom: 2px; font-weight: 600;">${parts.join(' <span style="color: black;">|</span> ')}</div>`;
+        notesHtml = `<div style="font-size: 22pt; margin-top: 2px; margin-bottom: 2px; font-weight: 600;">${parts.join(' <span style="color: black;">|</span> ')}</div>`;
     } else {
-        notesHtml = `<div style="font-size: 15pt; margin-top: 2px; margin-bottom: 2px; font-weight: 600; color: #999;">[ Dettagli da aggiungere ]</div>`;
+        notesHtml = `<div style="font-size: 22pt; margin-top: 2px; margin-bottom: 2px; font-weight: 600; color: #999;">[ Dettagli da aggiungere ]</div>`;
     }
     
     // Calcola paginazione
@@ -4871,8 +4991,8 @@ function generateSongPagesForBook(song) {
     // ✅ FOOTER HTML con link (senza onclick, gestiamo con touch events)
 const footerHtml = `
     <div style="position: absolute; bottom: 20px; left: 0; right: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; border-top: 1px solid black; padding-top: 15px;">
-        <div style="text-align: center; cursor: pointer; font-size: 16pt;" data-action="index">Torna all'indice</div>
-        <div style="text-align: center; cursor: pointer; font-size: 16pt;" data-action="artist" data-artist="${song.artist}">Torna al cantante</div>
+        <div style="text-align: center; cursor: pointer; font-size: 18pt;" data-action="index">Torna ad Elenco cantanti</div>
+        <div style="text-align: center; cursor: pointer; font-size: 18pt;" data-action="artist" data-artist="${song.artist}">Torna al cantante</div>
     </div>
 `;
     
@@ -4882,14 +5002,14 @@ const footerHtml = `
         if (page.isFirst) {
             content = `
                 <div style="text-align: center; margin-bottom: 25px;">
-                    <div style="font-size: 18pt; font-weight: bold; margin-bottom: 2px;">"${song.title.toUpperCase()}"</div>
-                    <div style="font-size: 10pt; margin-bottom: 2px;">(${song.artist.toUpperCase()})</div>
+                    <div style="font-size: 28pt; font-weight: bold; margin-bottom: 2px;">"${song.title.toUpperCase()}"</div>
+                    <div style="font-size: 13pt; margin-bottom: 2px;">(${song.artist.toUpperCase()})</div>
                     ${notesHtml}
                 </div>
-                <div class="song-text">${page.lines.join('\n')}</div>
+                <div class="song-text" style="font-size: 19pt;">${page.lines.join('\n')}</div>
             `;
         } else {
-            content = `<div class="song-text" style="margin-top: 20px;">${page.lines.join('\n')}</div>`;
+            content = `<div class="song-text" style="margin-top: 20px; font-size: 19pt;">${page.lines.join('\n')}</div>`;
         }
         
         // ✅ Aggiungi footer solo all'ULTIMA pagina della canzone
@@ -4912,45 +5032,58 @@ const footerHtml = `
 }
 
 function showBookPage(index) {
-    currentFullscreenIndex = Math.max(0, Math.min(index, allFullscreenPages.length - 1));
+    const targetIndex = Math.max(0, Math.min(index, allFullscreenPages.length - 1));
     
+    if (targetIndex === currentFullscreenIndex) return;
+    
+    currentFullscreenIndex = targetIndex;
     const previewContent = document.getElementById('preview-content');
     const page = allFullscreenPages[currentFullscreenIndex];
     
     const pageHtml = `<div class="page active" style="width: 100vw; height: 100vh;">${page.content}</div>`;
-    
     previewContent.innerHTML = pageHtml;
     
-    // Aggiungi event listeners per i link dopo aver inserito il contenuto
     setTimeout(() => {
-        addFullscreenLinkHandlers();
-    }, 50);
+    addFullscreenLinkHandlers();
+}, 200);
     
     console.log(`Pagina ${currentFullscreenIndex + 1}/${allFullscreenPages.length} - Tipo: ${page.type}`);
 }
 
 function addFullscreenLinkHandlers() {
-    // Handler per gli artisti nell'indice E per i titoli delle canzoni nelle pagine artisti
-    const artistItems = document.querySelectorAll('.artist-item');
+    const artistItems = document.querySelectorAll('.artist-link, .song-link');
     artistItems.forEach(item => {
         let touchStartTime = 0;
+        let touchStartPos = { x: 0, y: 0 };
+        let hasMoved = false;
         
         item.addEventListener('touchstart', (e) => {
             touchStartTime = Date.now();
+            touchStartPos = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+            hasMoved = false;
+        }, { passive: true });
+        
+        item.addEventListener('touchmove', (e) => {
+            const diffX = Math.abs(e.touches[0].clientX - touchStartPos.x);
+            const diffY = Math.abs(e.touches[0].clientY - touchStartPos.y);
+            
+            // Se movimento > 10px, è uno swipe
+            if (diffX > 10 || diffY > 10) {
+                hasMoved = true;
+            }
         }, { passive: true });
         
         item.addEventListener('touchend', (e) => {
             const touchDuration = Date.now() - touchStartTime;
             
-            // Solo tap brevi (< 300ms) sono considerati click
-            if (touchDuration < 300) {
+            // SOLO se: tap breve (<300ms) E NON si è mosso
+            if (touchDuration < 300 && !hasMoved) {
                 e.preventDefault();
                 e.stopPropagation();
                 
                 const itemText = item.textContent.trim();
                 const currentPage = allFullscreenPages[currentFullscreenIndex];
                 
-                // Se siamo nell'indice, cerca la pagina dell'artista
                 if (currentPage.type === 'index') {
                     const artistPageIndex = allFullscreenPages.findIndex(p => 
                         p.type === 'artist' && p.artist && 
@@ -4962,9 +5095,7 @@ function addFullscreenLinkHandlers() {
                         showBookPage(artistPageIndex);
                     }
                 }
-                // Se siamo in una pagina artista, cerca la canzone
                 else if (currentPage.type === 'artist') {
-                    // itemText è il titolo della canzone
                     const songPageIndex = allFullscreenPages.findIndex(p => 
                         p.type === 'song' && 
                         p.songTitle === itemText &&
@@ -5027,6 +5158,35 @@ function addFullscreenLinkHandlers() {
             }
         });
     });
+
+// Handler per titoli canzoni (con data-song-id)
+document.querySelectorAll('.song-link').forEach(link => {
+    let touchStartTime = 0;
+    
+    link.addEventListener('touchstart', (e) => {
+        touchStartTime = Date.now();
+    }, { passive: true });
+    
+    link.addEventListener('touchend', (e) => {
+        const touchDuration = Date.now() - touchStartTime;
+        
+        if (touchDuration < 300) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const songId = parseInt(link.getAttribute('data-song-id'));
+            
+            // Trova la pagina della canzone
+            const songPageIndex = allFullscreenPages.findIndex(p => 
+                p.type === 'song' && p.songId === songId
+            );
+            
+            if (songPageIndex >= 0) {
+                showBookPage(songPageIndex);
+            }
+        }
+    });
+});
 }
 
 // ===== FULLSCREEN MODE =====
@@ -5079,7 +5239,7 @@ function handleBookTouchStart(e) {
     e.stopPropagation();
     
     // SOLO swipe orizzontale significativo
-    if (diffX > 30 && diffX > diffY * 2) {
+    if (diffX > 80 && diffX > diffY * 3) {
         bookIsSwiping = true;
     }
     
@@ -5136,20 +5296,29 @@ function enterFullscreen() {
     
     isFullscreen = true;
     
-    // Mostra la prima pagina
-    showBookPage(0);
+    // Mostra la prima pagina SENZA chiamare showBookPage
+currentFullscreenIndex = 0;
+const page = allFullscreenPages[0];
+const pageHtml = `<div class="page active" style="width: 100vw; height: 100vh;">${page.content}</div>`;
+previewContainer.innerHTML = pageHtml;
+
+// Aspetta che il DOM sia pronto, poi aggiungi handlers
+setTimeout(() => {
+    addFullscreenLinkHandlers();
+    console.log('Handler attaccati - elementi trovati:', document.querySelectorAll('.artist-link, .song-link').length);
+}, 500);
     
-    // Event listeners per swipe (BLOCCATO verso il basso)
-    previewContainer.addEventListener('touchstart', handleBookTouchStart, { passive: false });
-    previewContainer.addEventListener('touchmove', handleBookTouchMove, { passive: false });
-    previewContainer.addEventListener('touchend', handleBookTouchEnd, { passive: false });
-    
-    // Long press per uscire
-    previewContainer.addEventListener('touchstart', handleLongPressStart);
-    previewContainer.addEventListener('touchend', handleLongPressEnd);
-    previewContainer.addEventListener('touchmove', handleLongPressCancel);
-    
-    console.log('Fullscreen Book Mode attivato -', allFullscreenPages.length, 'pagine totali');
+// Event listeners per swipe (BLOCCATO verso il basso)
+previewContainer.addEventListener('touchstart', handleBookTouchStart, { passive: false });
+previewContainer.addEventListener('touchmove', handleBookTouchMove, { passive: false });
+previewContainer.addEventListener('touchend', handleBookTouchEnd, { passive: false });
+
+// Long press per uscire
+previewContainer.addEventListener('touchstart', handleLongPressStart);
+previewContainer.addEventListener('touchend', handleLongPressEnd);
+previewContainer.addEventListener('touchmove', handleLongPressCancel);
+
+console.log('Fullscreen Book Mode attivato -', allFullscreenPages.length, 'pagine totali');
 }
 
 function exitFullscreen() {
