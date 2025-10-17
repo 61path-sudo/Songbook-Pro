@@ -4590,28 +4590,16 @@ function updateFirebaseUI() {
 function loginWithGoogle() {
     const provider = new window.firebaseGoogleProvider();
     
-    // Usa redirect su mobile/tablet, popup su desktop
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    
-    if (isMobile) {
-        // Su mobile usa redirect
-        window.firebaseSignInWithRedirect(window.firebaseAuth, provider)
-            .catch((error) => {
-                console.error('Errore login:', error);
-                alert('Errore durante il login: ' + error.message);
-            });
-    } else {
-        // Su desktop usa popup
-        window.firebaseSignInWithPopup(window.firebaseAuth, provider)
-            .then((result) => {
-                console.log('Login riuscito!', result.user.email);
-                alert('Login riuscito! Ora i tuoi dati sono sincronizzati sul cloud.');
-            })
-            .catch((error) => {
-                console.error('Errore login:', error);
-                alert('Errore durante il login: ' + error.message);
-            });
-    }
+    // FORZA popup su tutti i dispositivi (test)
+    window.firebaseSignInWithPopup(window.firebaseAuth, provider)
+        .then((result) => {
+            console.log('Login riuscito!', result.user.email);
+            alert('Login riuscito! Ora i tuoi dati sono sincronizzati sul cloud.');
+        })
+        .catch((error) => {
+            console.error('Errore login:', error);
+            alert('Errore durante il login: ' + error.message);
+        });
 }
 
 function logoutFromGoogle() {
