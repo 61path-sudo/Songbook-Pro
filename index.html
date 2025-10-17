@@ -4675,6 +4675,9 @@ function saveToFirebaseImmediate() {
     if (!syncEnabled || !currentUser) {
         return;
     }
+
+    const timestamp = new Date().toISOString();
+    localStorage.setItem('lastModified', timestamp);
     
     // Cancella timeout pendente
     if (syncTimeout) {
@@ -4701,11 +4704,11 @@ function saveToFirebaseImmediate() {
     // Salva anche metadata con lista ID e timestamp
     const metaDoc = window.firebaseDoc(window.firebaseDb, 'users', currentUser.uid);
     batch.set(metaDoc, {
-        songIds: songs.map(s => s.id),
-        lastModified: new Date().toISOString(),
-        deviceInfo: navigator.userAgent,
-        totalSongs: songs.length
-    });
+    songIds: songs.map(s => s.id),
+    lastModified: timestamp,  // <-- AGGIUNGI QUESTA RIGA
+    deviceInfo: navigator.userAgent,
+    totalSongs: songs.length
+});
     
     batch.commit()
         .then(() => {
@@ -4729,28 +4732,35 @@ function loadFromFirebase() {
         .then(async (docSnap) => {
             if (docSnap.exists()) {
                 const metadata = docSnap.data();
-                const cloudSongIds = metadata.songIds || [];
+                const cloudTimestamp = metadata.lastModified || '';
+                const localTimestamp = localStorage.getItem('lastModified') || '';
                 
-                console.log(`Cloud: ${cloudSongIds.length} canzoni, Locale: ${songs.length} canzoni`);
+                console.log('Cloud timestamp:', cloudTimestamp);
+                console.log('Local timestamp:', localTimestamp);
                 
-                if (cloudSongIds.length === 0 && songs.length === 0) {
-                    console.log('Nessun dato da sincronizzare');
-                    setSyncStatus('synced');
-                    return;
-                } else if (cloudSongIds.length === 0 && songs.length > 0) {
-                    console.log('Carico dati locali sul cloud...');
+                if (!cloudTimestamp && songs.length > 0) {
+                    // Cloud vuoto, locale pieno → carica locale su cloud
+                    console.log('Cloud vuoto, carico dati locali...');
                     saveToFirebaseImmediate();
                     return;
-                } else if (cloudSongIds.length > 0 && songs.length === 0) {
-                    console.log('Scarico dati dal cloud...');
+                }
+                
+                if (!localTimestamp || cloudTimestamp > localTimestamp) {
+                    // Cloud più recente → scarica
+                    console.log('Cloud più recente, scarico dati...');
+                    const cloudSongIds = metadata.songIds || [];
                     await loadAllSongsFromCloud(cloudSongIds);
+                    localStorage.setItem('lastModified', cloudTimestamp);
                     setSyncStatus('synced');
-                    return;
+                    alert(`✓ Sincronizzato dal cloud!\n${songs.length} canzoni aggiornate.`);
+                } else if (localTimestamp > cloudTimestamp) {
+                    // Locale più recente → carica su cloud
+                    console.log('Locale più recente, carico su cloud...');
+                    saveToFirebaseImmediate();
                 } else {
-                    console.log('Merge automatico in corso...');
-                    await mergeWithCloud(cloudSongIds);
+                    // Stessa versione
+                    console.log('Già sincronizzato');
                     setSyncStatus('synced');
-                    return;
                 }
             } else {
                 console.log('Primo accesso, salvo dati locali su cloud...');
