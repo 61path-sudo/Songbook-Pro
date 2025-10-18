@@ -4881,9 +4881,8 @@ let pendingMerge = null;
 function showMergeModal(diff, cloudSongs, cloudTimestamp, cloudDevice) {
     pendingMerge = { diff, cloudSongs };
     
-    // Calcola i tipi di modifica PRIMA
-const artistChanges = new Map();
-const songChanges = [];
+   let artistChanges = new Map();
+    let songChanges = [];
 
 diff.modified.forEach(item => {
     const artistChanged = item.local.artist !== item.cloud.artist || 
