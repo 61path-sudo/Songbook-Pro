@@ -5024,40 +5024,51 @@ function mergeAll() {
     const localMap = new Map(songs.map(s => [s.id, s]));
     
     const mergedSongs = [];
+    const processedIds = new Set();
     
-    // 1. Parti da tutte le canzoni del cloud (hanno le modifiche più recenti)
-    cloudSongs.forEach(cloudSong => {
-        const localSong = localMap.get(cloudSong.id);
-        
-        if (localSong) {
-            // La canzone esiste sia in cloud che in locale
-            const modifiedItem = diff.modified.find(m => 
-                (m.cloud.id === cloudSong.id) || 
-                (m.local.id === localSong.id)
-            );
-            
-            if (modifiedItem) {
-                // Ci sono differenze - usa la versione cloud (più recente)
-                mergedSongs.push(cloudSong);
-            } else {
-                // Identiche - usa una qualsiasi (cloud)
-                mergedSongs.push(cloudSong);
-            }
-        } else {
-            // Esiste solo nel cloud - aggiungi
-            mergedSongs.push(cloudSong);
+    // 1. PRIMA: mantieni tutte le modifiche LOCALI (priorità al dispositivo corrente)
+    songs.forEach(localSong => {
+        mergedSongs.push(localSong);
+        processedIds.add(localSong.id);
+    });
+    
+    // 2. AGGIUNGI: le canzoni che esistono SOLO nel cloud (non in locale)
+    diff.added.forEach(cloudSong => {
+        if (!processedIds.has(cloudSong.id)) {
+            mergedSongs.push({
+                ...cloudSong,
+                id: cloudSong.id || Date.now() + Math.random()
+            });
+            processedIds.add(cloudSong.id);
         }
     });
     
-    // 2. Aggiungi le canzoni che esistono SOLO in locale (non nel cloud)
-    diff.localOnly.forEach(localSong => {
-        mergedSongs.push(localSong);
+    // 3. Per le canzoni MODIFICATE: mantieni locale MA applica solo i cambi di ARTISTA dal cloud
+    diff.modified.forEach(modItem => {
+        const localSong = mergedSongs.find(s => s.id === modItem.local.id);
+        
+        if (localSong) {
+            // Controlla se nel cloud è cambiato SOLO l'artista
+            const onlyArtistChangedInCloud = 
+                (modItem.cloud.artist !== modItem.local.artist || 
+                 modItem.cloud.artistSort !== modItem.local.artistSort) &&
+                modItem.cloud.title === modItem.local.title && 
+                modItem.cloud.lyrics === modItem.local.lyrics &&
+                modItem.cloud.notes === modItem.local.notes;
+            
+            if (onlyArtistChangedInCloud) {
+                // Applica il cambio di artista dal cloud
+                localSong.artist = modItem.cloud.artist;
+                localSong.artistSort = modItem.cloud.artistSort;
+            }
+            // Altrimenti mantieni la versione locale com'è
+        }
     });
     
     songs = mergedSongs;
     saveData();
     
-    // Salva su Firebase per sincronizzare anche le canzoni "local only"
+    // Salva su Firebase per caricare le modifiche locali sul cloud
     saveToFirebaseImmediate();
     
     closeMergeModal();
@@ -5069,9 +5080,9 @@ function mergeAll() {
     const summary = 
         `✓ Unione completata!\n\n` +
         `📊 Riepilogo:\n` +
-        `• ${diff.added.length} canzoni dal cloud applicate\n` +
-        `• ${diff.modified.length} modifiche dal cloud applicate\n` +
-        `• ${diff.localOnly.length} canzoni solo in locale mantenute e caricate sul cloud\n\n` +
+        `• ${diff.added.length} canzoni nuove dal cloud aggiunte\n` +
+        `• ${diff.modified.length} canzoni con differenze unite\n` +
+        `• ${diff.localOnly.length} canzoni locali caricate sul cloud\n\n` +
         `Totale canzoni: ${songs.length}`;
     
     alert(summary);
