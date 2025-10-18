@@ -4977,30 +4977,26 @@ function mergeAll() {
     
     const { diff, cloudSongs } = pendingMerge;
     
-    // Crea mappa canzoni locali
-    const localMap = new Map(songs.map(s => 
-        [`${s.title.toLowerCase()}_${s.artist.toLowerCase()}`, s]
-    ));
+    // Crea mappa con ID per accesso rapido
+    const cloudMap = new Map(cloudSongs.map(s => [s.id, s]));
+    const localMap = new Map(songs.map(s => [s.id, s]));
     
-    // Parti dalle canzoni locali
-    const mergedSongs = [...songs];
+    const mergedSongs = [];
     
-    // Aggiungi nuove dal cloud
-    diff.added.forEach(song => {
-        mergedSongs.push({
-            ...song,
-            id: Date.now() + Math.random()
-        });
+    // 1. Mantieni TUTTE le canzoni locali (incluse modifiche)
+    songs.forEach(localSong => {
+        mergedSongs.push(localSong);
     });
     
-    // Aggiorna modificate con versione LOCALE (più recente)
-diff.modified.forEach(item => {
-    const index = mergedSongs.findIndex(s => s.id === item.local.id);
-    if (index >= 0) {
-        // Usa la versione locale che è quella modificata dall'utente
-        mergedSongs[index] = item.local;
-    }
-});
+    // 2. Aggiungi SOLO le nuove dal cloud (che non esistono in locale)
+    diff.added.forEach(cloudSong => {
+        if (!localMap.has(cloudSong.id)) {
+            mergedSongs.push({
+                ...cloudSong,
+                id: cloudSong.id || Date.now() + Math.random()
+            });
+        }
+    });
     
     songs = mergedSongs;
     saveData();
@@ -5015,7 +5011,7 @@ diff.modified.forEach(item => {
         `✓ Unione completata!\n\n` +
         `📊 Riepilogo:\n` +
         `• ${diff.added.length} canzoni aggiunte dal cloud\n` +
-        `• ${diff.modified.length} canzoni aggiornate\n` +
+        `• ${diff.modified.length} tue modifiche mantenute\n` +
         `• ${diff.localOnly.length} canzoni locali mantenute\n\n` +
         `Totale canzoni: ${songs.length}`;
     
