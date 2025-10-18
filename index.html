@@ -4730,9 +4730,11 @@ async function smartMerge(cloudSongs, localSongs) {
     const cloudMap = new Map(cloudSongs.map(s => [s.id, s]));
     const localMap = new Map(localSongs.map(s => [s.id, s]));
     
-    const added = [];      // Nuove nel cloud (ID cloud non in locale)
-    const modified = [];   // Modificate (stesso ID, contenuto diverso)
-    const localOnly = [];  // Solo in locale (ID locale non in cloud)
+    const added = [];           // Nuove nel cloud (ID cloud non in locale)
+    const modified = [];        // Modificate (stesso ID, contenuto diverso)
+    const localOnly = [];       // Solo in locale (ID locale non in cloud)
+    const cloudModified = [];   // Modifiche fatte nel cloud
+    const localModified = [];   // Modifiche fatte in locale
     
     // Trova aggiunte e modifiche dal cloud
     cloudSongs.forEach(cloudSong => {
@@ -4744,19 +4746,19 @@ async function smartMerge(cloudSongs, localSongs) {
         } else {
             // Confronta contenuto (escludi ID e timestamp)
             const cloudContent = JSON.stringify({
-    title: cloudSong.title,
-    artist: cloudSong.artist,
-    artistSort: cloudSong.artistSort,
-    lyrics: cloudSong.lyrics,
-    notes: cloudSong.notes
-});
-const localContent = JSON.stringify({
-    title: localSong.title,
-    artist: localSong.artist,
-    artistSort: localSong.artistSort,
-    lyrics: localSong.lyrics,
-    notes: localSong.notes
-});
+                title: cloudSong.title,
+                artist: cloudSong.artist,
+                artistSort: cloudSong.artistSort,
+                lyrics: cloudSong.lyrics,
+                notes: cloudSong.notes
+            });
+            const localContent = JSON.stringify({
+                title: localSong.title,
+                artist: localSong.artist,
+                artistSort: localSong.artistSort,
+                lyrics: localSong.lyrics,
+                notes: localSong.notes
+            });
             
             if (cloudContent !== localContent) {
                 modified.push({ cloud: cloudSong, local: localSong });
@@ -5023,52 +5025,47 @@ function mergeAll() {
     const cloudMap = new Map(cloudSongs.map(s => [s.id, s]));
     const localMap = new Map(songs.map(s => [s.id, s]));
     
-    const mergedSongs = [];
-    const processedIds = new Set();
+    // Mappa finale
+    const mergedMap = new Map();
     
-    // 1. PRIMA: mantieni tutte le modifiche LOCALI (priorità al dispositivo corrente)
+    // 1. Parti da TUTTE le canzoni locali (mantieni modifiche locali)
     songs.forEach(localSong => {
-        mergedSongs.push(localSong);
-        processedIds.add(localSong.id);
+        mergedMap.set(localSong.id, { ...localSong });
     });
     
-    // 2. AGGIUNGI: le canzoni che esistono SOLO nel cloud (non in locale)
-    diff.added.forEach(cloudSong => {
-        if (!processedIds.has(cloudSong.id)) {
-            mergedSongs.push({
-                ...cloudSong,
-                id: cloudSong.id || Date.now() + Math.random()
-            });
-            processedIds.add(cloudSong.id);
-        }
-    });
-    
-    // 3. Per le canzoni MODIFICATE: mantieni locale MA applica solo i cambi di ARTISTA dal cloud
-    diff.modified.forEach(modItem => {
-        const localSong = mergedSongs.find(s => s.id === modItem.local.id);
+    // 2. Aggiungi/aggiorna con canzoni dal cloud
+    cloudSongs.forEach(cloudSong => {
+        const existing = mergedMap.get(cloudSong.id);
         
-        if (localSong) {
-            // Controlla se nel cloud è cambiato SOLO l'artista
-            const onlyArtistChangedInCloud = 
-                (modItem.cloud.artist !== modItem.local.artist || 
-                 modItem.cloud.artistSort !== modItem.local.artistSort) &&
-                modItem.cloud.title === modItem.local.title && 
-                modItem.cloud.lyrics === modItem.local.lyrics &&
-                modItem.cloud.notes === modItem.local.notes;
+        if (!existing) {
+            // Non esiste in locale → aggiungila
+            mergedMap.set(cloudSong.id, { ...cloudSong });
+        } else {
+            // Esiste in entrambi → controlla se cloud ha modifiche agli artisti
+            const modItem = diff.modified.find(m => m.cloud.id === cloudSong.id);
             
-            if (onlyArtistChangedInCloud) {
-                // Applica il cambio di artista dal cloud
-                localSong.artist = modItem.cloud.artist;
-                localSong.artistSort = modItem.cloud.artistSort;
+            if (modItem) {
+                const onlyArtistChangedInCloud = 
+                    (modItem.cloud.artist !== modItem.local.artist || 
+                     modItem.cloud.artistSort !== modItem.local.artistSort) &&
+                    modItem.cloud.title === modItem.local.title && 
+                    modItem.cloud.lyrics === modItem.local.lyrics &&
+                    modItem.cloud.notes === modItem.local.notes;
+                
+                if (onlyArtistChangedInCloud) {
+                    // Applica solo il cambio di artista dal cloud
+                    existing.artist = modItem.cloud.artist;
+                    existing.artistSort = modItem.cloud.artistSort;
+                }
+                // Altrimenti mantieni la versione locale (che ha le sue modifiche)
             }
-            // Altrimenti mantieni la versione locale com'è
         }
     });
     
-    songs = mergedSongs;
+    songs = Array.from(mergedMap.values());
     saveData();
     
-    // Salva su Firebase per caricare le modifiche locali sul cloud
+    // Salva immediatamente su Firebase così sincronizza tutto
     saveToFirebaseImmediate();
     
     closeMergeModal();
@@ -5083,7 +5080,8 @@ function mergeAll() {
         `• ${diff.added.length} canzoni nuove dal cloud aggiunte\n` +
         `• ${diff.modified.length} canzoni con differenze unite\n` +
         `• ${diff.localOnly.length} canzoni locali caricate sul cloud\n\n` +
-        `Totale canzoni: ${songs.length}`;
+        `Totale canzoni: ${songs.length}\n\n` +
+        `Le modifiche sono state sincronizzate sul cloud.`;
     
     alert(summary);
 }
