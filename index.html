@@ -4726,36 +4726,50 @@ function saveToFirebaseImmediate() {
 }
 
 async function smartMerge(cloudSongs, localSongs) {
-    // Crea mappa delle canzoni per confronto rapido
-    const cloudMap = new Map(cloudSongs.map(s => [`${s.title.toLowerCase()}_${s.artist.toLowerCase()}`, s]));
-    const localMap = new Map(localSongs.map(s => [`${s.title.toLowerCase()}_${s.artist.toLowerCase()}`, s]));
+    // Crea mappa delle canzoni per confronto rapido (usa ID invece di titolo+artista)
+    const cloudMap = new Map(cloudSongs.map(s => [s.id, s]));
+    const localMap = new Map(localSongs.map(s => [s.id, s]));
     
-    const added = [];      // Nuove nel cloud
-    const modified = [];   // Modificate nel cloud
-    const deleted = [];    // Presenti in locale ma non nel cloud
-    const localOnly = [];  // Nuove in locale
+    const added = [];      // Nuove nel cloud (ID cloud non in locale)
+    const modified = [];   // Modificate (stesso ID, contenuto diverso)
+    const localOnly = [];  // Solo in locale (ID locale non in cloud)
     
     // Trova aggiunte e modifiche dal cloud
     cloudSongs.forEach(cloudSong => {
-        const key = `${cloudSong.title.toLowerCase()}_${cloudSong.artist.toLowerCase()}`;
-        const localSong = localMap.get(key);
+        const localSong = localMap.get(cloudSong.id);
         
         if (!localSong) {
+            // Canzone nel cloud ma non in locale = aggiunta
             added.push(cloudSong);
-        } else if (JSON.stringify(cloudSong) !== JSON.stringify(localSong)) {
-            modified.push({ cloud: cloudSong, local: localSong });
+        } else {
+            // Confronta contenuto (escludi ID e timestamp)
+            const cloudContent = JSON.stringify({
+                title: cloudSong.title,
+                artist: cloudSong.artist,
+                lyrics: cloudSong.lyrics,
+                notes: cloudSong.notes
+            });
+            const localContent = JSON.stringify({
+                title: localSong.title,
+                artist: localSong.artist,
+                lyrics: localSong.lyrics,
+                notes: localSong.notes
+            });
+            
+            if (cloudContent !== localContent) {
+                modified.push({ cloud: cloudSong, local: localSong });
+            }
         }
     });
     
-    // Trova canzoni solo in locale (nuove o eliminate dal cloud)
+    // Trova canzoni solo in locale
     localSongs.forEach(localSong => {
-        const key = `${localSong.title.toLowerCase()}_${localSong.artist.toLowerCase()}`;
-        if (!cloudMap.has(key)) {
+        if (!cloudMap.has(localSong.id)) {
             localOnly.push(localSong);
         }
     });
     
-    return { added, modified, deleted, localOnly };
+    return { added, modified, localOnly };
 }
 
 function loadFromFirebase() {
@@ -4842,10 +4856,6 @@ async function loadAllSongsFromCloud(songIds) {
     
     songs = cloudSongs;
     saveData();
-    
-    if (document.getElementById('manage-tab').classList.contains('active')) {
-        updateManage();
-    }
 }
 
 async function loadCloudSongsForComparison(songIds) {
@@ -4878,8 +4888,8 @@ function showMergeModal(diff, cloudSongs, cloudTimestamp, cloudDevice) {
     if (diff.localOnly.length > 0) summaryParts.push(`<strong>${diff.localOnly.length}</strong> canzoni solo in locale`);
     
     document.getElementById('merge-summary').innerHTML = 
-        `Trovate <strong>${totalChanges} differenze</strong> tra cloud e locale:<br>` +
-        summaryParts.join('<br>');
+    `Trovate <strong>${totalChanges} differenze</strong> tra cloud e locale:<br><br>` +
+    summaryParts.join(', ');
     
     // Details
     let detailsHtml = '<div style="font-family: monospace; font-size: 13px;">';
