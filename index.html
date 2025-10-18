@@ -5025,24 +5025,41 @@ function mergeAll() {
     
     const mergedSongs = [];
     
-    // 1. Mantieni TUTTE le canzoni locali (incluse modifiche)
-    songs.forEach(localSong => {
-        mergedSongs.push(localSong);
+    // 1. Parti da tutte le canzoni del cloud (hanno le modifiche più recenti)
+    cloudSongs.forEach(cloudSong => {
+        const localSong = localMap.get(cloudSong.id);
+        
+        if (localSong) {
+            // La canzone esiste sia in cloud che in locale
+            const modifiedItem = diff.modified.find(m => 
+                (m.cloud.id === cloudSong.id) || 
+                (m.local.id === localSong.id)
+            );
+            
+            if (modifiedItem) {
+                // Ci sono differenze - usa la versione cloud (più recente)
+                mergedSongs.push(cloudSong);
+            } else {
+                // Identiche - usa una qualsiasi (cloud)
+                mergedSongs.push(cloudSong);
+            }
+        } else {
+            // Esiste solo nel cloud - aggiungi
+            mergedSongs.push(cloudSong);
+        }
     });
     
-    // 2. Aggiungi SOLO le nuove dal cloud (che non esistono in locale)
-    diff.added.forEach(cloudSong => {
-        if (!localMap.has(cloudSong.id)) {
-            mergedSongs.push({
-                ...cloudSong,
-                id: cloudSong.id || Date.now() + Math.random()
-            });
-        }
+    // 2. Aggiungi le canzoni che esistono SOLO in locale (non nel cloud)
+    diff.localOnly.forEach(localSong => {
+        mergedSongs.push(localSong);
     });
     
     songs = mergedSongs;
     saveData();
+    
+    // Salva su Firebase per sincronizzare anche le canzoni "local only"
     saveToFirebaseImmediate();
+    
     closeMergeModal();
     
     if (document.getElementById('manage-tab').classList.contains('active')) {
@@ -5052,9 +5069,9 @@ function mergeAll() {
     const summary = 
         `✓ Unione completata!\n\n` +
         `📊 Riepilogo:\n` +
-        `• ${diff.added.length} canzoni aggiunte dal cloud\n` +
-        `• ${diff.modified.length} tue modifiche mantenute\n` +
-        `• ${diff.localOnly.length} canzoni locali mantenute\n\n` +
+        `• ${diff.added.length} canzoni dal cloud applicate\n` +
+        `• ${diff.modified.length} modifiche dal cloud applicate\n` +
+        `• ${diff.localOnly.length} canzoni solo in locale mantenute e caricate sul cloud\n\n` +
         `Totale canzoni: ${songs.length}`;
     
     alert(summary);
