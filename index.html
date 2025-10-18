@@ -4886,13 +4886,14 @@ function showMergeModal(diff, cloudSongs, cloudTimestamp, cloudDevice) {
     const songChangesList = [];
     
     diff.modified.forEach(item => {
-    const artistChanged = item.local.artist !== item.cloud.artist || 
-                         item.local.artistSort !== item.cloud.artistSort;
-    const contentChanged = item.local.title !== item.cloud.title || 
-                          item.local.lyrics !== item.cloud.lyrics ||
-                          item.local.notes !== item.cloud.notes;
+    // Controlla SOLO se l'artista è cambiato (ignora artistSort per ora)
+    const onlyArtistChanged = (item.local.artist !== item.cloud.artist || 
+                               item.local.artistSort !== item.cloud.artistSort) &&
+                              item.local.title === item.cloud.title && 
+                              item.local.lyrics === item.cloud.lyrics &&
+                              item.local.notes === item.cloud.notes;
     
-    if (artistChanged && !contentChanged) {
+    if (onlyArtistChanged) {
         // Solo cantante cambiato - raggruppa per OLD artist (quello nel cloud)
         const oldArtist = item.cloud.artist;
         if (!artistChangesMap.has(oldArtist)) {
