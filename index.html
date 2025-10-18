@@ -4902,6 +4902,11 @@ diff.modified.forEach(item => {
     }
 });
 
+// DEBUG
+console.log('artistChanges:', artistChanges);
+console.log('songChanges:', songChanges);
+console.log('diff.modified:', diff.modified);
+
 const totalChanges = diff.added.length + artistChanges.size + songChanges.length + diff.localOnly.length;
 
 // Summary
