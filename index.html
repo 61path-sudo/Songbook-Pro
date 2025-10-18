@@ -4744,17 +4744,19 @@ async function smartMerge(cloudSongs, localSongs) {
         } else {
             // Confronta contenuto (escludi ID e timestamp)
             const cloudContent = JSON.stringify({
-                title: cloudSong.title,
-                artist: cloudSong.artist,
-                lyrics: cloudSong.lyrics,
-                notes: cloudSong.notes
-            });
-            const localContent = JSON.stringify({
-                title: localSong.title,
-                artist: localSong.artist,
-                lyrics: localSong.lyrics,
-                notes: localSong.notes
-            });
+    title: cloudSong.title,
+    artist: cloudSong.artist,
+    artistSort: cloudSong.artistSort,
+    lyrics: cloudSong.lyrics,
+    notes: cloudSong.notes
+});
+const localContent = JSON.stringify({
+    title: localSong.title,
+    artist: localSong.artist,
+    artistSort: localSong.artistSort,
+    lyrics: localSong.lyrics,
+    notes: localSong.notes
+});
             
             if (cloudContent !== localContent) {
                 modified.push({ cloud: cloudSong, local: localSong });
@@ -4991,16 +4993,14 @@ function mergeAll() {
         });
     });
     
-    // Aggiorna modificate con versione cloud
-    diff.modified.forEach(item => {
-        const key = `${item.cloud.title.toLowerCase()}_${item.cloud.artist.toLowerCase()}`;
-        const index = mergedSongs.findIndex(s => 
-            `${s.title.toLowerCase()}_${s.artist.toLowerCase()}` === key
-        );
-        if (index >= 0) {
-            mergedSongs[index] = { ...item.cloud, id: mergedSongs[index].id };
-        }
-    });
+    // Aggiorna modificate con versione LOCALE (più recente)
+diff.modified.forEach(item => {
+    const index = mergedSongs.findIndex(s => s.id === item.local.id);
+    if (index >= 0) {
+        // Usa la versione locale che è quella modificata dall'utente
+        mergedSongs[index] = item.local;
+    }
+});
     
     songs = mergedSongs;
     saveData();
