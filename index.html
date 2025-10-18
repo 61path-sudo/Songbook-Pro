@@ -4881,44 +4881,42 @@ let pendingMerge = null;
 function showMergeModal(diff, cloudSongs, cloudTimestamp, cloudDevice) {
     pendingMerge = { diff, cloudSongs };
     
-   let artistChanges = new Map();
-    let songChanges = [];
-
-diff.modified.forEach(item => {
-    const artistChanged = item.local.artist !== item.cloud.artist || 
-                         item.local.artistSort !== item.cloud.artistSort;
-    const contentChanged = item.local.title !== item.cloud.title || 
-                          item.local.lyrics !== item.cloud.lyrics ||
-                          item.local.notes !== item.cloud.notes;
+    // Calcola artistChanges e songChanges
+    const artistChangesMap = new Map();
+    const songChangesList = [];
     
-    if (artistChanged && !contentChanged) {
-        const newArtist = item.local.artist;
-        if (!artistChanges.has(newArtist)) {
-            artistChanges.set(newArtist, []);
+    diff.modified.forEach(item => {
+        const artistChanged = item.local.artist !== item.cloud.artist || 
+                             item.local.artistSort !== item.cloud.artistSort;
+        const contentChanged = item.local.title !== item.cloud.title || 
+                              item.local.lyrics !== item.cloud.lyrics ||
+                              item.local.notes !== item.cloud.notes;
+        
+        if (artistChanged && !contentChanged) {
+            // Solo cantante cambiato
+            const newArtist = item.local.artist;
+            if (!artistChangesMap.has(newArtist)) {
+                artistChangesMap.set(newArtist, []);
+            }
+            artistChangesMap.get(newArtist).push(item.local.title);
+        } else {
+            // Altro cambiato
+            songChangesList.push(item);
         }
-        artistChanges.get(newArtist).push(item.local.title);
-    } else {
-        songChanges.push(item);
-    }
-});
-
-// DEBUG
-console.log('artistChanges:', artistChanges);
-console.log('songChanges:', songChanges);
-console.log('diff.modified:', diff.modified);
-
-const totalChanges = diff.added.length + artistChanges.size + songChanges.length + diff.localOnly.length;
-
-// Summary
-const summaryParts = [];
-if (diff.added.length > 0) summaryParts.push(`<strong>${diff.added.length}</strong> canzoni nuove nel cloud`);
-if (artistChanges.size > 0) summaryParts.push(`<strong>${artistChanges.size}</strong> cantanti aggiornati`);
-if (songChanges.length > 0) summaryParts.push(`<strong>${songChanges.length}</strong> canzoni modificate`);
-if (diff.localOnly.length > 0) summaryParts.push(`<strong>${diff.localOnly.length}</strong> canzoni solo in locale`);
+    });
+    
+    const totalChanges = diff.added.length + artistChangesMap.size + songChangesList.length + diff.localOnly.length;
+    
+    // Summary
+    const summaryParts = [];
+    if (diff.added.length > 0) summaryParts.push(`<strong>${diff.added.length}</strong> canzoni nuove nel cloud`);
+    if (artistChangesMap.size > 0) summaryParts.push(`<strong>${artistChangesMap.size}</strong> cantanti aggiornati`);
+    if (songChangesList.length > 0) summaryParts.push(`<strong>${songChangesList.length}</strong> canzoni modificate`);
+    if (diff.localOnly.length > 0) summaryParts.push(`<strong>${diff.localOnly.length}</strong> canzoni solo in locale`);
     
     document.getElementById('merge-summary').innerHTML = 
-    `Trovate <strong>${totalChanges} differenze</strong> tra cloud e locale:<br><br>` +
-    summaryParts.join(', ');
+        `Trovate <strong>${totalChanges} differenze</strong> tra cloud e locale:<br><br>` +
+        summaryParts.join(', ');
     
     // Details
     let detailsHtml = '<div style="font-family: monospace; font-size: 13px;">';
@@ -4931,22 +4929,21 @@ if (diff.localOnly.length > 0) summaryParts.push(`<strong>${diff.localOnly.lengt
         detailsHtml += '</div>';
     }
     
-    if (diff.modified.length > 0) {
-    
-    detailsHtml += '<div style="margin-bottom: 15px;"><strong>✏️ Aggiornate localmente:</strong><br>';
-    
-    // Mostra modifiche cantante
-    artistChanges.forEach((songs, artist) => {
-        detailsHtml += `&nbsp;&nbsp;✏️ Cantante aggiornato: <strong>${artist}</strong> (${songs.length} canzoni)<br>`;
-    });
-    
-    // Mostra modifiche canzoni
-    songChanges.forEach(item => {
-        detailsHtml += `&nbsp;&nbsp;✏️ "${item.local.title}" - ${item.local.artist}<br>`;
-    });
-    
-    detailsHtml += '</div>';
-}
+    if (artistChangesMap.size > 0 || songChangesList.length > 0) {
+        detailsHtml += '<div style="margin-bottom: 15px;"><strong>✏️ Aggiornate localmente:</strong><br>';
+        
+        // Mostra cantanti aggiornati
+        artistChangesMap.forEach((songs, artist) => {
+            detailsHtml += `&nbsp;&nbsp;✏️ Cantante aggiornato: <strong>${artist}</strong> (${songs.length} canzoni)<br>`;
+        });
+        
+        // Mostra canzoni modificate
+        songChangesList.forEach(item => {
+            detailsHtml += `&nbsp;&nbsp;✏️ "${item.local.title}" - ${item.local.artist}<br>`;
+        });
+        
+        detailsHtml += '</div>';
+    }
     
     if (diff.localOnly.length > 0) {
         detailsHtml += '<div style="margin-bottom: 15px;"><strong>📱 Solo in locale:</strong><br>';
