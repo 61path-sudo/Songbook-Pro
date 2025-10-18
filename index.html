@@ -5017,9 +5017,19 @@ function useLocalOnly() {
 function mergeAll() {
     if (!pendingMerge) return;
     
+    console.log('=== MERGE ALL DEBUG ===');
+    console.log('Songs locali PRIMA del merge:', songs.length);
+    console.log('Dettaglio songs locali:', songs.map(s => ({ id: s.id, title: s.title, artist: s.artist })));
+    
     saveUndoState();
     
     const { diff, cloudSongs } = pendingMerge;
+    
+    console.log('Cloud songs:', cloudSongs.length);
+    console.log('Dettaglio cloud:', cloudSongs.map(s => ({ id: s.id, title: s.title, artist: s.artist })));
+    console.log('diff.added:', diff.added.length);
+    console.log('diff.modified:', diff.modified.length);
+    console.log('diff.localOnly:', diff.localOnly.length);
     
     // Crea mappa con ID per accesso rapido
     const cloudMap = new Map(cloudSongs.map(s => [s.id, s]));
@@ -5028,44 +5038,36 @@ function mergeAll() {
     // Mappa finale
     const mergedMap = new Map();
     
-    // 1. Parti da TUTTE le canzoni locali (mantieni modifiche locali)
+    // 1. Parti da TUTTE le canzoni locali
+    console.log('STEP 1: Aggiungo tutte le canzoni locali...');
     songs.forEach(localSong => {
         mergedMap.set(localSong.id, { ...localSong });
+        console.log('Aggiunta locale:', localSong.title, '-', localSong.artist);
     });
     
+    console.log('Dopo step 1, mergedMap size:', mergedMap.size);
+    
     // 2. Aggiungi/aggiorna con canzoni dal cloud
+    console.log('STEP 2: Processo canzoni dal cloud...');
     cloudSongs.forEach(cloudSong => {
         const existing = mergedMap.get(cloudSong.id);
         
         if (!existing) {
-            // Non esiste in locale → aggiungila
+            console.log('Cloud song NON in locale, aggiungo:', cloudSong.title, '-', cloudSong.artist);
             mergedMap.set(cloudSong.id, { ...cloudSong });
         } else {
-            // Esiste in entrambi → controlla se cloud ha modifiche agli artisti
-            const modItem = diff.modified.find(m => m.cloud.id === cloudSong.id);
-            
-            if (modItem) {
-                const onlyArtistChangedInCloud = 
-                    (modItem.cloud.artist !== modItem.local.artist || 
-                     modItem.cloud.artistSort !== modItem.local.artistSort) &&
-                    modItem.cloud.title === modItem.local.title && 
-                    modItem.cloud.lyrics === modItem.local.lyrics &&
-                    modItem.cloud.notes === modItem.local.notes;
-                
-                if (onlyArtistChangedInCloud) {
-                    // Applica solo il cambio di artista dal cloud
-                    existing.artist = modItem.cloud.artist;
-                    existing.artistSort = modItem.cloud.artistSort;
-                }
-                // Altrimenti mantieni la versione locale (che ha le sue modifiche)
-            }
+            console.log('Cloud song già in locale:', cloudSong.title, '- controllo modifiche...');
         }
     });
     
-    songs = Array.from(mergedMap.values());
-    saveData();
+    console.log('Dopo step 2, mergedMap size:', mergedMap.size);
     
-    // Salva immediatamente su Firebase così sincronizza tutto
+    songs = Array.from(mergedMap.values());
+    
+    console.log('Songs DOPO il merge:', songs.length);
+    console.log('Dettaglio DOPO:', songs.map(s => ({ id: s.id, title: s.title, artist: s.artist })));
+    
+    saveData();
     saveToFirebaseImmediate();
     
     closeMergeModal();
@@ -5074,16 +5076,7 @@ function mergeAll() {
         updateManage();
     }
     
-    const summary = 
-        `✓ Unione completata!\n\n` +
-        `📊 Riepilogo:\n` +
-        `• ${diff.added.length} canzoni nuove dal cloud aggiunte\n` +
-        `• ${diff.modified.length} canzoni con differenze unite\n` +
-        `• ${diff.localOnly.length} canzoni locali caricate sul cloud\n\n` +
-        `Totale canzoni: ${songs.length}\n\n` +
-        `Le modifiche sono state sincronizzate sul cloud.`;
-    
-    alert(summary);
+    alert(`✓ Unione completata!\n\nTotale canzoni: ${songs.length}`);
 }
 
 async function mergeWithCloud(cloudSongIds) {
