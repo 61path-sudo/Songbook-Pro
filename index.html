@@ -1468,6 +1468,29 @@ body.dark-mode #empty-trash-btn:disabled {
     </div>
 </div>
 
+<!-- Modal Merge Sync -->
+<div id="merge-modal" class="modal-overlay">
+    <div class="modal-box wide">
+        <h3>🔄 Sincronizzazione Necessaria</h3>
+        <p id="merge-summary"></p>
+        
+        <div id="merge-details" style="max-height: 400px; overflow-y: auto; margin: 20px 0; padding: 15px; background: #f9f9f9; border-radius: 5px; border: 1px solid #ddd;">
+            <!-- Dettagli modifiche -->
+        </div>
+        
+        <div id="merge-info" style="font-size: 12px; color: #666; margin-bottom: 15px;">
+            <!-- Info timestamp e dispositivo -->
+        </div>
+        
+        <div class="modal-buttons">
+            <button class="modal-btn modal-btn-cancel" onclick="closeMergeModal()">Annulla</button>
+            <button class="modal-btn modal-btn-replace" onclick="useCloudOnly()">Usa Solo Cloud</button>
+            <button class="modal-btn modal-btn-replace" onclick="useLocalOnly()">Usa Solo Locale</button>
+            <button class="modal-btn modal-btn-add" onclick="mergeAll()">✓ Unisci Tutto</button>
+        </div>
+    </div>
+</div>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script>
         let songs = [];
@@ -4702,6 +4725,39 @@ function saveToFirebaseImmediate() {
         });
 }
 
+async function smartMerge(cloudSongs, localSongs) {
+    // Crea mappa delle canzoni per confronto rapido
+    const cloudMap = new Map(cloudSongs.map(s => [`${s.title.toLowerCase()}_${s.artist.toLowerCase()}`, s]));
+    const localMap = new Map(localSongs.map(s => [`${s.title.toLowerCase()}_${s.artist.toLowerCase()}`, s]));
+    
+    const added = [];      // Nuove nel cloud
+    const modified = [];   // Modificate nel cloud
+    const deleted = [];    // Presenti in locale ma non nel cloud
+    const localOnly = [];  // Nuove in locale
+    
+    // Trova aggiunte e modifiche dal cloud
+    cloudSongs.forEach(cloudSong => {
+        const key = `${cloudSong.title.toLowerCase()}_${cloudSong.artist.toLowerCase()}`;
+        const localSong = localMap.get(key);
+        
+        if (!localSong) {
+            added.push(cloudSong);
+        } else if (JSON.stringify(cloudSong) !== JSON.stringify(localSong)) {
+            modified.push({ cloud: cloudSong, local: localSong });
+        }
+    });
+    
+    // Trova canzoni solo in locale (nuove o eliminate dal cloud)
+    localSongs.forEach(localSong => {
+        const key = `${localSong.title.toLowerCase()}_${localSong.artist.toLowerCase()}`;
+        if (!cloudMap.has(key)) {
+            localOnly.push(localSong);
+        }
+    });
+    
+    return { added, modified, deleted, localOnly };
+}
+
 function loadFromFirebase() {
     if (!currentUser) return;
     
@@ -4715,34 +4771,50 @@ function loadFromFirebase() {
                 const metadata = docSnap.data();
                 const cloudTimestamp = metadata.lastModified || '';
                 const localTimestamp = localStorage.getItem('lastModified') || '';
+                const cloudSongIds = metadata.songIds || [];
                 
-                console.log('Cloud timestamp:', cloudTimestamp);
-                console.log('Local timestamp:', localTimestamp);
+                console.log('Cloud:', cloudSongIds.length, 'canzoni - timestamp:', cloudTimestamp);
+                console.log('Local:', songs.length, 'canzoni - timestamp:', localTimestamp);
                 
-                if (!cloudTimestamp && songs.length > 0) {
-                    // Cloud vuoto, locale pieno → carica locale su cloud
+                // Cloud vuoto, locale pieno → carica locale su cloud
+                if (cloudSongIds.length === 0 && songs.length > 0) {
                     console.log('Cloud vuoto, carico dati locali...');
                     saveToFirebaseImmediate();
                     return;
                 }
                 
-                if (!localTimestamp || cloudTimestamp > localTimestamp) {
-                    // Cloud più recente → scarica
-                    console.log('Cloud più recente, scarico dati...');
-                    const cloudSongIds = metadata.songIds || [];
+                // Cloud pieno, locale vuoto → scarica dal cloud
+                if (cloudSongIds.length > 0 && songs.length === 0) {
+                    console.log('Locale vuoto, scarico dal cloud...');
                     await loadAllSongsFromCloud(cloudSongIds);
                     localStorage.setItem('lastModified', cloudTimestamp);
                     setSyncStatus('synced');
-                    alert(`✓ Sincronizzato dal cloud!\n${songs.length} canzoni aggiornate.`);
-                } else if (localTimestamp > cloudTimestamp) {
-                    // Locale più recente → carica su cloud
-                    console.log('Locale più recente, carico su cloud...');
-                    saveToFirebaseImmediate();
+                    return;
+                }
+                
+                // Entrambi hanno dati → verifica se ci sono differenze
+                if (songs.length > 0 && cloudSongIds.length > 0) {
+                    // Carica canzoni dal cloud per confronto
+                    const cloudSongs = await loadCloudSongsForComparison(cloudSongIds);
+                    
+                    // Fa il merge intelligente
+                    const diff = await smartMerge(cloudSongs, songs);
+                    
+                    const totalChanges = diff.added.length + diff.modified.length + diff.localOnly.length;
+                    
+                    if (totalChanges === 0) {
+                        // Nessuna differenza
+                        console.log('Già sincronizzato perfettamente');
+                        setSyncStatus('synced');
+                        return;
+                    }
+                    
+                    // Ci sono differenze → mostra modal di merge
+                    showMergeModal(diff, cloudSongs, cloudTimestamp, metadata.deviceInfo);
                 } else {
-                    // Stessa versione
-                    console.log('Già sincronizzato');
                     setSyncStatus('synced');
                 }
+                
             } else {
                 console.log('Primo accesso, salvo dati locali su cloud...');
                 saveToFirebaseImmediate();
@@ -4774,6 +4846,170 @@ async function loadAllSongsFromCloud(songIds) {
     if (document.getElementById('manage-tab').classList.contains('active')) {
         updateManage();
     }
+}
+
+async function loadCloudSongsForComparison(songIds) {
+    const userSongsCollection = window.firebaseCollection(window.firebaseDb, 'users', currentUser.uid, 'songs');
+    const cloudSongs = [];
+    
+    for (const songId of songIds) {
+        const songDoc = window.firebaseDoc(userSongsCollection, String(songId));
+        const songSnap = await window.firebaseGetDoc(songDoc);
+        
+        if (songSnap.exists()) {
+            cloudSongs.push(songSnap.data());
+        }
+    }
+    
+    return cloudSongs;
+}
+
+let pendingMerge = null;
+
+function showMergeModal(diff, cloudSongs, cloudTimestamp, cloudDevice) {
+    pendingMerge = { diff, cloudSongs };
+    
+    const totalChanges = diff.added.length + diff.modified.length + diff.localOnly.length;
+    
+    // Summary
+    const summaryParts = [];
+    if (diff.added.length > 0) summaryParts.push(`<strong>${diff.added.length}</strong> canzoni nuove nel cloud`);
+    if (diff.modified.length > 0) summaryParts.push(`<strong>${diff.modified.length}</strong> canzoni modificate`);
+    if (diff.localOnly.length > 0) summaryParts.push(`<strong>${diff.localOnly.length}</strong> canzoni solo in locale`);
+    
+    document.getElementById('merge-summary').innerHTML = 
+        `Trovate <strong>${totalChanges} differenze</strong> tra cloud e locale:<br>` +
+        summaryParts.join('<br>');
+    
+    // Details
+    let detailsHtml = '<div style="font-family: monospace; font-size: 13px;">';
+    
+    if (diff.added.length > 0) {
+        detailsHtml += '<div style="margin-bottom: 15px;"><strong>✅ Nuove nel cloud:</strong><br>';
+        diff.added.forEach(song => {
+            detailsHtml += `&nbsp;&nbsp;✅ "${song.title}" - ${song.artist}<br>`;
+        });
+        detailsHtml += '</div>';
+    }
+    
+    if (diff.modified.length > 0) {
+        detailsHtml += '<div style="margin-bottom: 15px;"><strong>✏️ Modificate:</strong><br>';
+        diff.modified.forEach(item => {
+            detailsHtml += `&nbsp;&nbsp;✏️ "${item.cloud.title}" - ${item.cloud.artist}<br>`;
+        });
+        detailsHtml += '</div>';
+    }
+    
+    if (diff.localOnly.length > 0) {
+        detailsHtml += '<div style="margin-bottom: 15px;"><strong>📱 Solo in locale:</strong><br>';
+        diff.localOnly.forEach(song => {
+            detailsHtml += `&nbsp;&nbsp;📱 "${song.title}" - ${song.artist}<br>`;
+        });
+        detailsHtml += '</div>';
+    }
+    
+    detailsHtml += '</div>';
+    document.getElementById('merge-details').innerHTML = detailsHtml;
+    
+    // Info
+    const localTimestamp = localStorage.getItem('lastModified') || 'Sconosciuto';
+    const cloudDate = cloudTimestamp ? new Date(cloudTimestamp).toLocaleString('it-IT') : 'Sconosciuto';
+    const localDate = localTimestamp !== 'Sconosciuto' ? new Date(localTimestamp).toLocaleString('it-IT') : 'Sconosciuto';
+    
+    document.getElementById('merge-info').innerHTML = 
+        `☁️ Cloud: ${cloudDate} ${cloudDevice ? `(${cloudDevice})` : ''}<br>` +
+        `📱 Locale: ${localDate}`;
+    
+    document.getElementById('merge-modal').classList.add('show');
+}
+
+function closeMergeModal() {
+    document.getElementById('merge-modal').classList.remove('show');
+    pendingMerge = null;
+    setSyncStatus('synced');
+}
+
+function useCloudOnly() {
+    if (!pendingMerge) return;
+    
+    saveUndoState();
+    songs = pendingMerge.cloudSongs.map((s, i) => ({
+        ...s,
+        id: s.id || Date.now() + i
+    }));
+    
+    saveData();
+    closeMergeModal();
+    
+    if (document.getElementById('manage-tab').classList.contains('active')) {
+        updateManage();
+    }
+    
+    alert(`✓ Caricato dal cloud!\n\nTotale canzoni: ${songs.length}`);
+}
+
+function useLocalOnly() {
+    if (!pendingMerge) return;
+    
+    // Mantieni i dati locali e caricali sul cloud
+    saveToFirebaseImmediate();
+    closeMergeModal();
+    
+    alert(`✓ Dati locali caricati sul cloud!\n\nTotale canzoni: ${songs.length}`);
+}
+
+function mergeAll() {
+    if (!pendingMerge) return;
+    
+    saveUndoState();
+    
+    const { diff, cloudSongs } = pendingMerge;
+    
+    // Crea mappa canzoni locali
+    const localMap = new Map(songs.map(s => 
+        [`${s.title.toLowerCase()}_${s.artist.toLowerCase()}`, s]
+    ));
+    
+    // Parti dalle canzoni locali
+    const mergedSongs = [...songs];
+    
+    // Aggiungi nuove dal cloud
+    diff.added.forEach(song => {
+        mergedSongs.push({
+            ...song,
+            id: Date.now() + Math.random()
+        });
+    });
+    
+    // Aggiorna modificate con versione cloud
+    diff.modified.forEach(item => {
+        const key = `${item.cloud.title.toLowerCase()}_${item.cloud.artist.toLowerCase()}`;
+        const index = mergedSongs.findIndex(s => 
+            `${s.title.toLowerCase()}_${s.artist.toLowerCase()}` === key
+        );
+        if (index >= 0) {
+            mergedSongs[index] = { ...item.cloud, id: mergedSongs[index].id };
+        }
+    });
+    
+    songs = mergedSongs;
+    saveData();
+    saveToFirebaseImmediate();
+    closeMergeModal();
+    
+    if (document.getElementById('manage-tab').classList.contains('active')) {
+        updateManage();
+    }
+    
+    const summary = 
+        `✓ Unione completata!\n\n` +
+        `📊 Riepilogo:\n` +
+        `• ${diff.added.length} canzoni aggiunte dal cloud\n` +
+        `• ${diff.modified.length} canzoni aggiornate\n` +
+        `• ${diff.localOnly.length} canzoni locali mantenute\n\n` +
+        `Totale canzoni: ${songs.length}`;
+    
+    alert(summary);
 }
 
 async function mergeWithCloud(cloudSongIds) {
