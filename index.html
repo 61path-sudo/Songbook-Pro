@@ -1500,6 +1500,7 @@ body.dark-mode #empty-trash-btn:disabled {
         let metronomeInterval = null;
         let metronomeRunning = false;
         let audioContext = null;
+        window.isSavingToCloud = false;
         let tapTimes = [];
         let nextTickTime = 0;
         let metronomeBpm = 120;
@@ -4554,6 +4555,7 @@ SongBook Pro
 let currentUser = null;
 let syncEnabled = false;
 let syncTimeout = null;
+let isSavingToCloud = false;
 
 // Inizializza Firebase Auth
 function initFirebaseAuth() {
@@ -4627,8 +4629,15 @@ function loginWithGoogle() {
 
 function logoutFromGoogle() {
     if (confirm('Vuoi uscire? I dati rimarranno salvati localmente sul dispositivo.')) {
+        // Ferma listener real-time
+        if (window.syncListener) {
+            window.syncListener();
+            window.syncListener = null;
+        }
+        
         window.firebaseSignOut(window.firebaseAuth)
             .then(() => {
+                syncEnabled = false;
                 console.log('Logout riuscito');
                 alert('Logout effettuato. I dati sono ancora disponibili localmente.');
             })
@@ -4676,10 +4685,11 @@ function saveToFirebase() {
 }
 
 function saveToFirebaseImmediate() {
-    if (!syncEnabled || !currentUser) {
+    if (!syncEnabled || !currentUser || isSavingToCloud) {
         return;
     }
 
+    isSavingToCloud = true;
     const timestamp = new Date().toISOString();
     localStorage.setItem('lastModified', timestamp);
     
@@ -4691,37 +4701,32 @@ function saveToFirebaseImmediate() {
     
     setSyncStatus('syncing');
     
-    // Usa batch per scrivere tutte le canzoni
     const batch = window.firebaseWriteBatch(window.firebaseDb);
     const userSongsCollection = window.firebaseCollection(window.firebaseDb, 'users', currentUser.uid, 'songs');
     
-    // Prima elimina tutte le canzoni esistenti (per gestire le cancellazioni)
-    // Questo è un placeholder - Firebase non permette di eliminare collection intere facilmente
-    // Per ora sovrascriviamo semplicemente tutto
-    
-    // Salva ogni canzone come documento separato
     songs.forEach(song => {
         const songDoc = window.firebaseDoc(userSongsCollection, String(song.id));
         batch.set(songDoc, song);
     });
     
-    // Salva anche metadata con lista ID e timestamp
     const metaDoc = window.firebaseDoc(window.firebaseDb, 'users', currentUser.uid);
     batch.set(metaDoc, {
-    songIds: songs.map(s => s.id),
-    lastModified: timestamp,  // <-- AGGIUNGI QUESTA RIGA
-    deviceInfo: navigator.userAgent,
-    totalSongs: songs.length
-});
+        songIds: songs.map(s => s.id),
+        lastModified: timestamp,
+        deviceInfo: navigator.userAgent,
+        totalSongs: songs.length
+    });
     
     batch.commit()
         .then(() => {
-            console.log('Dati salvati su Firebase (documenti separati)');
+            console.log('✅ Dati salvati su Firebase');
             setSyncStatus('synced');
+            isSavingToCloud = false;
         })
         .catch((error) => {
-            console.error('Errore salvataggio Firebase:', error);
+            console.error('❌ Errore salvataggio Firebase:', error);
             setSyncStatus('offline');
+            isSavingToCloud = false;
         });
 }
 
@@ -4843,44 +4848,61 @@ function loadFromFirebase() {
             setSyncStatus('offline');
         });
 
-// Setup controllo periodico aggiornamenti (ogni 30 secondi)
-    if (!window.syncCheckInterval && syncEnabled) {
-        window.syncCheckInterval = setInterval(() => {
-            if (!currentUser) return;
+// Setup listener real-time per aggiornamenti
+    if (!window.syncListener && syncEnabled && currentUser) {
+        const metaDoc = window.firebaseDoc(window.firebaseDb, 'users', currentUser.uid);
+        
+        window.syncListener = window.firebaseOnSnapshot(metaDoc, (docSnap) => {
+            if (!docSnap.exists()) return;
             
-            const metaDoc = window.firebaseDoc(window.firebaseDb, 'users', currentUser.uid);
+            const cloudTimestamp = docSnap.data().lastModified;
+            const localTimestamp = localStorage.getItem('lastModified');
             
-            window.firebaseGetDoc(metaDoc).then((docSnap) => {
-                if (docSnap.exists()) {
-                    const cloudTimestamp = docSnap.data().lastModified;
-                    const localTimestamp = localStorage.getItem('lastModified');
-                    
-                    // Se cloud è più recente di locale
-                    if (cloudTimestamp && localTimestamp && cloudTimestamp > localTimestamp) {
-                        console.log('Aggiornamenti disponibili dal cloud');
-                        setSyncStatus('syncing');
+            // Salta se stiamo salvando noi
+            if (window.isSavingToCloud) return;
+            
+            // Se cloud è più recente di locale
+            if (cloudTimestamp && localTimestamp && cloudTimestamp > localTimestamp) {
+                console.log('🔄 Aggiornamenti rilevati dal cloud in tempo reale');
+                setSyncStatus('syncing');
+                
+                const metadata = docSnap.data();
+                const cloudSongIds = metadata.songIds || [];
+                
+                loadCloudSongsForComparison(cloudSongIds).then(cloudSongs => {
+                    smartMerge(cloudSongs, songs).then(diff => {
+                        const totalChanges = diff.added.length + diff.modified.length + diff.localOnly.length;
                         
-                        // Ricarica automaticamente
-                        const metadata = docSnap.data();
-                        const cloudSongIds = metadata.songIds || [];
-                        
-                        loadAllSongsFromCloud(cloudSongIds).then(() => {
+                        if (totalChanges === 0) {
                             localStorage.setItem('lastModified', cloudTimestamp);
-                            console.log('Aggiornato dal cloud automaticamente');
+                            setSyncStatus('synced');
+                            return;
+                        }
+                        
+                        // Se ci sono solo aggiunte dal cloud, applica automaticamente
+                        if (diff.added.length > 0 && diff.modified.length === 0 && diff.localOnly.length === 0) {
+                            console.log(`✅ Aggiunte ${diff.added.length} canzoni dal cloud automaticamente`);
+                            songs = [...songs, ...diff.added];
+                            saveData();
+                            localStorage.setItem('lastModified', cloudTimestamp);
                             
                             if (document.getElementById('manage-tab').classList.contains('active')) {
                                 updateManage();
                             }
                             setSyncStatus('synced');
-                        });
-                    }
-                }
-            }).catch(err => {
-                console.error('Errore check sync:', err);
-            });
-        }, 30000); // Controlla ogni 30 secondi
+                        } else {
+                            // Conflitti - mostra modal
+                            showMergeModal(diff, cloudSongs, cloudTimestamp, metadata.deviceInfo);
+                        }
+                    });
+                });
+            }
+        }, (error) => {
+            console.error('Errore listener sync:', error);
+            setSyncStatus('offline');
+        });
         
-        console.log('Auto-sync attivato (check ogni 30 secondi)');
+        console.log('✅ Listener real-time Firebase attivato');
     }
 }
 
