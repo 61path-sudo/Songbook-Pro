@@ -4594,6 +4594,64 @@ window.firebaseGetRedirectResult = async function() {
         .catch((error) => {
             console.error('Errore redirect:', error);
         });
+
+// Attiva listener dopo login
+    setTimeout(() => {
+        if (currentUser && syncEnabled && !window.syncListener) {
+            console.log('🔧 Attivo listener real-time...');
+            
+            const metaDoc = window.firebaseDoc(window.firebaseDb, 'users', currentUser.uid);
+            
+            window.syncListener = window.firebaseOnSnapshot(metaDoc, (docSnap) => {
+                if (!docSnap.exists()) return;
+                
+                const cloudTimestamp = docSnap.data().lastModified;
+                const localTimestamp = localStorage.getItem('lastModified');
+                
+                if (window.isSavingToCloud) return;
+                
+                if (cloudTimestamp && localTimestamp && cloudTimestamp > localTimestamp) {
+                    console.log('🔄 Aggiornamenti dal cloud!');
+                    setSyncStatus('syncing');
+                    
+                    const metadata = docSnap.data();
+                    const cloudSongIds = metadata.songIds || [];
+                    
+                    loadCloudSongsForComparison(cloudSongIds).then(cloudSongs => {
+                        smartMerge(cloudSongs, songs).then(diff => {
+                            const totalChanges = diff.added.length + diff.modified.length + diff.localOnly.length;
+                            
+                            if (totalChanges === 0) {
+                                localStorage.setItem('lastModified', cloudTimestamp);
+                                setSyncStatus('synced');
+                                return;
+                            }
+                            
+                            if (diff.added.length > 0 && diff.modified.length === 0 && diff.localOnly.length === 0) {
+                                console.log(`✅ Aggiunte ${diff.added.length} canzoni automaticamente`);
+                                songs = [...songs, ...diff.added];
+                                saveData();
+                                localStorage.setItem('lastModified', cloudTimestamp);
+                                
+                                if (document.getElementById('manage-tab').classList.contains('active')) {
+                                    updateManage();
+                                }
+                                setSyncStatus('synced');
+                            } else {
+                                showMergeModal(diff, cloudSongs, cloudTimestamp, metadata.deviceInfo);
+                            }
+                        });
+                    });
+                }
+            }, (error) => {
+                console.error('Errore listener:', error);
+                setSyncStatus('offline');
+            });
+            
+            console.log('✅ Listener real-time attivato in initFirebaseAuth');
+        }
+    }, 2000);
+
 };
 
 function updateFirebaseUI() {
