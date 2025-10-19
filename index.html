@@ -4843,35 +4843,44 @@ function loadFromFirebase() {
             setSyncStatus('offline');
         });
 
-// Attiva listener real-time per aggiornamenti automatici
-    if (!window.firebaseListener) {
-        const metaDoc = window.firebaseDoc(window.firebaseDb, 'users', currentUser.uid);
-        
-        window.firebaseListener = window.firebaseOnSnapshot(metaDoc, (docSnap) => {
-            if (docSnap.exists()) {
-                const newTimestamp = docSnap.data().lastModified;
-                const currentTimestamp = localStorage.getItem('lastModified');
-                
-                if (newTimestamp && newTimestamp !== currentTimestamp) {
-                    console.log('Rilevato aggiornamento dal cloud, ricarico...');
-                    localStorage.setItem('lastModified', newTimestamp);
+// Setup controllo periodico aggiornamenti (ogni 30 secondi)
+    if (!window.syncCheckInterval && syncEnabled) {
+        window.syncCheckInterval = setInterval(() => {
+            if (!currentUser) return;
+            
+            const metaDoc = window.firebaseDoc(window.firebaseDb, 'users', currentUser.uid);
+            
+            window.firebaseGetDoc(metaDoc).then((docSnap) => {
+                if (docSnap.exists()) {
+                    const cloudTimestamp = docSnap.data().lastModified;
+                    const localTimestamp = localStorage.getItem('lastModified');
                     
-                    // Ricarica i dati senza refresh della pagina
-                    const metadata = docSnap.data();
-                    const cloudSongIds = metadata.songIds || [];
-                    
-                    loadAllSongsFromCloud(cloudSongIds).then(() => {
-                        console.log('Dati aggiornati dal cloud!');
-                        if (document.getElementById('manage-tab').classList.contains('active')) {
-                            updateManage();
-                        }
-                        setSyncStatus('synced');
-                    });
+                    // Se cloud è più recente di locale
+                    if (cloudTimestamp && localTimestamp && cloudTimestamp > localTimestamp) {
+                        console.log('Aggiornamenti disponibili dal cloud');
+                        setSyncStatus('syncing');
+                        
+                        // Ricarica automaticamente
+                        const metadata = docSnap.data();
+                        const cloudSongIds = metadata.songIds || [];
+                        
+                        loadAllSongsFromCloud(cloudSongIds).then(() => {
+                            localStorage.setItem('lastModified', cloudTimestamp);
+                            console.log('Aggiornato dal cloud automaticamente');
+                            
+                            if (document.getElementById('manage-tab').classList.contains('active')) {
+                                updateManage();
+                            }
+                            setSyncStatus('synced');
+                        });
+                    }
                 }
-            }
-        });
+            }).catch(err => {
+                console.error('Errore check sync:', err);
+            });
+        }, 30000); // Controlla ogni 30 secondi
         
-        console.log('Listener real-time attivato');
+        console.log('Auto-sync attivato (check ogni 30 secondi)');
     }
 }
 
