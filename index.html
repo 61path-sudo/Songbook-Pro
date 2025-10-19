@@ -5053,11 +5053,44 @@ function mergeAll() {
         const existing = mergedMap.get(cloudSong.id);
         
         if (!existing) {
-            console.log('Cloud song NON in locale, aggiungo:', cloudSong.title, '-', cloudSong.artist);
-            mergedMap.set(cloudSong.id, { ...cloudSong });
+    console.log('Cloud song NON in locale, aggiungo:', cloudSong.title, '-', cloudSong.artist);
+    mergedMap.set(cloudSong.id, { ...cloudSong });
+} else {
+    console.log('Cloud song già in locale:', cloudSong.title, '- controllo modifiche...');
+    
+    const modItem = diff.modified.find(m => m.cloud.id === cloudSong.id);
+    
+    if (modItem) {
+        // C'è una differenza tra locale e cloud
+        const onlyArtistChangedInCloud = 
+            (modItem.cloud.artist !== modItem.local.artist || 
+             modItem.cloud.artistSort !== modItem.local.artistSort) &&
+            modItem.cloud.title === modItem.local.title && 
+            modItem.cloud.lyrics === modItem.local.lyrics &&
+            modItem.cloud.notes === modItem.local.notes;
+        
+        const onlyArtistChangedInLocal = 
+            (modItem.local.artist !== modItem.cloud.artist || 
+             modItem.local.artistSort !== modItem.cloud.artistSort) &&
+            modItem.local.title === modItem.cloud.title && 
+            modItem.local.lyrics === modItem.cloud.lyrics &&
+            modItem.local.notes === modItem.cloud.notes;
+        
+        if (onlyArtistChangedInCloud && !onlyArtistChangedInLocal) {
+            // Solo cloud ha cambiato artista → applica cambio dal cloud
+            console.log('Applico cambio artista dal cloud:', modItem.cloud.artist);
+            existing.artist = modItem.cloud.artist;
+            existing.artistSort = modItem.cloud.artistSort;
+        } else if (onlyArtistChangedInLocal && !onlyArtistChangedInCloud) {
+            // Solo locale ha cambiato artista → mantieni locale (già fatto)
+            console.log('Mantengo cambio artista locale:', modItem.local.artist);
         } else {
-            console.log('Cloud song già in locale:', cloudSong.title, '- controllo modifiche...');
+            // Entrambi hanno modifiche diverse o modifiche al contenuto
+            // Mantieni locale (già nella map)
+            console.log('Modifiche diverse o al contenuto, mantengo locale');
         }
+    }
+}
     });
     
     console.log('Dopo step 2, mergedMap size:', mergedMap.size);
