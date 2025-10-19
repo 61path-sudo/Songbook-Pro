@@ -5101,7 +5101,13 @@ function mergeAll() {
     console.log('Dettaglio DOPO:', songs.map(s => ({ id: s.id, title: s.title, artist: s.artist })));
     
     saveData();
-    saveToFirebaseImmediate();
+    // Salva su Firebase SOLO se ci sono modifiche locali da caricare
+if (diff.localOnly.length > 0) {
+    console.log('Carico modifiche locali sul cloud...');
+    setTimeout(() => {
+        saveToFirebaseImmediate();
+    }, 1000);
+}
     
     closeMergeModal();
     
