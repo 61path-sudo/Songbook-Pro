@@ -3515,6 +3515,21 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     loadData();
+
+// Rileva quando torni online
+    window.addEventListener('online', () => {
+        console.log('📡 Connessione ripristinata');
+        if (currentUser && syncEnabled) {
+            setTimeout(() => {
+                loadFromFirebase();
+            }, 1000);
+        }
+    });
+    
+    window.addEventListener('offline', () => {
+        console.log('📴 Connessione persa');
+        setSyncStatus('offline');
+    });
 });
 
 function convertToSortName(artist) {
