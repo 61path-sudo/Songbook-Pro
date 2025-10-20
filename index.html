@@ -4921,6 +4921,12 @@ function loadFromFirebase() {
                 const cloudSongs = data.songs || [];
                 
                 smartMerge(cloudSongs, songs).then(diff => {
+                    // ✅ DEBUG SOLO PER LISTENER
+                    console.log('📊 LISTENER DIFF iPhone:');
+                    console.log('  added:', diff.added.length);
+                    console.log('  modified:', diff.modified.length);
+                    console.log('  localOnly:', diff.localOnly.length);
+                    
                     const totalChanges = diff.added.length + diff.modified.length + diff.localOnly.length;
                     
                     if (totalChanges === 0) {
