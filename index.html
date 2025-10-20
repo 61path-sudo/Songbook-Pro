@@ -4920,8 +4920,8 @@ function loadFromFirebase() {
                 console.log('🔄 Aggiornamenti dal cloud in tempo reale');
                 setSyncStatus('syncing');
                 
-                const cloudSongs = data.songs || [];
                 smartMerge(cloudSongs, songs).then(diff => {
+                    alert('Cloud: ' + cloudSongs.length + '\nLocal: ' + songs.length + '\nadded: ' + diff.added.length + '\nmodified: ' + diff.modified.length + '\nlocalOnly: ' + diff.localOnly.length);
                     
                     const totalChanges = diff.added.length + diff.modified.length + diff.localOnly.length;
                     
@@ -4931,9 +4931,8 @@ function loadFromFirebase() {
                         return;
                     }
                     
-                    // Auto-sync se il cloud è più recente E non ci sono modifiche locali
+                    // Auto-sync se non ci sono modifiche locali in conflitto
                     if (diff.localOnly.length === 0) {
-                        // Nessuna modifica locale in conflitto → scarica automaticamente
                         console.log(`✅ Auto-sync: scarico ${cloudSongs.length} canzoni dal cloud`);
                         songs = cloudSongs;
                         saveData();
