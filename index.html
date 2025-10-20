@@ -2843,6 +2843,17 @@ pageArtists.forEach((artist, i) => {
 }
 
         function showSong(id) {
+// Se siamo in fullscreen, usa showBookPage invece
+    if (document.getElementById('performance-tab').classList.contains('fullscreen-active')) {
+        const songPageIndex = allFullscreenPages.findIndex(p => 
+            p.type === 'song' && p.songId === id
+        );
+        if (songPageIndex >= 0) {
+            showBookPage(songPageIndex);
+            return; // Esci dalla funzione
+        }
+    }
+
     const song = songs.find(s => s.id === id);
     if (!song) {
         updatePerformance();
