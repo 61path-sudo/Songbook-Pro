@@ -4627,19 +4627,21 @@ window.firebaseGetRedirectResult = async function() {
                                 return;
                             }
                             
-                            if (diff.added.length > 0 && diff.modified.length === 0 && diff.localOnly.length === 0) {
-                                console.log(`✅ Aggiunte ${diff.added.length} canzoni automaticamente`);
-                                songs = [...songs, ...diff.added];
-                                saveData();
-                                localStorage.setItem('lastModified', cloudTimestamp);
-                                
-                                if (document.getElementById('manage-tab').classList.contains('active')) {
-                                    updateManage();
-                                }
-                                setSyncStatus('synced');
-                            } else {
-                                showMergeModal(diff, cloudSongs, cloudTimestamp, metadata.deviceInfo);
-                            }
+                            // Auto-sync se non ci sono modifiche locali in conflitto
+                    if (diff.localOnly.length === 0) {
+                        console.log(`✅ Auto-sync: scarico ${cloudSongs.length} canzoni dal cloud`);
+                        songs = cloudSongs;
+                        saveData();
+                        localStorage.setItem('lastModified', cloudTimestamp);
+                        
+                        if (document.getElementById('manage-tab').classList.contains('active')) {
+                            updateManage();
+                        }
+                        setSyncStatus('synced');
+                    } else {
+                        // Conflitto: modifiche sia in cloud che in locale
+                        showMergeModal(diff, cloudSongs, cloudTimestamp, data.deviceInfo);
+                    }
                         });
                     });
                 }
