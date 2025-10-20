@@ -4936,13 +4936,31 @@ function loadFromFirebase() {
                 
                 const cloudSongs = data.songs || [];
                 
-                // Mostra sempre modal per conferma
+                let modalShown = false;
+                
+                // Timeout di sicurezza: mostra modal dopo 2 secondi
+                const timeoutId = setTimeout(() => {
+                    if (!modalShown) {
+                        console.log('⏱️ Timeout - forzo modal');
+                        modalShown = true;
+                        showMergeModal({added: [], modified: [], localOnly: []}, cloudSongs, cloudTimestamp, data.deviceInfo);
+                    }
+                }, 2000);
+                
+                // Prova smartMerge
                 smartMerge(cloudSongs, songs).then(diff => {
-                    showMergeModal(diff, cloudSongs, cloudTimestamp, data.deviceInfo);
+                    clearTimeout(timeoutId);
+                    if (!modalShown) {
+                        modalShown = true;
+                        showMergeModal(diff, cloudSongs, cloudTimestamp, data.deviceInfo);
+                    }
                 }).catch(error => {
+                    clearTimeout(timeoutId);
                     console.error('Errore smartMerge:', error);
-                    // Fallback: mostra modal generico
-                    showMergeModal({added: [], modified: [], localOnly: []}, cloudSongs, cloudTimestamp, data.deviceInfo);
+                    if (!modalShown) {
+                        modalShown = true;
+                        showMergeModal({added: [], modified: [], localOnly: []}, cloudSongs, cloudTimestamp, data.deviceInfo);
+                    }
                 });
             }
         }, (error) => {
