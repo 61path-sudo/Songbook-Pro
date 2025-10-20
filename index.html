@@ -4922,46 +4922,16 @@ function loadFromFirebase() {
                 
                 const cloudSongs = data.songs || [];
                 
-                // Timeout di sicurezza
-                const timeoutId = setTimeout(() => {
-                    console.log('⚠️ Timeout sync - forzo reload');
-                    songs = cloudSongs;
-                    saveData();
-                    localStorage.setItem('lastModified', cloudTimestamp);
-                    setSyncStatus('synced');
-                    if (document.getElementById('manage-tab').classList.contains('active')) {
-                        updateManage();
-                    }
-                }, 3000);
+                // FORZA DOWNLOAD DIRETTO - senza smartMerge
+                console.log(`✅ Forzo download: ${cloudSongs.length} canzoni dal cloud`);
+                songs = cloudSongs;
+                saveData();
+                localStorage.setItem('lastModified', cloudTimestamp);
                 
-                smartMerge(cloudSongs, songs).then(diff => {
-                    clearTimeout(timeoutId); // Cancella timeout se completa in tempo
-                    alert('Cloud: ' + cloudSongs.length + '\nLocal: ' + songs.length + '\nadded: ' + diff.added.length + '\nmodified: ' + diff.modified.length + '\nlocalOnly: ' + diff.localOnly.length);
-                    
-                    const totalChanges = diff.added.length + diff.modified.length + diff.localOnly.length;
-                    
-                    if (totalChanges === 0) {
-                        localStorage.setItem('lastModified', cloudTimestamp);
-                        setSyncStatus('synced');
-                        return;
-                    }
-                    
-                    // Auto-sync se non ci sono modifiche locali in conflitto
-                    if (diff.localOnly.length === 0) {
-                        console.log(`✅ Auto-sync: scarico ${cloudSongs.length} canzoni dal cloud`);
-                        songs = cloudSongs;
-                        saveData();
-                        localStorage.setItem('lastModified', cloudTimestamp);
-                        
-                        if (document.getElementById('manage-tab').classList.contains('active')) {
-                            updateManage();
-                        }
-                        setSyncStatus('synced');
-                    } else {
-                        // Conflitto: ci sono modifiche sia in cloud che in locale
-                        showMergeModal(diff, cloudSongs, cloudTimestamp, data.deviceInfo);
-                    }
-                });
+                if (document.getElementById('manage-tab').classList.contains('active')) {
+                    updateManage();
+                }
+                setSyncStatus('synced');
             }
         }, (error) => {
             console.error('Errore listener:', error);
