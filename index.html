@@ -4843,49 +4843,50 @@ function loadFromFirebase() {
     window.firebaseGetDoc(metaDoc)
         .then(async (docSnap) => {
             if (docSnap.exists()) {
-                const metadata = docSnap.data();
-                const cloudTimestamp = metadata.lastModified || '';
+                const data = docSnap.data();
+                const cloudTimestamp = data.lastModified || '';
                 const localTimestamp = localStorage.getItem('lastModified') || '';
-                const cloudSongIds = metadata.songIds || [];
                 
-                console.log('Cloud:', cloudSongIds.length, 'canzoni - timestamp:', cloudTimestamp);
+                console.log('Cloud:', data.totalSongs || 0, 'canzoni - timestamp:', cloudTimestamp);
                 console.log('Local:', songs.length, 'canzoni - timestamp:', localTimestamp);
                 
+                // NUOVO: leggi direttamente dall'array songs
+                const cloudSongs = data.songs || [];
+                
                 // Cloud vuoto, locale pieno → carica locale su cloud
-                if (cloudSongIds.length === 0 && songs.length > 0) {
+                if (cloudSongs.length === 0 && songs.length > 0) {
                     console.log('Cloud vuoto, carico dati locali...');
                     saveToFirebaseImmediate();
                     return;
                 }
                 
                 // Cloud pieno, locale vuoto → scarica dal cloud
-                if (cloudSongIds.length > 0 && songs.length === 0) {
+                if (cloudSongs.length > 0 && songs.length === 0) {
                     console.log('Locale vuoto, scarico dal cloud...');
-                    await loadAllSongsFromCloud(cloudSongIds);
+                    songs = cloudSongs;
+                    saveData();
                     localStorage.setItem('lastModified', cloudTimestamp);
                     setSyncStatus('synced');
+                    
+                    if (document.getElementById('manage-tab').classList.contains('active')) {
+                        updateManage();
+                    }
                     return;
                 }
                 
-                // Entrambi hanno dati → verifica se ci sono differenze
-                if (songs.length > 0 && cloudSongIds.length > 0) {
-                    // Carica canzoni dal cloud per confronto
-                    const cloudSongs = await loadCloudSongsForComparison(cloudSongIds);
-                    
-                    // Fa il merge intelligente
+                // Entrambi hanno dati → verifica differenze
+                if (songs.length > 0 && cloudSongs.length > 0) {
                     const diff = await smartMerge(cloudSongs, songs);
-                    
                     const totalChanges = diff.added.length + diff.modified.length + diff.localOnly.length;
                     
                     if (totalChanges === 0) {
-                        // Nessuna differenza
                         console.log('Già sincronizzato perfettamente');
                         setSyncStatus('synced');
                         return;
                     }
                     
-                    // Ci sono differenze → mostra modal di merge
-                    showMergeModal(diff, cloudSongs, cloudTimestamp, metadata.deviceInfo);
+                    // Ci sono differenze → mostra modal
+                    showMergeModal(diff, cloudSongs, cloudTimestamp, data.deviceInfo);
                 } else {
                     setSyncStatus('synced');
                 }
@@ -4900,57 +4901,51 @@ function loadFromFirebase() {
             setSyncStatus('offline');
         });
 
-// Setup listener real-time per aggiornamenti
+    // Setup listener real-time
     if (!window.syncListener && syncEnabled && currentUser) {
         const metaDoc = window.firebaseDoc(window.firebaseDb, 'users', currentUser.uid);
         
         window.syncListener = window.firebaseOnSnapshot(metaDoc, (docSnap) => {
             if (!docSnap.exists()) return;
             
-            const cloudTimestamp = docSnap.data().lastModified;
+            const data = docSnap.data();
+            const cloudTimestamp = data.lastModified;
             const localTimestamp = localStorage.getItem('lastModified');
             
-            // Salta se stiamo salvando noi
             if (window.isSavingToCloud) return;
             
-            // Se cloud è più recente di locale
             if (cloudTimestamp && localTimestamp && cloudTimestamp > localTimestamp) {
-                console.log('🔄 Aggiornamenti rilevati dal cloud in tempo reale');
+                console.log('🔄 Aggiornamenti dal cloud in tempo reale');
                 setSyncStatus('syncing');
                 
-                const metadata = docSnap.data();
-                const cloudSongIds = metadata.songIds || [];
+                const cloudSongs = data.songs || [];
                 
-                loadCloudSongsForComparison(cloudSongIds).then(cloudSongs => {
-                    smartMerge(cloudSongs, songs).then(diff => {
-                        const totalChanges = diff.added.length + diff.modified.length + diff.localOnly.length;
+                smartMerge(cloudSongs, songs).then(diff => {
+                    const totalChanges = diff.added.length + diff.modified.length + diff.localOnly.length;
+                    
+                    if (totalChanges === 0) {
+                        localStorage.setItem('lastModified', cloudTimestamp);
+                        setSyncStatus('synced');
+                        return;
+                    }
+                    
+                    if (diff.added.length > 0 && diff.modified.length === 0 && diff.localOnly.length === 0) {
+                        console.log(`✅ Aggiunte ${diff.added.length} canzoni automaticamente`);
+                        songs = [...songs, ...diff.added];
+                        saveData();
+                        localStorage.setItem('lastModified', cloudTimestamp);
                         
-                        if (totalChanges === 0) {
-                            localStorage.setItem('lastModified', cloudTimestamp);
-                            setSyncStatus('synced');
-                            return;
+                        if (document.getElementById('manage-tab').classList.contains('active')) {
+                            updateManage();
                         }
-                        
-                        // Se ci sono solo aggiunte dal cloud, applica automaticamente
-                        if (diff.added.length > 0 && diff.modified.length === 0 && diff.localOnly.length === 0) {
-                            console.log(`✅ Aggiunte ${diff.added.length} canzoni dal cloud automaticamente`);
-                            songs = [...songs, ...diff.added];
-                            saveData();
-                            localStorage.setItem('lastModified', cloudTimestamp);
-                            
-                            if (document.getElementById('manage-tab').classList.contains('active')) {
-                                updateManage();
-                            }
-                            setSyncStatus('synced');
-                        } else {
-                            // Conflitti - mostra modal
-                            showMergeModal(diff, cloudSongs, cloudTimestamp, metadata.deviceInfo);
-                        }
-                    });
+                        setSyncStatus('synced');
+                    } else {
+                        showMergeModal(diff, cloudSongs, cloudTimestamp, data.deviceInfo);
+                    }
                 });
             }
         }, (error) => {
-            console.error('Errore listener sync:', error);
+            console.error('Errore listener:', error);
             setSyncStatus('offline');
         });
         
