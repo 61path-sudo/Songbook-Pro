@@ -336,16 +336,16 @@ body.dark-mode .fullscreen-active .artist-item {
     cursor: pointer; 
     color: black;
     white-space: nowrap;
-    height: 37px; /* Altezza fissa */
-    line-height: 37px; /* Centra verticalmente */
+    height: 37px;
+    line-height: 37px;
     display: flex;
     align-items: center;
-    pointer-events: none; /* Disabilita click sull'intero item */
+    /* pointer-events: none; */
 }
 
-.artist-item > * {
-    pointer-events: auto; /* Riabilita solo sul contenuto */
-}
+/* .artist-item > * {
+    pointer-events: auto;
+} */
 
 /* Fullscreen: distanziamento diverso */
 .fullscreen-active .artist-item {
@@ -5398,7 +5398,7 @@ artists.forEach(artist => {
             ${artistSort.toUpperCase()}
         </div>
         <div>
-            ${artistSongs.map(song => `<div class="artist-item" style="font-size: 20pt;"><span class="song-link" data-song-id="${song.id}">${song.title.toUpperCase()}</span></div>`).join('')}
+            ${artistSongs.map(song => `<div class="artist-item" onclick="showSong(${song.id})" style="font-size: 20pt;">${song.title.toUpperCase()}</div>`).join('')}
         </div>
         <div style="position: absolute; bottom: 20px; left: 0; right: 0; text-align: center; border-top: 1px solid black; padding-top: 15px;">
             <span style="cursor: pointer; font-size: 18pt;" data-action="index">Torna ad Elenco cantanti</span>
