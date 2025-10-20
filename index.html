@@ -4748,10 +4748,10 @@ function saveToFirebaseImmediate() {
     }
 
     isSavingToCloud = true;
+    window.isSavingToCloud = true;
     const timestamp = new Date().toISOString();
     localStorage.setItem('lastModified', timestamp);
     
-    // Cancella timeout pendente
     if (syncTimeout) {
         clearTimeout(syncTimeout);
         syncTimeout = null;
@@ -4759,33 +4759,27 @@ function saveToFirebaseImmediate() {
     
     setSyncStatus('syncing');
     
-    const batch = window.firebaseWriteBatch(window.firebaseDb);
-    const userSongsCollection = window.firebaseCollection(window.firebaseDb, 'users', currentUser.uid, 'songs');
+    // ✅ SALVA TUTTO IN UN SOLO DOCUMENTO
+    const userDoc = window.firebaseDoc(window.firebaseDb, 'users', currentUser.uid);
     
-    songs.forEach(song => {
-        const songDoc = window.firebaseDoc(userSongsCollection, String(song.id));
-        batch.set(songDoc, song);
-    });
-    
-    const metaDoc = window.firebaseDoc(window.firebaseDb, 'users', currentUser.uid);
-    batch.set(metaDoc, {
-        songIds: songs.map(s => s.id),
+    window.firebaseSetDoc(userDoc, {
+        songs: songs,  // Tutte le canzoni in un solo campo
         lastModified: timestamp,
         deviceInfo: navigator.userAgent,
         totalSongs: songs.length
+    })
+    .then(() => {
+        console.log('✅ Dati salvati su Firebase (1 scrittura)');
+        setSyncStatus('synced');
+        isSavingToCloud = false;
+        window.isSavingToCloud = false;
+    })
+    .catch((error) => {
+        console.error('❌ Errore salvataggio Firebase:', error);
+        setSyncStatus('offline');
+        isSavingToCloud = false;
+        window.isSavingToCloud = false;
     });
-    
-    batch.commit()
-        .then(() => {
-            console.log('✅ Dati salvati su Firebase');
-            setSyncStatus('synced');
-            isSavingToCloud = false;
-        })
-        .catch((error) => {
-            console.error('❌ Errore salvataggio Firebase:', error);
-            setSyncStatus('offline');
-            isSavingToCloud = false;
-        });
 }
 
 async function smartMerge(cloudSongs, localSongs) {
@@ -5026,7 +5020,6 @@ function showMergeModal(diff, cloudSongs, cloudTimestamp, cloudDevice) {
             });
         }
         artistChangesMap.get(oldArtist).songs.push(item.local.title);
-    } else if (contentChanged) {
         // Contenuto cambiato (non solo artista)
         songChangesList.push(item);
     }
