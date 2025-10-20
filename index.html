@@ -5101,13 +5101,18 @@ function useCloudOnly() {
     }));
     
     saveData();
-    closeMergeModal();
     
+    // Aggiorna interfaccia PRIMA di chiudere il modal
     if (document.getElementById('manage-tab').classList.contains('active')) {
         updateManage();
     }
     
-    alert(`✓ Caricato dal cloud!\n\nTotale canzoni: ${songs.length}`);
+    closeMergeModal();
+    
+    // Alert dopo, con timeout per dare tempo all'UI
+    setTimeout(() => {
+        alert(`✓ Caricato dal cloud!\n\nTotale canzoni: ${songs.length}`);
+    }, 100);
 }
 
 function useLocalOnly() {
