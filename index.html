@@ -1483,11 +1483,10 @@ body.dark-mode #empty-trash-btn:disabled {
         </div>
         
         <div class="modal-buttons">
-            <button class="modal-btn modal-btn-cancel" onclick="closeMergeModal()">Annulla</button>
-            <button class="modal-btn modal-btn-replace" onclick="useCloudOnly()">Usa Solo Cloud</button>
-            <button class="modal-btn modal-btn-replace" onclick="useLocalOnly()">Usa Solo Locale</button>
-            <button class="modal-btn modal-btn-add" onclick="mergeAll()">✓ Unisci Tutto</button>
-        </div>
+        <button class="modal-btn modal-btn-cancel" onclick="closeMergeModal()">Annulla</button>
+        <button class="modal-btn modal-btn-replace" onclick="useCloudOnly()">Usa Solo Cloud</button>
+        <button class="modal-btn modal-btn-add" onclick="mergeAll()">✓ Unisci Tutto</button>
+    </div>
     </div>
 </div>
 
@@ -4922,16 +4921,14 @@ function loadFromFirebase() {
                 
                 const cloudSongs = data.songs || [];
                 
-                // FORZA DOWNLOAD DIRETTO - senza smartMerge
-                console.log(`✅ Forzo download: ${cloudSongs.length} canzoni dal cloud`);
-                songs = cloudSongs;
-                saveData();
-                localStorage.setItem('lastModified', cloudTimestamp);
-                
-                if (document.getElementById('manage-tab').classList.contains('active')) {
-                    updateManage();
-                }
-                setSyncStatus('synced');
+                // Mostra sempre modal per conferma
+                smartMerge(cloudSongs, songs).then(diff => {
+                    showMergeModal(diff, cloudSongs, cloudTimestamp, data.deviceInfo);
+                }).catch(error => {
+                    console.error('Errore smartMerge:', error);
+                    // Fallback: mostra modal generico
+                    showMergeModal({added: [], modified: [], localOnly: []}, cloudSongs, cloudTimestamp, data.deviceInfo);
+                });
             }
         }, (error) => {
             console.error('Errore listener:', error);
