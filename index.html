@@ -4929,9 +4929,11 @@ function loadFromFirebase() {
                         return;
                     }
                     
-                    if (diff.added.length > 0 && diff.modified.length === 0 && diff.localOnly.length === 0) {
-                        console.log(`✅ Aggiunte ${diff.added.length} canzoni automaticamente`);
-                        songs = [...songs, ...diff.added];
+                    // Auto-sync se il cloud è più recente E non ci sono modifiche locali
+                    if (diff.localOnly.length === 0) {
+                        // Nessuna modifica locale in conflitto → scarica automaticamente
+                        console.log(`✅ Auto-sync: scarico ${cloudSongs.length} canzoni dal cloud`);
+                        songs = cloudSongs;
                         saveData();
                         localStorage.setItem('lastModified', cloudTimestamp);
                         
@@ -4940,6 +4942,7 @@ function loadFromFirebase() {
                         }
                         setSyncStatus('synced');
                     } else {
+                        // Conflitto: ci sono modifiche sia in cloud che in locale
                         showMergeModal(diff, cloudSongs, cloudTimestamp, data.deviceInfo);
                     }
                 });
