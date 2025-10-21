@@ -1182,6 +1182,75 @@ body.dark-mode #empty-trash-btn:disabled {
     box-shadow: 0 4px 20px rgba(0,0,0,0.15);
 }
 
+/* Tastiera Piano */
+.piano-key {
+    position: relative;
+    cursor: pointer;
+    border: 1px solid #333;
+    user-select: none;
+    transition: all 0.05s;
+}
+
+.piano-key.white {
+    width: 50px;
+    height: 200px;
+    background: white;
+    z-index: 1;
+}
+
+.piano-key.white:active,
+.piano-key.white.playing {
+    background: #e0e0e0;
+    transform: translateY(2px);
+}
+
+.piano-key.black {
+    width: 30px;
+    height: 120px;
+    background: #333;
+    z-index: 2;
+    margin-left: -15px;
+    margin-right: -15px;
+}
+
+.piano-key.black:active,
+.piano-key.black.playing {
+    background: #666;
+}
+
+.piano-key-label {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.piano-key.white .piano-key-label {
+    color: #333;
+}
+
+.piano-key.black .piano-key-label {
+    color: white;
+}
+
+/* Dark mode tastiera */
+body.dark-mode .piano-key.white {
+    background: #e0e0e0;
+    border-color: #555;
+}
+
+body.dark-mode .piano-key.white:active,
+body.dark-mode .piano-key.white.playing {
+    background: #bbb;
+}
+
+body.dark-mode .piano-key.black {
+    background: #1a1a1a;
+    border-color: #555;
+}
+
     </style>
 </head>
 <body>
@@ -1221,8 +1290,8 @@ body.dark-mode #empty-trash-btn:disabled {
                     <input type="number" id="tempo" placeholder="BPM" min="40" max="240" style="flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
                 </div>
             </div>
-            <div class="form-row" style="align-items: flex-start;">
-    <label style="padding-top: 12px;"><strong>Testo:</strong></label>
+            <div class="form-row" style="align-items: flex-start; margin: 10px 0;">
+    <label style="padding-top: 41px;">Testo:</label>
 <div style="flex: 1;">
     <div style="display: flex; gap: 5px; margin-bottom: 5px; justify-content: flex-end;">
         <button type="button" class="btn btn-secondary" onclick="changeLyricsFontSize(-1)" style="padding: 5px 10px; font-size: 12px;">A-</button>
@@ -1233,16 +1302,31 @@ body.dark-mode #empty-trash-btn:disabled {
 </div>
             
             <!-- Metronomo -->
-            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0;">
-                <div style="display: flex; align-items: center; gap: 15px;">
-                    <strong style="color: #333;">Metronomo:</strong>
-                    <input type="number" id="metronome-bpm" placeholder="BPM" value="120" min="40" max="240" style="width: 80px; padding: 8px; border: 1px solid #ddd; border-radius: 5px;">
-                    <button class="btn btn-secondary" onclick="toggleMetronome()" id="metronome-btn" style="font-weight: 600; color: #333;">▶ Avvia</button>
-                    <span id="metronome-indicator" style="width: 20px; height: 20px; border-radius: 50%; background: #ddd; transition: all 0.05s;"></span>
-                    <button class="btn btn-secondary" onclick="tapTempo()" style="padding: 8px 15px; font-weight: 600; color: #333;">Tap Tempo</button>
-                </div>
-            </div>
-            <div style="text-align: right;">
+<div class="form-row" style="align-items: center; margin: 10px 0; padding-top: 15px; border-top: 1px solid #ddd;">
+    <label>Metronomo:</label>
+    <div style="display: flex; align-items: center; gap: 10px;">
+        <input type="number" id="metronome-bpm" placeholder="BPM" value="120" min="40" max="240" style="width: 70px; padding: 10px 8px; border: 1px solid #ddd; border-radius: 5px; height: 40px;">
+        <button class="btn btn-secondary" onclick="toggleMetronome()" id="metronome-btn" style="font-weight: 600; color: #333; padding: 10px 15px;">▶ Avvia</button>
+        <span id="metronome-indicator" style="width: 20px; height: 20px; border-radius: 50%; background: #ddd; transition: all 0.05s; flex-shrink: 0;"></span>
+        <button class="btn btn-secondary" onclick="tapTempo()" style="padding: 10px 15px; font-weight: 600; color: #333;">Tap Tempo</button>
+    </div>
+</div>
+
+<!-- Tastiera Musicale -->
+<div class="form-row" style="align-items: center; margin: 5px 0 10px 0; padding-top: 15px; border-top: 1px solid #ddd;">
+    <label>Tastiera:</label>
+    <div style="display: flex; flex-direction: column; gap: 10px; flex: 1;">
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <button class="btn btn-secondary" onclick="changeOctave(-1)" style="padding: 10px 15px;">← Ottava</button>
+            <span id="octave-display" style="font-weight: 600; color: #333;">Ottava: 4</span>
+            <button class="btn btn-secondary" onclick="changeOctave(1)" style="padding: 10px 15px;">Ottava →</button>
+        </div>
+        <div id="piano-keyboard" style="display: flex; gap: 2px; user-select: none;"></div>
+    </div>
+</div>
+
+<!-- Pulsanti finali -->
+<div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
     <button class="btn btn-secondary" id="add-cancel-btn" onclick="clearForm()">Cancella</button>
     <button class="btn btn-primary" id="add-save-btn" onclick="addSong()">Inserisci Canzone</button>
 </div>
@@ -3499,6 +3583,7 @@ document.addEventListener('DOMContentLoaded', function() {
     loadDarkMode();  // ← AGGIUNGI QUESTA RIGA
     loadTrash();
     loadLyricsFontSize();
+    initPiano();
     
     // Inizializza Firebase
     setTimeout(initFirebaseAuth, 500);
@@ -5981,6 +6066,126 @@ function loadLyricsFontSize() {
             textarea.style.fontSize = currentLyricsFontSize + 'px';
         }
     }
+}
+
+// Tastiera Piano
+let currentOctave = 4;
+let pianoAudioContext = null;
+
+function initPiano() {
+    if (!pianoAudioContext) {
+        pianoAudioContext = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    renderPianoKeyboard();
+}
+
+function renderPianoKeyboard() {
+    const keyboard = document.getElementById('piano-keyboard');
+    if (!keyboard) return;
+    
+    // 2 ottave: C a B (24 tasti totali: 14 bianchi + 10 neri)
+    const notes = [
+        { note: 'C', type: 'white', offset: 0 },
+        { note: 'C#', type: 'black', offset: 0 },
+        { note: 'D', type: 'white', offset: 1 },
+        { note: 'D#', type: 'black', offset: 1 },
+        { note: 'E', type: 'white', offset: 2 },
+        { note: 'F', type: 'white', offset: 3 },
+        { note: 'F#', type: 'black', offset: 3 },
+        { note: 'G', type: 'white', offset: 4 },
+        { note: 'G#', type: 'black', offset: 4 },
+        { note: 'A', type: 'white', offset: 5 },
+        { note: 'A#', type: 'black', offset: 5 },
+        { note: 'B', type: 'white', offset: 6 }
+    ];
+    
+    keyboard.innerHTML = '';
+    
+    // Crea 2 ottave
+    for (let octave = 0; octave < 2; octave++) {
+        notes.forEach(noteData => {
+            const key = document.createElement('div');
+            key.className = `piano-key ${noteData.type}`;
+            
+            const noteWithOctave = noteData.note + (currentOctave + octave);
+            key.setAttribute('data-note', noteWithOctave);
+            
+            // Touch events
+            key.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                playPianoNote(noteWithOctave, key);
+            });
+            
+            key.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                key.classList.remove('playing');
+            });
+            
+            // Mouse events (per desktop)
+            key.addEventListener('mousedown', () => {
+                playPianoNote(noteWithOctave, key);
+            });
+            
+            key.addEventListener('mouseup', () => {
+                key.classList.remove('playing');
+            });
+            
+            key.addEventListener('mouseleave', () => {
+                key.classList.remove('playing');
+            });
+            
+            keyboard.appendChild(key);
+        });
+    }
+}
+
+function playPianoNote(note, keyElement) {
+    if (!pianoAudioContext) {
+        pianoAudioContext = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    
+    keyElement.classList.add('playing');
+    
+    const frequency = getNoteFrequency(note);
+    const oscillator = pianoAudioContext.createOscillator();
+    const gainNode = pianoAudioContext.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(pianoAudioContext.destination);
+    
+    oscillator.type = 'sine';
+    oscillator.frequency.setValueAtTime(frequency, pianoAudioContext.currentTime);
+    
+    gainNode.gain.setValueAtTime(0.3, pianoAudioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, pianoAudioContext.currentTime + 0.5);
+    
+    oscillator.start(pianoAudioContext.currentTime);
+    oscillator.stop(pianoAudioContext.currentTime + 0.5);
+    
+    setTimeout(() => {
+        keyElement.classList.remove('playing');
+    }, 100);
+}
+
+function getNoteFrequency(note) {
+    const noteMap = {
+        'C': 0, 'C#': 1, 'D': 2, 'D#': 3, 'E': 4, 'F': 5,
+        'F#': 6, 'G': 7, 'G#': 8, 'A': 9, 'A#': 10, 'B': 11
+    };
+    
+    const noteName = note.slice(0, -1);
+    const octave = parseInt(note.slice(-1));
+    
+    const semitone = noteMap[noteName];
+    const keyNumber = (octave - 4) * 12 + semitone;
+    
+    return 440 * Math.pow(2, keyNumber / 12);
+}
+
+function changeOctave(direction) {
+    currentOctave = Math.max(1, Math.min(7, currentOctave + direction));
+    document.getElementById('octave-display').textContent = `Ottava: ${currentOctave}`;
+    renderPianoKeyboard();
 }
 
     </script>
