@@ -1221,10 +1221,16 @@ body.dark-mode #empty-trash-btn:disabled {
                     <input type="number" id="tempo" placeholder="BPM" min="40" max="240" style="flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
                 </div>
             </div>
-            <div style="margin: 20px 0;">
-                <label><strong>Testo:</strong></label>
-                <textarea id="lyrics" placeholder="Inserisci il testo della canzone..."></textarea>
-            </div>
+            <div class="form-row" style="align-items: flex-start;">
+    <label style="padding-top: 12px;"><strong>Testo:</strong></label>
+<div style="flex: 1;">
+    <div style="display: flex; gap: 5px; margin-bottom: 5px; justify-content: flex-end;">
+        <button type="button" class="btn btn-secondary" onclick="changeLyricsFontSize(-1)" style="padding: 5px 10px; font-size: 12px;">A-</button>
+        <button type="button" class="btn btn-secondary" onclick="changeLyricsFontSize(1)" style="padding: 5px 10px; font-size: 12px;">A+</button>
+    </div>
+    <textarea id="lyrics" placeholder="Inserisci il testo della canzone..." style="min-height: 400px; width: 100%;"></textarea>
+</div>
+</div>
             
             <!-- Metronomo -->
             <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0;">
@@ -3492,6 +3498,7 @@ function tapTempo() {
 document.addEventListener('DOMContentLoaded', function() {
     loadDarkMode();  // ← AGGIUNGI QUESTA RIGA
     loadTrash();
+    loadLyricsFontSize();
     
     // Inizializza Firebase
     setTimeout(initFirebaseAuth, 500);
@@ -5950,6 +5957,30 @@ function handleTouchEnd(e) {
     }
     
     isSwiping = false;
+}
+
+// Font-size textarea lyrics
+let currentLyricsFontSize = 14; // dimensione iniziale in px
+
+function changeLyricsFontSize(change) {
+    currentLyricsFontSize = Math.max(10, Math.min(24, currentLyricsFontSize + change));
+    const textarea = document.getElementById('lyrics');
+    textarea.style.fontSize = currentLyricsFontSize + 'px';
+    
+    // Salva preferenza
+    localStorage.setItem('lyricsFontSize', currentLyricsFontSize);
+}
+
+// Carica font-size salvato
+function loadLyricsFontSize() {
+    const saved = localStorage.getItem('lyricsFontSize');
+    if (saved) {
+        currentLyricsFontSize = parseInt(saved);
+        const textarea = document.getElementById('lyrics');
+        if (textarea) {
+            textarea.style.fontSize = currentLyricsFontSize + 'px';
+        }
+    }
 }
 
     </script>
