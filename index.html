@@ -5409,7 +5409,7 @@ artists.forEach(artist => {
             ${artistSort.toUpperCase()}
         </div>
         <div>
-            ${artistSongs.map(song => `<div class="artist-item" style="font-size: 20pt;"><span class="song-link" data-song-id="${song.id}">${song.title.toUpperCase()}</span></div>`).join('')}
+            ${artistSongs.map(song => `<div class="artist-item" onclick="showSong(${song.id})" style="font-size: 20pt;">${song.title.toUpperCase()}</div>`).join('')}
         </div>
         <div style="position: absolute; bottom: 20px; left: 0; right: 0; text-align: center; border-top: 1px solid black; padding-top: 15px;">
             <span style="cursor: pointer; font-size: 18pt;" data-action="index">Torna ad Elenco cantanti</span>
@@ -5471,20 +5471,20 @@ const footerHtml = `
 `;
     
     pagination.forEach((page, pageIndex) => {
-    let content = '';
-    
-    if (page.isFirst) {
-        content = `
-            <div style="text-align: center; margin-bottom: 25px;">
-                <div style="font-size: 28pt; font-weight: bold; margin-bottom: 2px;">"${song.title.toUpperCase()}"</div>
-                <div style="font-size: 13pt; margin-bottom: 2px;">(${song.artist.toUpperCase()})</div>
-                ${notesHtml}
-            </div>
-            <div class="song-text" style="font-size: 19pt;">${page.lines.join('\n')}</div>
-        `;
-    } else {
-        content = `<div class="song-text" style="margin-top: 20px; font-size: 19pt;">${page.lines.join('\n')}</div>`;
-    }
+        let content = '';
+        
+        if (page.isFirst) {
+            content = `
+                <div style="text-align: center; margin-bottom: 25px;">
+                    <div style="font-size: 28pt; font-weight: bold; margin-bottom: 2px;">"${song.title.toUpperCase()}"</div>
+                    <div style="font-size: 13pt; margin-bottom: 2px;">(${song.artist.toUpperCase()})</div>
+                    ${notesHtml}
+                </div>
+                <div class="song-text" style="font-size: 19pt;">${page.lines.join('\n')}</div>
+            `;
+        } else {
+            content = `<div class="song-text" style="margin-top: 20px; font-size: 19pt;">${page.lines.join('\n')}</div>`;
+        }
         
         // ✅ Aggiungi footer solo all'ULTIMA pagina della canzone
         if (page.isLast || pageIndex === pagination.length - 1) {
@@ -5525,9 +5525,7 @@ function showBookPage(index) {
 }
 
 function addFullscreenLinkHandlers() {
-    // IMPORTANTE: solo .artist-link, NON .artist-item (per ridurre area cliccabile)
-    const artistItems = document.querySelectorAll('.artist-link');
-    
+    const artistItems = document.querySelectorAll('.artist-link, .song-link');
     artistItems.forEach(item => {
         let touchStartTime = 0;
         let touchStartPos = { x: 0, y: 0 };
@@ -5571,46 +5569,16 @@ function addFullscreenLinkHandlers() {
                         showBookPage(artistPageIndex);
                     }
                 }
-            }
-        });
-    });
-    
-    // Handler per titoli canzoni nella pagina artista
-    const songItems = document.querySelectorAll('.song-link');
-    songItems.forEach(item => {
-        let touchStartTime = 0;
-        let touchStartPos = { x: 0, y: 0 };
-        let hasMoved = false;
-        
-        item.addEventListener('touchstart', (e) => {
-            touchStartTime = Date.now();
-            touchStartPos = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-            hasMoved = false;
-        }, { passive: true });
-        
-        item.addEventListener('touchmove', (e) => {
-            const diffX = Math.abs(e.touches[0].clientX - touchStartPos.x);
-            const diffY = Math.abs(e.touches[0].clientY - touchStartPos.y);
-            
-            if (diffX > 10 || diffY > 10) {
-                hasMoved = true;
-            }
-        }, { passive: true });
-        
-        item.addEventListener('touchend', (e) => {
-            const touchDuration = Date.now() - touchStartTime;
-            
-            if (touchDuration < 300 && !hasMoved) {
-                e.preventDefault();
-                e.stopPropagation();
-                
-                const songId = parseInt(item.getAttribute('data-song-id'));
-                const songPageIndex = allFullscreenPages.findIndex(p => 
-                    p.type === 'song' && p.songId === songId
-                );
-                
-                if (songPageIndex >= 0) {
-                    showBookPage(songPageIndex);
+                else if (currentPage.type === 'artist') {
+                    const songPageIndex = allFullscreenPages.findIndex(p => 
+                        p.type === 'song' && 
+                        p.songTitle === itemText &&
+                        p.artist === currentPage.artist
+                    );
+                    
+                    if (songPageIndex >= 0) {
+                        showBookPage(songPageIndex);
+                    }
                 }
             }
         });
