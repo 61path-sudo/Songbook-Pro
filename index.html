@@ -3277,8 +3277,11 @@ const columnHeights = [0, 0, 0];
 pdf.setFont('times', 'normal');
 pdf.setFontSize(14);
 
+let lastLetter = ''; // ✅ Traccia l'ultima lettera per i separatori
+
 artists.forEach(artist => {
     const artistSort = songs.find(s => s.artist === artist)?.artistSort || artist;
+    const firstLetter = artistSort.charAt(0).toUpperCase(); // ✅ Prima lettera
     
     const maxItemsThisPage = isFirstPage ? itemsPerColFirstPage : itemsPerColOtherPages;
     
@@ -3313,9 +3316,9 @@ artists.forEach(artist => {
             
             pdf.addPage();
             currentPage++;
-            isFirstPage = false;  // Dalla seconda pagina in poi
+            isFirstPage = false;
             col = 0;
-            y = startYOtherPages;  // Parti più in alto
+            y = startYOtherPages;
             
             columnHeights[0] = 0;
             columnHeights[1] = 0;
@@ -3325,13 +3328,73 @@ artists.forEach(artist => {
 
     const x = marginLR + (col * colWidth);
     
+    // ✅ AGGIUNGI SEPARATORE se cambia lettera
+if (firstLetter !== lastLetter) {
+    const currentSpacing = isFirstPage ? spacingFirstPage : spacingOtherPages; // ✅ Definisci qui
+    
+    // Disegna rettangolo grigio per separatore
+    pdf.setFillColor(204, 204, 204);
+    pdf.rect(x - 2, y - 5, colWidth - 5, currentSpacing, 'F');  // ✅ -5 per lasciare spazio
+        
+        // Testo separatore (lettera in grassetto)
+        pdf.setFont('times', 'bold');
+        pdf.setFontSize(14);
+        pdf.setTextColor(0, 0, 0);
+        pdf.text(firstLetter, x, y + 1);  // ✅ +2 per centrare meglio
+        
+        columnHeights[col] = y;
+        y += currentSpacing;
+        artistCount++;
+        lastLetter = firstLetter;
+        
+        // Controlla se dopo il separatore devi cambiare colonna
+        if (artistCount >= maxItemsThisPage) {
+            const currentStartY = isFirstPage ? startYFirstPage : startYOtherPages;
+            
+            if (columnHeights[col] > 0) {
+                const xLine = marginLR + (col * colWidth);
+                pdf.setLineWidth(0.4);
+                pdf.setDrawColor(204, 204, 204);
+                pdf.line(xLine - 2, currentStartY - 5, xLine - 2, columnHeights[col]);
+                pdf.setDrawColor(0, 0, 0);
+            }
+            
+            col++;
+            artistCount = 0;
+            y = isFirstPage ? startYFirstPage : startYOtherPages;
+            
+            if (col >= 3) {
+                for (let c = 0; c < 3; c++) {
+                    if (columnHeights[c] > 0) {
+                        const xLine = marginLR + (c * colWidth);
+                        pdf.setLineWidth(0.4);
+                        pdf.setDrawColor(204, 204, 204);
+                        pdf.line(xLine - 2, currentStartY - 5, xLine - 2, columnHeights[c]);
+                        pdf.setDrawColor(0, 0, 0);
+                    }
+                }
+                
+                pdf.addPage();
+                currentPage++;
+                isFirstPage = false;
+                col = 0;
+                y = startYOtherPages;
+                
+                columnHeights[0] = 0;
+                columnHeights[1] = 0;
+                columnHeights[2] = 0;
+            }
+        }
+    }
+    
     // Calcola font-size dinamico per nomi lunghi
     let fontSize = 14;
+    pdf.setFont('times', 'normal'); // ✅ Reset a normal
     pdf.setFontSize(fontSize);
     const textWidth = pdf.getTextWidth(artistSort);
-    const availableWidth = colWidth * 0.95; // Usa 95% dello spazio
+    const availableWidth = colWidth * 0.94; // ✅ Stesso valore di updatePerformance
     if (textWidth > availableWidth) {
-        fontSize = Math.max(8, Math.floor(14 * (availableWidth / textWidth))); // Min 8pt
+        fontSize = Math.max(8, Math.floor(14 * (availableWidth / textWidth)));
     }
     pdf.setFontSize(fontSize);
     
@@ -3579,43 +3642,91 @@ function addFooterToPage(pdf, pageWidth, pageHeight, sideMargin) {
 
 // Funzioni per aggiungere link interattivi al PDF
 function addLinksToIndex(pdf, artists, pageMap, pageWidth, pageHeight, margin) {
+    // Usa gli stessi parametri di generatePDFWithJsPDF
+    const marginLR = 8;
+    const colWidth = (pageWidth - (marginLR * 2)) / 3;
+    
+    let itemsPerColFirstPage, itemsPerColOtherPages;
+    if (pageFormat === 'A5') {
+        itemsPerColFirstPage = 19;
+        itemsPerColOtherPages = 20;
+    } else {
+        itemsPerColFirstPage = 27;
+        itemsPerColOtherPages = 29;
+    }
+    
+    const startYFirstPage = margin + 17;
+    const startYOtherPages = margin + 2;
+    const availableHeightFirstPage = pageHeight - startYFirstPage;
+    const availableHeightOtherPages = pageHeight - startYOtherPages;
+    const spacingFirstPage = availableHeightFirstPage / itemsPerColFirstPage;
+    const spacingOtherPages = availableHeightOtherPages / itemsPerColOtherPages;
+    
     pdf.setPage(1);
     
-    let y = margin + 17;
-    const contentWidth = pageWidth - (margin * 2);
-    const colWidth = contentWidth / 3;
+    let y = startYFirstPage;
     let col = 0;
     let currentPage = 1;
-    
-    const footerHeight = 15;
-    const bottomLimit = pageHeight - margin - footerHeight;
+    let isFirstPage = true;
+    let artistCount = 0;
+    let lastLetter = '';
     
     artists.forEach(artist => {
         const artistSort = songs.find(s => s.artist === artist)?.artistSort || artist;
-        const x = 4 + (col * colWidth);
-        const artistPage = pageMap.artists.get(artist);
+        const firstLetter = artistSort.charAt(0).toUpperCase();
+        const maxItemsThisPage = isFirstPage ? itemsPerColFirstPage : itemsPerColOtherPages;
+        const currentSpacing = isFirstPage ? spacingFirstPage : spacingOtherPages;
         
-        if (y + 7 > bottomLimit) {
+        if (artistCount >= maxItemsThisPage) {
             col++;
-            y = margin + 17;
+            artistCount = 0;
+            y = isFirstPage ? startYFirstPage : startYOtherPages;
             
             if (col >= 3) {
                 currentPage++;
                 pdf.setPage(currentPage);
+                isFirstPage = false;
                 col = 0;
-                y = margin + 17;
+                y = startYOtherPages;
             }
         }
         
-        // MODIFICATO: usa la larghezza effettiva del testo invece di colWidth
+        const x = marginLR + (col * colWidth);
+        
+        // Se c'è un separatore, salta quella riga
+        if (firstLetter !== lastLetter) {
+            y += currentSpacing;
+            artistCount++;
+            lastLetter = firstLetter;
+            
+            // Controlla di nuovo se devi cambiare colonna dopo il separatore
+            if (artistCount >= maxItemsThisPage) {
+                col++;
+                artistCount = 0;
+                y = isFirstPage ? startYFirstPage : startYOtherPages;
+                
+                if (col >= 3) {
+                    currentPage++;
+                    pdf.setPage(currentPage);
+                    isFirstPage = false;
+                    col = 0;
+                    y = startYOtherPages;
+                }
+            }
+        }
+        
+        const artistPage = pageMap.artists.get(artist);
+        
+        // Calcola larghezza testo per link preciso
         pdf.setFont('times', 'normal');
         pdf.setFontSize(14);
         const textWidth = pdf.getTextWidth(artistSort);
         
-        // Link solo sull'area del testo, non su tutta la colonna
-        pdf.link(x, y - 3.5, textWidth + 2, 6, { pageNumber: artistPage });
+        // Link solo sull'area del testo
+        pdf.link(x, y - 3.5, textWidth + 2, currentSpacing * 0.8, { pageNumber: artistPage });
         
-        y += 7;
+        y += currentSpacing;
+        artistCount++;
     });
 }
 
@@ -6068,6 +6179,8 @@ function handleBookTouchEnd(e) {
 }
 
 function enterFullscreen() {
+    alert('1 - Inizio enterFullscreen'); // ✅ AGGIUNGI
+    
     // NON usare requestFullscreen() nativo - simula fullscreen
     
     // BLOCCA completamente lo scroll del body
@@ -6078,11 +6191,17 @@ function enterFullscreen() {
     document.body.style.top = '0';
     document.body.style.left = '0';
 
+    alert('2 - Dopo blocco body'); // ✅ AGGIUNGI
+
     const performanceTab = document.getElementById('performance-tab');
     const previewContainer = document.getElementById('preview-content');
     
+    alert('3 - Prima di generateAllPagesForBook'); // ✅ AGGIUNGI
+    
     // Genera tutte le pagine in sequenza (come un libro)
     generateAllPagesForBook();
+    
+    alert('4 - Dopo generateAllPagesForBook, pagine: ' + allFullscreenPages.length); // ✅ AGGIUNGI
     
     // Aggiungi classe fullscreen SENZA usare API nativa
     performanceTab.classList.add('fullscreen-active');
