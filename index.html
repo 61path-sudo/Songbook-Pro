@@ -6157,6 +6157,15 @@ function exitFullscreenAndGoToArtist(artist) {
 function handleBookTouchStart(e) {
     if (!isFullscreen) return;
     
+    // ✅ IGNORA se stai toccando un link/elemento cliccabile
+    const target = e.target;
+    if (target.hasAttribute('data-action') || 
+        target.closest('[data-action]') ||
+        target.classList.contains('artist-item') ||
+        target.closest('.artist-item')) {
+        return; // Non iniziare lo swipe
+    }
+    
     bookTouchStartX = e.touches[0].clientX;
     bookTouchStartY = e.touches[0].clientY;
     bookTouchCurrentX = bookTouchStartX;
@@ -6165,6 +6174,15 @@ function handleBookTouchStart(e) {
 
     function handleBookTouchMove(e) {
     if (!isFullscreen) return;
+    
+    // ✅ IGNORA se stai toccando un link
+    const target = e.target;
+    if (target.hasAttribute('data-action') || 
+        target.closest('[data-action]') ||
+        target.classList.contains('artist-item') ||
+        target.closest('.artist-item')) {
+        return;
+    }
     
     bookTouchCurrentX = e.touches[0].clientX;
     const touchCurrentY = e.touches[0].clientY;
