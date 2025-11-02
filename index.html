@@ -345,6 +345,13 @@ body.dark-mode .fullscreen-active .artist-item {
     /* pointer-events: none; */
 }
 
+/* Previeni selezione testo durante swipe in fullscreen */
+.fullscreen-active .artist-item {
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+}
+
 /* Nessun troncamento quando il font è ridotto */
 .artist-item[style*="font-size: 13pt"],
 .artist-item[style*="font-size: 12pt"],
@@ -6175,28 +6182,17 @@ function handleBookTouchStart(e) {
     function handleBookTouchMove(e) {
     if (!isFullscreen) return;
     
-    // ✅ IGNORA se stai toccando un link
-    const target = e.target;
-    if (target.hasAttribute('data-action') || 
-        target.closest('[data-action]') ||
-        target.classList.contains('artist-item') ||
-        target.closest('.artist-item')) {
-        return;
-    }
-    
     bookTouchCurrentX = e.touches[0].clientX;
     const touchCurrentY = e.touches[0].clientY;
     
     const diffX = Math.abs(bookTouchCurrentX - bookTouchStartX);
     const diffY = Math.abs(touchCurrentY - bookTouchStartY);
     
-    // BLOCCA COMPLETAMENTE qualsiasi movimento verticale
-    e.preventDefault();
-    e.stopPropagation();
-    
-    // SOLO swipe orizzontale significativo
-    if (diffX > 80 && diffX > diffY * 3) {
+    // Se è uno swipe orizzontale chiaro (80px+ e prevalentemente orizzontale)
+    if (diffX > 80 && diffX > diffY * 2) {
         bookIsSwiping = true;
+        e.preventDefault(); // BLOCCA il default SOLO se è uno swipe
+        e.stopPropagation();
     }
     
     return false;
@@ -6211,32 +6207,15 @@ function handleBookTouchEnd(e) {
     if (Math.abs(diffX) > threshold) {
         const currentPage = allFullscreenPages[currentFullscreenIndex];
         
-        // ✅ Se siamo in una canzone, naviga SOLO tra le pagine della stessa canzone
-        if (currentPage.type === 'song') {
-            const songId = currentPage.songId;
-            
-            // Trova indice prima e ultima pagina di questa canzone
-            const firstPageIndex = allFullscreenPages.findIndex(p => p.type === 'song' && p.songId === songId);
-            const lastPageIndex = allFullscreenPages.map((p, i) => p.type === 'song' && p.songId === songId ? i : -1)
-                                                    .filter(i => i !== -1)
-                                                    .pop();
-            
-            if (diffX > 0) {
-                // Swipe destra → pagina precedente DELLA CANZONE
-                if (currentFullscreenIndex > firstPageIndex) {
-                    showBookPage(currentFullscreenIndex - 1);
-                }
-            } else {
-                // Swipe sinistra → pagina successiva DELLA CANZONE
-                if (currentFullscreenIndex < lastPageIndex) {
-                    showBookPage(currentFullscreenIndex + 1);
-                }
+        // Per TUTTE le pagine (indice, artista, canzone), swipe normale
+        if (diffX > 0) {
+            // Swipe destra → pagina precedente
+            if (currentFullscreenIndex > 0) {
+                showBookPage(currentFullscreenIndex - 1);
             }
         } else {
-            // Per indice e pagine artista, swipe normale
-            if (diffX > 0) {
-                showBookPage(currentFullscreenIndex - 1);
-            } else {
+            // Swipe sinistra → pagina successiva
+            if (currentFullscreenIndex < allFullscreenPages.length - 1) {
                 showBookPage(currentFullscreenIndex + 1);
             }
         }
