@@ -5843,7 +5843,7 @@ if (textWidth > targetWidth) {
     fontSize = Math.max(8, Math.min(14, fontSize));
 }
                     
-                    html += `<div class="artist-item" style="font-size: ${fontSize}pt;" onclick="showArtist('${artist.replace(/'/g, "\\'")}')">${artistSort}</div>`;
+                    html += `<div class="artist-item" style="font-size: ${fontSize}pt;"><span class="artist-link" style="cursor: pointer;">${artistSort}</span></div>`;
                     
                     return html;
                 }).join('')}
