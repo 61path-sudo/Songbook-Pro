@@ -5711,7 +5711,11 @@ async function mergeWithCloud(cloudSongIds) {
 }
 
 function generateAllPagesForBook() {
+    alert('A - Inizio generateAllPagesForBook'); // ✅ AGGIUNGI
+    
     allFullscreenPages = [];
+    
+    alert('B - Array pulito'); // ✅ AGGIUNGI
     
     // Ottieni artisti ordinati
     const artistsMap = new Map();
@@ -5721,11 +5725,15 @@ function generateAllPagesForBook() {
         }
     });
     
+    alert('C - artistsMap creata, size: ' + artistsMap.size); // ✅ AGGIUNGI
+    
     const artistsArray = Array.from(artistsMap.entries()).map(([artist, artistSort]) => ({
         artist, artistSort
     }));
     artistsArray.sort((a, b) => a.artistSort.localeCompare(b.artistSort));
     const artists = artistsArray.map(item => item.artist);
+    
+    alert('D - Artists array creato, length: ' + artists.length); // ✅ AGGIUNGI
     
     // 1. PAGINA INDICE (multipagina se necessario)
 let itemsPerColFirstPage, itemsPerColOtherPages;
