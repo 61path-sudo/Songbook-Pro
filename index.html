@@ -5746,6 +5746,8 @@ if (pageFormat === 'A5') {
     itemsPerColOtherPages = 29;
 }
 
+alert('E - Formato: ' + pageFormat + ', items prima pagina: ' + itemsPerColFirstPage); // ✅ AGGIUNGI
+
 const itemsFirstPage = itemsPerColFirstPage * 3;
 const itemsOtherPages = itemsPerColOtherPages * 3;
 
@@ -5846,6 +5848,7 @@ const indexContent = `
     
         // 2. PER OGNI ARTISTA: pagina artista + tutte le canzoni
 artists.forEach(artist => {
+     alert('G - Inizio artista: ' + artist); // ✅ AGGIUNGI
     const artistSongs = songs.filter(s => s.artist === artist).sort((a,b) => a.title.localeCompare(b.title));
     const artistSort = songs.find(s => s.artist === artist)?.artistSort || artist;
     
