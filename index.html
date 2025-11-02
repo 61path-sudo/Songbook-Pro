@@ -6191,6 +6191,23 @@ function handleBookTouchEnd(e) {
     const threshold = 80;
     
     if (Math.abs(diffX) > threshold) {
+        // ✅ PREVIENI lo swipe se siamo su una pagina canzone con più pagine
+        const currentPage = allFullscreenPages[currentFullscreenIndex];
+        
+        // Se è una pagina canzone, permetti swipe solo se è l'unica pagina della canzone
+        if (currentPage.type === 'song') {
+            // Trova tutte le pagine della stessa canzone
+            const sameSongPages = allFullscreenPages.filter(p => 
+                p.type === 'song' && p.songId === currentPage.songId
+            );
+            
+            // Se la canzone ha più di una pagina, NON fare swipe (gestito internamente)
+            if (sameSongPages.length > 1) {
+                bookIsSwiping = false;
+                return;
+            }
+        }
+        
         if (diffX > 0) {
             // Swipe destra → pagina precedente
             showBookPage(currentFullscreenIndex - 1);
