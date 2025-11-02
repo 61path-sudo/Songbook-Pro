@@ -6191,29 +6191,36 @@ function handleBookTouchEnd(e) {
     const threshold = 80;
     
     if (Math.abs(diffX) > threshold) {
-        // ✅ PREVIENI lo swipe se siamo su una pagina canzone con più pagine
         const currentPage = allFullscreenPages[currentFullscreenIndex];
         
-        // Se è una pagina canzone, permetti swipe solo se è l'unica pagina della canzone
+        // ✅ Se siamo in una canzone, naviga SOLO tra le pagine della stessa canzone
         if (currentPage.type === 'song') {
-            // Trova tutte le pagine della stessa canzone
-            const sameSongPages = allFullscreenPages.filter(p => 
-                p.type === 'song' && p.songId === currentPage.songId
-            );
+            const songId = currentPage.songId;
             
-            // Se la canzone ha più di una pagina, NON fare swipe (gestito internamente)
-            if (sameSongPages.length > 1) {
-                bookIsSwiping = false;
-                return;
+            // Trova indice prima e ultima pagina di questa canzone
+            const firstPageIndex = allFullscreenPages.findIndex(p => p.type === 'song' && p.songId === songId);
+            const lastPageIndex = allFullscreenPages.map((p, i) => p.type === 'song' && p.songId === songId ? i : -1)
+                                                    .filter(i => i !== -1)
+                                                    .pop();
+            
+            if (diffX > 0) {
+                // Swipe destra → pagina precedente DELLA CANZONE
+                if (currentFullscreenIndex > firstPageIndex) {
+                    showBookPage(currentFullscreenIndex - 1);
+                }
+            } else {
+                // Swipe sinistra → pagina successiva DELLA CANZONE
+                if (currentFullscreenIndex < lastPageIndex) {
+                    showBookPage(currentFullscreenIndex + 1);
+                }
             }
-        }
-        
-        if (diffX > 0) {
-            // Swipe destra → pagina precedente
-            showBookPage(currentFullscreenIndex - 1);
         } else {
-            // Swipe sinistra → pagina successiva
-            showBookPage(currentFullscreenIndex + 1);
+            // Per indice e pagine artista, swipe normale
+            if (diffX > 0) {
+                showBookPage(currentFullscreenIndex - 1);
+            } else {
+                showBookPage(currentFullscreenIndex + 1);
+            }
         }
     }
     
@@ -6221,7 +6228,6 @@ function handleBookTouchEnd(e) {
 }
 
 function enterFullscreen() {
-    alert('1 - Inizio enterFullscreen'); // ✅ AGGIUNGI
     
     // NON usare requestFullscreen() nativo - simula fullscreen
     
@@ -6233,17 +6239,11 @@ function enterFullscreen() {
     document.body.style.top = '0';
     document.body.style.left = '0';
 
-    alert('2 - Dopo blocco body'); // ✅ AGGIUNGI
-
     const performanceTab = document.getElementById('performance-tab');
     const previewContainer = document.getElementById('preview-content');
     
-    alert('3 - Prima di generateAllPagesForBook'); // ✅ AGGIUNGI
-    
     // Genera tutte le pagine in sequenza (come un libro)
     generateAllPagesForBook();
-    
-    alert('4 - Dopo generateAllPagesForBook, pagine: ' + allFullscreenPages.length); // ✅ AGGIUNGI
     
     // Aggiungi classe fullscreen SENZA usare API nativa
     performanceTab.classList.add('fullscreen-active');
@@ -6272,9 +6272,9 @@ setTimeout(() => {
 }, 500);
     
 // Event listeners per swipe (BLOCCATO verso il basso)
-/*previewContainer.addEventListener('touchstart', handleBookTouchStart, { passive: false });
+previewContainer.addEventListener('touchstart', handleBookTouchStart, { passive: false });
 previewContainer.addEventListener('touchmove', handleBookTouchMove, { passive: false });
-previewContainer.addEventListener('touchend', handleBookTouchEnd, { passive: false });*/
+previewContainer.addEventListener('touchend', handleBookTouchEnd, { passive: false });
 
 // Long press per uscire
 previewContainer.addEventListener('touchstart', handleLongPressStart);
