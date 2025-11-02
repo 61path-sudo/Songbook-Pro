@@ -5711,11 +5711,8 @@ async function mergeWithCloud(cloudSongIds) {
 }
 
 function generateAllPagesForBook() {
-    alert('A - Inizio generateAllPagesForBook'); // ✅ AGGIUNGI
     
     allFullscreenPages = [];
-    
-    alert('B - Array pulito'); // ✅ AGGIUNGI
     
     // Ottieni artisti ordinati
     const artistsMap = new Map();
@@ -5725,15 +5722,11 @@ function generateAllPagesForBook() {
         }
     });
     
-    alert('C - artistsMap creata, size: ' + artistsMap.size); // ✅ AGGIUNGI
-    
     const artistsArray = Array.from(artistsMap.entries()).map(([artist, artistSort]) => ({
         artist, artistSort
     }));
     artistsArray.sort((a, b) => a.artistSort.localeCompare(b.artistSort));
     const artists = artistsArray.map(item => item.artist);
-    
-    alert('D - Artists array creato, length: ' + artists.length); // ✅ AGGIUNGI
     
     // 1. PAGINA INDICE (multipagina se necessario)
 let itemsPerColFirstPage, itemsPerColOtherPages;
@@ -5745,8 +5738,6 @@ if (pageFormat === 'A5') {
     itemsPerColFirstPage = 27;
     itemsPerColOtherPages = 29;
 }
-
-alert('E - Formato: ' + pageFormat + ', items prima pagina: ' + itemsPerColFirstPage); // ✅ AGGIUNGI
 
 const itemsFirstPage = itemsPerColFirstPage * 3;
 const itemsOtherPages = itemsPerColOtherPages * 3;
@@ -5872,7 +5863,6 @@ document.body.removeChild(testDivFont); // ✅ AGGIUNGI QUESTA RIGA QUI
     
         // 2. PER OGNI ARTISTA: pagina artista + tutte le canzoni
 artists.forEach(artist => {
-     alert('G - Inizio artista: ' + artist); // ✅ AGGIUNGI
     const artistSongs = songs.filter(s => s.artist === artist).sort((a,b) => a.title.localeCompare(b.title));
     const artistSort = songs.find(s => s.artist === artist)?.artistSort || artist;
     
@@ -5898,9 +5888,9 @@ artists.forEach(artist => {
     
     // Tutte le pagine di tutte le canzoni
     artistSongs.forEach(song => {
-        const songPages = generateSongPagesForBook(song);
-        allFullscreenPages.push(...songPages);
-    });
+    // const songPages = generateSongPagesForBook(song);
+    // allFullscreenPages.push(...songPages);
+});
 });
 }
 
