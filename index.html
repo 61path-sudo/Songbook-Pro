@@ -5756,6 +5756,23 @@ let remainingArtists = artists.length - itemsFirstPage;
 const additionalPages = remainingArtists > 0 ? Math.ceil(remainingArtists / itemsOtherPages) : 0;
 const totalIndexPages = 1 + additionalPages;
 
+// ✅ AGGIUNGI QUESTE RIGHE QUI:
+const dims = getPageDimensions();
+
+// Crea testDivFont per calcolare dimensioni
+const testDivFont = document.createElement('div');
+testDivFont.className = 'artist-item';
+testDivFont.style.position = 'absolute';
+testDivFont.style.visibility = 'hidden';
+testDivFont.style.width = 'auto';
+testDivFont.style.height = 'auto';
+document.body.appendChild(testDivFont);
+
+// Calcola columnWidth
+const columnWidth = pageFormat === 'A5' 
+    ? ((dims.width - 40) / 3) - 31
+    : ((dims.width - 40) / 3) - 10;
+
 // Crea pagine indice
 for (let pageNum = 0; pageNum < totalIndexPages; pageNum++) {
     let startIndex, endIndex;
@@ -5821,14 +5838,19 @@ const indexContent = `
                         lastLetter = firstLetter;
                     }
                     
-                    testDivFont.style.fontSize = '14pt';
-                    testDivFont.textContent = artistSort;
-                    const textWidth = testDivFont.offsetWidth;
-                    
-                    let fontSize = 14;
-                    if (textWidth > columnWidth) {
-                        fontSize = Math.max(5, Math.floor(14 * (columnWidth / textWidth)));
-                    }
+                    // Calcola font-size dinamico usando canvas
+const canvas = document.createElement('canvas');
+const context = canvas.getContext('2d');
+context.font = '14pt "Times New Roman", serif';
+
+const textWidth = context.measureText(artistSort).width;
+const targetWidth = columnWidth * 0.94;
+
+let fontSize = 14;
+if (textWidth > targetWidth) {
+    fontSize = Math.floor(14 * (targetWidth / textWidth));
+    fontSize = Math.max(8, Math.min(14, fontSize));
+}
                     
                     html += `<div class="artist-item" style="font-size: ${fontSize}pt;" onclick="showArtist('${artist.replace(/'/g, "\\'")}')">${artistSort}</div>`;
                     
@@ -5845,6 +5867,8 @@ const indexContent = `
         content: indexContent
     });
 }
+
+document.body.removeChild(testDivFont); // ✅ AGGIUNGI QUESTA RIGA QUI
     
         // 2. PER OGNI ARTISTA: pagina artista + tutte le canzoni
 artists.forEach(artist => {
