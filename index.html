@@ -1680,8 +1680,6 @@ function calculateSongPagination(song, format, isPDF = false, isFullscreen = fal
     middlePageHeight = screenHeight - 40; // Solo margini
     lastPageHeight = screenHeight - footerHeight - 40;
 
-    alert('Fullscreen canzone - Altezza: ' + firstPageHeight + 'px');  // ✅ AGGIUNGI QUESTO
-
 } else if (isPDF) {
     if (format === 'A5') {
         firstPageHeight = 650;
