@@ -375,10 +375,24 @@ body.dark-mode .fullscreen-active .artist-item {
 
 /* Fullscreen: distanziamento uguale al resto */
 .fullscreen-active .artist-item {
-    height: 37px !important;
-    line-height: 37px !important;
-    min-height: 37px;
-    max-height: 37px;
+    height: 42px !important;
+    line-height: 42px !important;
+    min-height: 42px;
+    max-height: 42px;
+    flex-shrink: 0;
+    flex-grow: 0;
+}
+
+.fullscreen-active .artist-columns {
+    height: 100%;
+    align-items: stretch;
+}
+
+.fullscreen-active .artist-column {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100%;
 }
 
 .artist-item.long-name {
@@ -5972,7 +5986,7 @@ function generateSongPagesForBook(song) {
     }
     
     // Calcola paginazione
-    const pagination = calculateSongPagination(song, pageFormat, false, true); // true = isFullscreen
+    const pagination = calculateSongPagination(song, pageFormat, false, true);  // ✅ CORRETTA
     
     // ✅ FOOTER HTML con link (senza onclick, gestiamo con touch events)
 const footerHtml = `
