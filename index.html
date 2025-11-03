@@ -5951,9 +5951,11 @@ artists.forEach(artist => {
     
     // Tutte le pagine di tutte le canzoni
     artistSongs.forEach(song => {
-    // const songPages = generateSongPagesForBook(song);
-    // allFullscreenPages.push(...songPages);
-});
+        alert('🎵 Genero pagine per: ' + song.title); // ✅ AGGIUNGI QUI
+        const songPages = generateSongPagesForBook(song);
+        alert('📄 Pagine generate: ' + songPages.length); // ✅ E QUI
+        allFullscreenPages.push(...songPages);
+    });
 });
 }
 
