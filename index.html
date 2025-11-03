@@ -5958,6 +5958,8 @@ artists.forEach(artist => {
 }
 
 function generateSongPagesForBook(song) {
+    alert('🎵 generateSongPagesForBook chiamata per: ' + song.title); // ✅ AGGIUNGI QUESTA RIGA
+    
     const pages = [];
     
     // Parse notes
@@ -5987,7 +5989,9 @@ function generateSongPagesForBook(song) {
     }
     
     // Calcola paginazione
-    const pagination = calculateSongPagination(song, pageFormat, false, true);  // ✅ CORRETTA
+    alert('📏 Prima di calculateSongPagination - pageFormat: ' + pageFormat); // ✅ E QUESTA
+    const pagination = calculateSongPagination(song, pageFormat, false, true);
+    alert('📄 Pagination completata - pagine: ' + pagination.length); // ✅ E QUESTA
     
     // ✅ FOOTER HTML con link (senza onclick, gestiamo con touch events)
 const footerHtml = `
