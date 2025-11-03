@@ -325,32 +325,60 @@ body.dark-mode .fullscreen-active .artist-item {
     display: flex; 
     flex-direction: column;
     width: 100%;
-    overflow: hidden;
+    /*overflow: hidden;*/
     border-left: 2px solid #cccccc; /* Linea a sinistra */
     padding-left: 10px; /* Spazio tra linea e testo */
 }
 
+/* Forza altezze uniformi in fullscreen */
+.fullscreen-active .artist-column > div {
+    height: 37px !important;
+    min-height: 37px;
+    max-height: 37px;
+    line-height: 37px !important;
+    flex-shrink: 0;
+    flex-grow: 0;
+}
+
 .artist-item { 
     font-size: 14pt; 
-    padding: 5px 0; 
+    padding: 6px 0; 
     cursor: pointer; 
     color: black;
     white-space: nowrap;
-    height: 37px;
-    line-height: 37px;
+    height: 37px !important;
+    line-height: 37px !important;
     display: flex;
     align-items: center;
-    /* pointer-events: none; */
+    overflow: hidden;
+    text-overflow: clip;
+    flex-shrink: 0;
+    flex-grow: 0;
 }
 
-/* .artist-item > * {
-    pointer-events: auto;
-} */
-
-/* Fullscreen: distanziamento diverso */
+/* Previeni selezione testo durante swipe in fullscreen */
 .fullscreen-active .artist-item {
-    height: 42px;
-    line-height: 42px;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+}
+
+/* Nessun troncamento quando il font è ridotto */
+/*.artist-item[style*="font-size: 13pt"],
+.artist-item[style*="font-size: 12pt"],
+.artist-item[style*="font-size: 11pt"],
+.artist-item[style*="font-size: 10pt"],
+.artist-item[style*="font-size: 9pt"],
+.artist-item[style*="font-size: 8pt"] {
+    overflow: visible !important;
+}*/
+
+/* Fullscreen: distanziamento uguale al resto */
+.fullscreen-active .artist-item {
+    height: 37px !important;
+    line-height: 37px !important;
+    min-height: 37px;
+    max-height: 37px;
 }
 
 .artist-item.long-name {
@@ -1610,7 +1638,7 @@ body.dark-mode .piano-key.black {
         }
 
 // Funzione UNIFICATA per calcolare pagine di una canzone
-function calculateSongPagination(song, format, isPDF = false) {
+function calculateSongPagination(song, format, isPDF = false, isFullscreen = false) {
     // Assumiamo sempre che ci siano note (o il segnaposto)
     const hasNotes = true;
     
@@ -1622,15 +1650,26 @@ function calculateSongPagination(song, format, isPDF = false) {
     // Calcola altezze disponibili in pixel per ogni tipo di pagina
     let firstPageHeight, middlePageHeight, lastPageHeight;
     
-    if (isPDF) {
+    if (isFullscreen) {
+    // ✅ FULLSCREEN: usa l'altezza reale dello schermo
+    const screenHeight = window.innerHeight;
+    const headerHeight = 180; // Titolo + artista + dettagli
+    const footerHeight = 80;  // Footer con link
+    
+    firstPageHeight = screenHeight - headerHeight - footerHeight;
+    middlePageHeight = screenHeight - 40; // Solo margini
+    lastPageHeight = screenHeight - footerHeight - 40;
+    
+    console.log('📱 Fullscreen canzone - Altezza disponibile:', firstPageHeight, 'px');
+} else if (isPDF) {
     if (format === 'A5') {
         firstPageHeight = 650;
         middlePageHeight = 740;
         lastPageHeight = 700;
     } else {
-        firstPageHeight = 750;  // era 750
-        middlePageHeight = 1050;  // era 1000
-        lastPageHeight = 950;  // era 850
+        firstPageHeight = 750;
+        middlePageHeight = 1050;
+        lastPageHeight = 950;
     }
 } else {
     // PARAMETRI PER PERFORMANCE
@@ -1639,9 +1678,9 @@ function calculateSongPagination(song, format, isPDF = false) {
         middlePageHeight = 740;
         lastPageHeight = 700;
     } else {
-        firstPageHeight = 780;  // era 770
-        middlePageHeight = 870;  // era 870
-        lastPageHeight = 825;  // era 950
+        firstPageHeight = 780;
+        middlePageHeight = 870;
+        lastPageHeight = 825;
     }
 }
     
@@ -2798,79 +2837,206 @@ if (pageFormat === 'A5') {
 const itemsFirstPage = itemsPerColFirstPage * 3;
 const itemsOtherPages = itemsPerColOtherPages * 3;
     
-    // Calcola totale pagine necessarie
-    let remainingArtists = artists.length - itemsFirstPage;
-    const additionalPages = remainingArtists > 0 ? Math.ceil(remainingArtists / itemsOtherPages) : 0;
-    const totalIndexPages = 1 + additionalPages;
+    // Il numero di pagine verrà calcolato automaticamente dal ciclo
+console.log(`Artisti: ${artists.length}, Prima pagina: ${itemsFirstPage}, Altre: ${itemsOtherPages}`);
     
-    console.log(`Artisti: ${artists.length}, Prima pagina: ${itemsFirstPage}, Altre: ${itemsOtherPages}, Pagine indice: ${totalIndexPages}`);
+    // Crea pagine indice dinamicamente
+const indexPages = [];
+let processedArtists = 0;
+let globalLastLetter = ''; // Traccia l'ultima lettera GLOBALE tra tutte le pagine
+
+// ✅ CREA testDivFont UNA SOLA VOLTA FUORI DAL LOOP
+const testDivFont = document.createElement('div');
+testDivFont.className = 'artist-item';
+testDivFont.style.position = 'absolute';
+testDivFont.style.visibility = 'hidden';
+testDivFont.style.width = 'auto';
+testDivFont.style.height = 'auto';
+document.body.appendChild(testDivFont);
+
+// ✅ CALCOLA columnWidth FUORI DAL LOOP
+const columnWidth = pageFormat === 'A5' 
+    ? ((dims.width - 40) / 3) - 31  // A5: più aggressivo
+    : ((dims.width - 40) / 3) - 25; // A4: meno aggressivo
+
+while (processedArtists < artists.length) {
+    const isFirstPage = (indexPages.length === 0);
+    const itemsPerCol = isFirstPage ? itemsPerColFirstPage : itemsPerColOtherPages;
     
-    // Crea pagine indice
-    const indexPages = [];
+    const columns = [[], [], []];
+    let currentCol = 0;
+    let rowsInCurrentCol = 0;
     
-    for (let pageNum = 0; pageNum < totalIndexPages; pageNum++) {
-        let startIndex, endIndex;
+    const startIndex = processedArtists;
+    
+    // FASE 1: DISTRIBUZIONE (calcola quali artisti vanno dove)
+    const columnData = [[], [], []]; // Salva anche info sui separatori
+    
+    while (processedArtists < artists.length && currentCol < 3) {
+    const artist = artists[processedArtists];
+    const artistSort = songs.find(s => s.artist === artist)?.artistSort || artist;
+    const firstLetter = artistSort.charAt(0).toUpperCase();
+    
+    const needsSeparator = (firstLetter !== globalLastLetter);
+    const rowsNeeded = needsSeparator ? 2 : 1;
+    
+    // ✅ NUOVO: Se serve separatore ma c'è spazio solo per quello
+    if (needsSeparator && rowsInCurrentCol + 1 === itemsPerCol && rowsInCurrentCol + 2 > itemsPerCol) {
+        // Aggiungi SOLO il separatore (senza artista)
+        columnData[currentCol].push({
+            artist: null,
+            artistSort: null,
+            needsSeparator: true,
+            separatorLetter: firstLetter,
+            isOnlySeparator: true
+        });
         
-        if (pageNum === 0) {
-            // Prima pagina
-            startIndex = 0;
-            endIndex = Math.min(itemsFirstPage, artists.length);
+        globalLastLetter = firstLetter;
+        rowsInCurrentCol += 1;
+        
+        // Vai alla colonna/pagina successiva
+        if (currentCol < 2) {
+            currentCol++;
+            rowsInCurrentCol = 0;
+            // ✅ NON fare continue - prosegui per aggiungere l'artista nella nuova colonna
         } else {
-            // Pagine successive
-            startIndex = itemsFirstPage + ((pageNum - 1) * itemsOtherPages);
-            endIndex = Math.min(startIndex + itemsOtherPages, artists.length);
+            // Fine pagina - l'artista andrà nella pagina successiva
+            break;
         }
         
-        const pageArtists = artists.slice(startIndex, endIndex);
+        // ✅ Ricalcola per la nuova colonna
+        const needsSeparatorInNewCol = false; // Il separatore è appena stato aggiunto
+        const rowsNeededInNewCol = 1; // Solo artista, no separatore
         
-        // Distribuisci in 3 colonne: riempi colonna per colonna
-const itemsPerCol = pageNum === 0 ? itemsPerColFirstPage : itemsPerColOtherPages;
-const columns = [[], [], []];
+        // Controlla se l'artista ci sta nella nuova colonna
+        if (rowsInCurrentCol + rowsNeededInNewCol <= itemsPerCol) {
+            // Aggiungi l'artista nella nuova colonna
+            columnData[currentCol].push({
+                artist: artist,
+                artistSort: artistSort,
+                needsSeparator: false // Il separatore è già stato messo
+            });
+            
+            rowsInCurrentCol += 1;
+            processedArtists++;
+            continue; // Vai al prossimo artista
+        }
+    }
+    
+    // Se supera il limite normale, vai alla colonna successiva
+    if (rowsInCurrentCol + rowsNeeded > itemsPerCol) {
+        if (currentCol < 2) {
+            currentCol++;
+            rowsInCurrentCol = 0;
+            // ✅ NON fare break - riprova ad aggiungere l'artista nella nuova colonna
+        } else {
+            // Tutte e 3 le colonne piene
+            break;
+        }
+    }
+    
+    // ✅ Controlla di nuovo se ci sta dopo il cambio colonna
+    if (rowsInCurrentCol + rowsNeeded <= itemsPerCol) {
+        // Salva artista + info separatore
+        columnData[currentCol].push({
+            artist: artist,
+            artistSort: artistSort,
+            needsSeparator: (firstLetter !== globalLastLetter)
+        });
+        
+        rowsInCurrentCol += (firstLetter !== globalLastLetter) ? 2 : 1;
+        globalLastLetter = firstLetter;
+        processedArtists++;
+    } else {
+        // Non ci sta nemmeno nella nuova colonna - vai alla pagina successiva
+        break;
+    }
+}
 
-pageArtists.forEach((artist, i) => {
-    const colIndex = Math.floor(i / itemsPerCol);
-    if (colIndex < 3) {
-        columns[colIndex].push(artist);
+// ✅ DEBUG
+    console.log(`📄 Pagina ${indexPages.length + 1}:`);
+    console.log(`   - Artisti processati finora: ${processedArtists}/${artists.length}`);
+    console.log(`   - Ultima lettera: ${globalLastLetter}`);
+    console.log(`   - Colonne riempite: ${columnData.filter(col => col.length > 0).length}`);
+    if (processedArtists < artists.length) {
+        console.log(`   ➡️ Prossimo artista da processare: ${artists[processedArtists]}`);
     }
-});
-        
-        // Crea div di test per calcolare larghezze
-        const testDivFont = document.createElement('div');
-        testDivFont.style.position = 'absolute';
-        testDivFont.style.visibility = 'hidden';
-        testDivFont.style.whiteSpace = 'nowrap';
-        document.body.appendChild(testDivFont);
-        
-        const columnWidth = (dims.width - 40) / 3;
-        
-        const indexContent = `
-            ${pageNum === 0 ? '<div style="text-align: center; font-size: 18pt; font-weight: bold; margin-bottom: 30px;">ELENCO CANTANTI</div>' : ''}
-            <div class="artist-columns">
-                ${columns.map(col => `
-                    <div class="artist-column">
-                        ${col.map(artist => {
-                            const artistSort = songs.find(s => s.artist === artist)?.artistSort || artist;
-                            
-                            testDivFont.style.fontSize = '14pt';
-                            testDivFont.textContent = artistSort;
-                            const textWidth = testDivFont.offsetWidth;
-                            
-                            let fontSize = 14;
-                            if (textWidth > columnWidth) {
-                                fontSize = Math.max(5, Math.floor(14 * (columnWidth / textWidth)));
-                            }
-                            
-                            return `<div class="artist-item" style="font-size: ${fontSize}pt;" onclick="showArtist('${artist.replace(/'/g, "\\'")}')">${artistSort}</div>`;
-                        }).join('')}
-                    </div>
-                `).join('')}
-            </div>
-        `;
-        
-        document.body.removeChild(testDivFont);
-        
-        indexPages.push(indexContent);
+    
+    // FASE 2: RENDERING HTML (usa i dati salvati)
+    const indexContent = `
+        ${isFirstPage ? '<div style="text-align: center; font-size: 18pt; font-weight: bold; margin-bottom: 30px;">ELENCO CANTANTI</div>' : ''}
+        <div class="artist-columns">
+            ${columnData.map(colData => `
+                <div class="artist-column">
+                    ${colData.map(item => {
+    let html = '';
+    
+    // ✅ NUOVO: Se è solo separatore (senza artista)
+    if (item.isOnlySeparator) {
+        html += `<div style="background: #cccccc; padding: 2px 0 2px 5px; font-weight: bold; font-size: 14pt; height: 37px; line-height: 37px; display: flex; align-items: center; margin-left: -10px;">${item.separatorLetter}</div>`;
+        return html;
     }
+    
+    // Mostra separatore se necessario (info già salvata)
+    if (item.needsSeparator) {
+        const firstLetter = item.artistSort.charAt(0).toUpperCase();
+        html += `<div style="background: #cccccc; padding: 2px 0 2px 5px; font-weight: bold; font-size: 14pt; height: 37px; line-height: 37px; display: flex; align-items: center; margin-left: -10px;">${firstLetter}</div>`;
+    }
+    
+    // Calcola font-size dinamico usando canvas per misurare accuratamente
+const canvas = document.createElement('canvas');
+const context = canvas.getContext('2d');
+const targetWidth = columnWidth * 0.94;
+
+let fontSize = 14;
+let textWidth;
+
+// Calcolo iterativo: trova il fontSize più grande che sta nello spazio
+for (let size = 14; size >= 8; size -= 0.5) {
+    context.font = `${size}pt "Times New Roman", serif`;
+    textWidth = context.measureText(item.artistSort).width;
+    
+    if (textWidth <= targetWidth) {
+        fontSize = size;
+        break;
+    }
+}
+
+html += `<div class="artist-item" style="font-size: ${fontSize}pt;" onclick="showArtist('${item.artist.replace(/'/g, "\\'")}')">${item.artistSort}</div>`;
+    
+    return html;
+}).join('')}
+                </div>
+            `).join('')}
+        </div>
+    `;
+
+    indexPages.push(indexContent);
+
+// ✅ DEBUG FINALE PAGINA
+    if (processedArtists < artists.length) {
+        console.log(`   ✅ Pagina creata, continuo con prossima pagina...`);
+    } else {
+        console.log(`   ✅ COMPLETATO! Tutti gli artisti processati.`);
+    }
+}
+
+// ✅ RIMUOVI testDivFont DOPO IL LOOP
+document.body.removeChild(testDivFont);
+
+// ✅ DEBUG FINALE
+console.log(`\n=== RIEPILOGO FINALE ===`);
+console.log(`Totale pagine create: ${indexPages.length}`);
+console.log(`Artisti totali: ${artists.length}`);
+console.log(`Artisti processati: ${processedArtists}`);
+if (processedArtists < artists.length) {
+    console.error(`❌ MANCANO ${artists.length - processedArtists} ARTISTI!`);
+    console.log('Artisti mancanti:', artists.slice(processedArtists));
+}
+
+console.log('=== DEBUG PAGINE ===');
+console.log('Pagine create:', indexPages.length);
+console.log('Artisti processati:', processedArtists, '/', artists.length);
     
     // Crea HTML per tutte le pagine indice
     let allPagesHtml = '';
@@ -2879,7 +3045,7 @@ pageArtists.forEach((artist, i) => {
     });
     
     previewContent.innerHTML = allPagesHtml;
-    totalPages = totalIndexPages;
+    totalPages = indexPages.length;  // ✅ Usa il numero reale di pagine create
     currentPage = 0;
     showPage(0);
 }
@@ -3072,8 +3238,10 @@ function generatePDFWithJsPDF(format, fileName) {
     
     const pageWidth = pageSize[0];
     const pageHeight = pageSize[1];
-    const margin = 10;
-    const contentWidth = pageWidth - (margin * 2);
+    const marginTop = 10;  // Margine alto
+    const marginLR = 8;  // Margine sx/dx ridotto
+    const margin = marginTop;  // Per compatibilità con bottomLimit
+    const contentWidth = pageWidth - (marginLR * 2);
     
 // AGGIUNGI QUESTE RIGHE DI TEST QUI
     console.log('Format:', format);
@@ -3108,56 +3276,181 @@ function generatePDFWithJsPDF(format, fileName) {
     // 1. INDICE CANTANTI
 pdf.setFont('times', 'bold');
 pdf.setFontSize(18);
-pdf.text('ELENCO CANTANTI', pageWidth / 2, 12, { align: 'center' });  // Stesso valore di topMargin
+pdf.text('ELENCO CANTANTI', pageWidth / 2, 10, { align: 'center' });
 
-let y = margin + 17;
+// ✅ AGGIUNGI TUTTO QUESTO BLOCCO QUI
 const colWidth = contentWidth / 3;
 let col = 0;
+
+const footerHeight = 0;
+const bottomLimit = pageHeight;
+
+// Definizioni per prima pagina vs altre pagine
+let itemsPerColFirstPage = 19;
+let itemsPerColOtherPages = 20;
+let artistCount = 0;
+let isFirstPage = true;
+
+const startYFirstPage = margin + 17;   // Prima pagina (con titolo)
+const startYOtherPages = margin + 2;   // Pagine successive (senza titolo)
+
+const availableHeightFirstPage = bottomLimit - startYFirstPage;
+const availableHeightOtherPages = bottomLimit - startYOtherPages;
+
+const spacingFirstPage = availableHeightFirstPage / itemsPerColFirstPage;
+const spacingOtherPages = availableHeightOtherPages / itemsPerColOtherPages;
+
+let y = startYFirstPage;  // Inizia dalla prima pagina
+
+// Array per tracciare altezza di ogni colonna
+const columnHeights = [0, 0, 0];
 
 pdf.setFont('times', 'normal');
 pdf.setFontSize(14);
 
-const footerHeight = 15;  // Spazio per il footer
-const bottomLimit = pageHeight - margin - footerHeight;
+let lastLetter = ''; // ✅ Traccia l'ultima lettera per i separatori
 
 artists.forEach(artist => {
     const artistSort = songs.find(s => s.artist === artist)?.artistSort || artist;
-    const x = 4 + (col * (contentWidth / 3));  // Margine 4 + larghezza colonna
+    const firstLetter = artistSort.charAt(0).toUpperCase(); // ✅ Prima lettera
     
-    // Controlla se c'è spazio per questa riga
-    if (y + 7 > bottomLimit) {
+    const maxItemsThisPage = isFirstPage ? itemsPerColFirstPage : itemsPerColOtherPages;
+    
+    if (artistCount >= maxItemsThisPage) {
+        // Determina quale startY usare
+        const currentStartY = isFirstPage ? startYFirstPage : startYOtherPages;
+        
+        // Disegna le linee della colonna appena completata
+        if (columnHeights[col] > 0) {
+            const xLine = marginLR + (col * colWidth);
+            pdf.setLineWidth(0.4);
+            pdf.setDrawColor(204, 204, 204);
+            pdf.line(xLine - 2, currentStartY - 5, xLine - 2, columnHeights[col]);
+            pdf.setDrawColor(0, 0, 0);
+        }
+        
         col++;
-        y = margin + 17;
+        artistCount = 0;
+        y = isFirstPage ? startYFirstPage : startYOtherPages;
         
         if (col >= 3) {
-    pdf.setLineWidth(0.2);
-    // Aggiungi footer alla pagina corrente
-    pdf.setFont('times', 'normal');
-    pdf.setFontSize(16);
-    const lineY = pageHeight - 15;
-const textY = lineY + ((pageHeight - lineY) / 2);  // Metà tra linea e bordo
-pdf.line(-1, lineY, pageWidth + 1, lineY);
-pdf.text('Indice', pageWidth / 2, textY, { align: 'center' });
+            // Disegna le linee delle altre colonne prima di cambiare pagina
+            for (let c = 0; c < 3; c++) {
+                if (columnHeights[c] > 0) {
+                    const xLine = marginLR + (c * colWidth);
+                    pdf.setLineWidth(0.4);
+                    pdf.setDrawColor(204, 204, 204);
+                    pdf.line(xLine - 2, currentStartY - 5, xLine - 2, columnHeights[c]);
+                    pdf.setDrawColor(0, 0, 0);
+                }
+            }
+            
+            pdf.addPage();
+            currentPage++;
+            isFirstPage = false;
+            col = 0;
+            y = startYOtherPages;
+            
+            columnHeights[0] = 0;
+            columnHeights[1] = 0;
+            columnHeights[2] = 0;
+        }
+    }
+
+    const x = marginLR + (col * colWidth);
     
-    pdf.addPage();
-    currentPage++;
-    col = 0;
-    y = margin + 10;
-}
+    // ✅ AGGIUNGI SEPARATORE se cambia lettera
+if (firstLetter !== lastLetter) {
+    const currentSpacing = isFirstPage ? spacingFirstPage : spacingOtherPages; // ✅ Definisci qui
+    
+    // Disegna rettangolo grigio per separatore
+    pdf.setFillColor(204, 204, 204);
+    pdf.rect(x - 2, y - 5, colWidth - 5, currentSpacing, 'F');  // ✅ -5 per lasciare spazio
+        
+        // Testo separatore (lettera in grassetto)
+        pdf.setFont('times', 'bold');
+        pdf.setFontSize(14);
+        pdf.setTextColor(0, 0, 0);
+        pdf.text(firstLetter, x, y + 1);  // ✅ +2 per centrare meglio
+        
+        columnHeights[col] = y;
+        y += currentSpacing;
+        artistCount++;
+        lastLetter = firstLetter;
+        
+        // Controlla se dopo il separatore devi cambiare colonna
+        if (artistCount >= maxItemsThisPage) {
+            const currentStartY = isFirstPage ? startYFirstPage : startYOtherPages;
+            
+            if (columnHeights[col] > 0) {
+                const xLine = marginLR + (col * colWidth);
+                pdf.setLineWidth(0.4);
+                pdf.setDrawColor(204, 204, 204);
+                pdf.line(xLine - 2, currentStartY - 5, xLine - 2, columnHeights[col]);
+                pdf.setDrawColor(0, 0, 0);
+            }
+            
+            col++;
+            artistCount = 0;
+            y = isFirstPage ? startYFirstPage : startYOtherPages;
+            
+            if (col >= 3) {
+                for (let c = 0; c < 3; c++) {
+                    if (columnHeights[c] > 0) {
+                        const xLine = marginLR + (c * colWidth);
+                        pdf.setLineWidth(0.4);
+                        pdf.setDrawColor(204, 204, 204);
+                        pdf.line(xLine - 2, currentStartY - 5, xLine - 2, columnHeights[c]);
+                        pdf.setDrawColor(0, 0, 0);
+                    }
+                }
+                
+                pdf.addPage();
+                currentPage++;
+                isFirstPage = false;
+                col = 0;
+                y = startYOtherPages;
+                
+                columnHeights[0] = 0;
+                columnHeights[1] = 0;
+                columnHeights[2] = 0;
+            }
+        }
     }
     
+    // Calcola font-size dinamico per nomi lunghi
+    let fontSize = 14;
+    pdf.setFont('times', 'normal'); // ✅ Reset a normal
+    pdf.setFontSize(fontSize);
+    const textWidth = pdf.getTextWidth(artistSort);
+    const availableWidth = colWidth * 0.94; // ✅ Stesso valore di updatePerformance
+    if (textWidth > availableWidth) {
+        fontSize = Math.max(8, Math.floor(14 * (availableWidth / textWidth)));
+    }
+    pdf.setFontSize(fontSize);
+    
     pdf.text(artistSort, x, y);
-    y += 7;
+    
+    columnHeights[col] = y;
+    
+    // Usa spacing dinamico
+    const currentSpacing = isFirstPage ? spacingFirstPage : spacingOtherPages;
+    y += currentSpacing;
+    
+    artistCount++;
 });
 
-// Footer dell'ultima pagina dell'indice
-pdf.setLineWidth(0.2);
-pdf.setFont('times', 'normal');
-pdf.setFontSize(16);
-const lineY = pageHeight - 15;
-const textY = lineY + ((pageHeight - lineY) / 2);  // Metà tra linea e bordo
-pdf.line(-1, lineY, pageWidth + 1, lineY);
-pdf.text('Indice', pageWidth / 2, textY, { align: 'center' });
+// ✅ Disegna le linee dell'ULTIMA pagina
+const finalStartY = isFirstPage ? startYFirstPage : startYOtherPages;
+for (let c = 0; c < 3; c++) {
+    if (columnHeights[c] > 0) {
+        const xLine = marginLR + (c * colWidth);  // marginLR deve esistere già
+        pdf.setLineWidth(0.4);
+        pdf.setDrawColor(204, 204, 204);
+        pdf.line(xLine - 2, finalStartY - 5, xLine - 2, columnHeights[c]);  // ✅ Usa finalStartY
+        pdf.setDrawColor(0, 0, 0);
+    }
+}
     
     // 2. PER OGNI ARTISTA: PAGINA + CANZONI
 artists.forEach(artist => {
@@ -3188,23 +3481,23 @@ artists.forEach(artist => {
     const bottomLimit = pageHeight - margin - footerHeight;
     
     artistSongs.forEach(song => {
-        if (y + 10 > bottomLimit) {
-            pdf.addPage();
-            currentPage++;
-            y = margin + 10;
-        }
-        pdf.text(song.title, 4, y);
-        y += 10;
-    });
+    if (y + 10 > bottomLimit) {
+        pdf.addPage();
+        currentPage++;
+        y = margin + 10;
+    }
+    pdf.text(song.title.toUpperCase(), 4, y);  // ← AGGIUNTO .toUpperCase()
+    y += 10;
+});
     
     // Aggiungi footer alla pagina artista
-pdf.setLineWidth(0.2);
+pdf.setLineWidth(0.1);  // ← Linea più sottile
 pdf.setFont('times', 'normal');
-pdf.setFontSize(16);
-const lineY = pageHeight - 15;
-const textY = lineY + ((pageHeight - lineY) / 2);  // Metà tra linea e bordo
-pdf.line(-1, lineY, pageWidth + 1, lineY);
-pdf.text('Torna all\'indice', pageWidth / 2, textY, { align: 'center' });
+pdf.setFontSize(16);  // ← Stesso font size di addFooterToPage
+const lineY = pageHeight - 13;  // ← Stessa altezza di addFooterToPage
+const textY = lineY + 8;  // ← Stessa distanza di addFooterToPage
+pdf.line(0, lineY, pageWidth, lineY);  // ← Linea piena larghezza
+pdf.text('Torna ad Elenco cantanti', pageWidth / 2, textY, { align: 'center' });
 
 const linkHeight = pageHeight - lineY;
 pdf.link(0, lineY, pageWidth, linkHeight, { pageNumber: 1 });  // Link a pagina 1 (indice)
@@ -3362,61 +3655,109 @@ y += 8;
 }
 
 function addFooterToPage(pdf, pageWidth, pageHeight, sideMargin) {
-    const lineY = pageHeight - 15;  // Stessa altezza degli altri footer
-    const textY = lineY + ((pageHeight - lineY) / 2);  // Centrato tra linea e bordo
+    const lineY = pageHeight - 13;  // ← RIDOTTO da 15 a 10
+    const textY = lineY + 8;  // ← Semplificato
     
     // Linea
-    pdf.setLineWidth(0.2);
-    pdf.line(-1, lineY, pageWidth + 1, lineY);
+    pdf.setLineWidth(0.1);  // ← RIDOTTO da 0.2 a 0.1
+    pdf.line(0, lineY, pageWidth, lineY);  // Linea da bordo a bordo
     
     // Testo
     pdf.setFont('times', 'normal');
-    pdf.setFontSize(16);
+    pdf.setFontSize(16);  // ← RIDOTTO da 16 a 12
     pdf.setTextColor(0, 0, 0);
     
-    pdf.text('Torna all\'indice', pageWidth / 4, textY, { align: 'center' });
+    pdf.text('Torna ad Elenco cantanti', pageWidth / 4, textY, { align: 'center' });
     pdf.text('Torna al cantante', (pageWidth * 3) / 4, textY, { align: 'center' });
 }
 
 // Funzioni per aggiungere link interattivi al PDF
 function addLinksToIndex(pdf, artists, pageMap, pageWidth, pageHeight, margin) {
+    // Usa gli stessi parametri di generatePDFWithJsPDF
+    const marginLR = 8;
+    const colWidth = (pageWidth - (marginLR * 2)) / 3;
+    
+    let itemsPerColFirstPage, itemsPerColOtherPages;
+    if (pageFormat === 'A5') {
+        itemsPerColFirstPage = 19;
+        itemsPerColOtherPages = 20;
+    } else {
+        itemsPerColFirstPage = 27;
+        itemsPerColOtherPages = 29;
+    }
+    
+    const startYFirstPage = margin + 17;
+    const startYOtherPages = margin + 2;
+    const availableHeightFirstPage = pageHeight - startYFirstPage;
+    const availableHeightOtherPages = pageHeight - startYOtherPages;
+    const spacingFirstPage = availableHeightFirstPage / itemsPerColFirstPage;
+    const spacingOtherPages = availableHeightOtherPages / itemsPerColOtherPages;
+    
     pdf.setPage(1);
     
-    let y = margin + 17;
-    const contentWidth = pageWidth - (margin * 2);
-    const colWidth = contentWidth / 3;
+    let y = startYFirstPage;
     let col = 0;
     let currentPage = 1;
-    
-    const footerHeight = 15;
-    const bottomLimit = pageHeight - margin - footerHeight;
+    let isFirstPage = true;
+    let artistCount = 0;
+    let lastLetter = '';
     
     artists.forEach(artist => {
         const artistSort = songs.find(s => s.artist === artist)?.artistSort || artist;
-        const x = 4 + (col * colWidth);
-        const artistPage = pageMap.artists.get(artist);
+        const firstLetter = artistSort.charAt(0).toUpperCase();
+        const maxItemsThisPage = isFirstPage ? itemsPerColFirstPage : itemsPerColOtherPages;
+        const currentSpacing = isFirstPage ? spacingFirstPage : spacingOtherPages;
         
-        if (y + 7 > bottomLimit) {
+        if (artistCount >= maxItemsThisPage) {
             col++;
-            y = margin + 17;
+            artistCount = 0;
+            y = isFirstPage ? startYFirstPage : startYOtherPages;
             
             if (col >= 3) {
                 currentPage++;
                 pdf.setPage(currentPage);
+                isFirstPage = false;
                 col = 0;
-                y = margin + 17;
+                y = startYOtherPages;
             }
         }
         
-        // MODIFICATO: usa la larghezza effettiva del testo invece di colWidth
+        const x = marginLR + (col * colWidth);
+        
+        // Se c'è un separatore, salta quella riga
+        if (firstLetter !== lastLetter) {
+            y += currentSpacing;
+            artistCount++;
+            lastLetter = firstLetter;
+            
+            // Controlla di nuovo se devi cambiare colonna dopo il separatore
+            if (artistCount >= maxItemsThisPage) {
+                col++;
+                artistCount = 0;
+                y = isFirstPage ? startYFirstPage : startYOtherPages;
+                
+                if (col >= 3) {
+                    currentPage++;
+                    pdf.setPage(currentPage);
+                    isFirstPage = false;
+                    col = 0;
+                    y = startYOtherPages;
+                }
+            }
+        }
+        
+        const artistPage = pageMap.artists.get(artist);
+        
+        // Calcola larghezza testo per link preciso
         pdf.setFont('times', 'normal');
         pdf.setFontSize(14);
         const textWidth = pdf.getTextWidth(artistSort);
         
-        // Link solo sull'area del testo, non su tutta la colonna
-        pdf.link(x, y - 3.5, textWidth + 2, 6, { pageNumber: artistPage });
+        // Link solo sull'area del testo
+        pdf.link(x, y - 3.5, textWidth + 2, currentSpacing * 0.8, { pageNumber: artistPage });
         
-        y += 7;
+        y += currentSpacing;
+        artistCount++;
     });
 }
 
@@ -4559,33 +4900,32 @@ function generateAndDownloadPDF(format, fileName) {
             y = margin + 17;
             
             if (col >= 3) {
-                pdf.setLineWidth(0.2);
-                pdf.setFont('times', 'normal');
-                pdf.setFontSize(16);
-                const lineY = pageHeight - 15;
-                const textY = lineY + ((pageHeight - lineY) / 2);
-                pdf.line(-1, lineY, pageWidth + 1, lineY);
-                pdf.text('Indice', pageWidth / 2, textY, { align: 'center' });
-                
-                pdf.addPage();
-                currentPage++;
-                col = 0;
-                y = margin + 17;
-            }
+    // Disegna le linee della pagina corrente prima di cambiarla
+    for (let c = 0; c < 3; c++) {
+        if (columnHeights[c] > 0) {
+            const xLine = marginLR + (c * colWidth);
+            pdf.setLineWidth(0.4);
+            pdf.setDrawColor(204, 204, 204);
+            pdf.line(xLine - 2, startY - 5, xLine - 2, columnHeights[c]);
+            pdf.setDrawColor(0, 0, 0);
+        }
+    }
+    
+    // Reset columnHeights per la nuova pagina
+    columnHeights[0] = 0;
+    columnHeights[1] = 0;
+    columnHeights[2] = 0;
+    
+    pdf.addPage();
+    currentPage++;
+    col = 0;
+    y = margin + 17;
+}
         }
         
         pdf.text(artistSort, x, y);
         y += 7;
     });
-    
-    // Footer ultima pagina indice
-    pdf.setLineWidth(0.2);
-    pdf.setFont('times', 'normal');
-    pdf.setFontSize(16);
-    const lineY = pageHeight - 15;
-    const textY = lineY + ((pageHeight - lineY) / 2);
-    pdf.line(-1, lineY, pageWidth + 1, lineY);
-    pdf.text('Indice', pageWidth / 2, textY, { align: 'center' });
     
     // PAGINE ARTISTI E CANZONI (versione semplificata per backup)
     artists.forEach(artist => {
@@ -4619,13 +4959,15 @@ function generateAndDownloadPDF(format, fileName) {
             y += 10;
         });
         
-        pdf.setLineWidth(0.2);
-        pdf.setFont('times', 'normal');
-        pdf.setFontSize(16);
-        const lineY2 = pageHeight - 15;
-        const textY2 = lineY2 + ((pageHeight - lineY2) / 2);
-        pdf.line(-1, lineY2, pageWidth + 1, lineY2);
-        pdf.text('Torna all\'indice', pageWidth / 2, textY2, { align: 'center' });
+        pdf.setLineWidth(0.1);  // ← Linea più sottile (come addFooterToPage)
+pdf.setFont('times', 'normal');
+pdf.setFontSize(14);  // ← Stesso font size che hai scelto
+const lineY2 = pageHeight - 10;  // ← Stessa altezza linea
+const textY2 = lineY2 + 5;  // ← Stessa distanza testo
+pdf.line(0, lineY2, pageWidth, lineY2);  // ← Linea piena larghezza
+pdf.text('Torna ad Elenco cantanti', pageWidth / 2, textY2, { align: 'center' });  // ← Testo corretto
+const linkHeight = pageHeight - lineY2;
+pdf.link(0, lineY2, pageWidth, linkHeight, { pageNumber: 1 });
         
         // Aggiungi canzoni
         artistSongs.forEach(song => {
@@ -5400,6 +5742,7 @@ async function mergeWithCloud(cloudSongIds) {
 }
 
 function generateAllPagesForBook() {
+    
     allFullscreenPages = [];
     
     // Ottieni artisti ordinati
@@ -5416,7 +5759,7 @@ function generateAllPagesForBook() {
     artistsArray.sort((a, b) => a.artistSort.localeCompare(b.artistSort));
     const artists = artistsArray.map(item => item.artist);
     
-    // 1. PAGINA INDICE (multipagina se necessario)
+    // ✅ VALORI FISSI per righe per colonna (come nel vecchio codice)
 let itemsPerColFirstPage, itemsPerColOtherPages;
 
 if (pageFormat === 'A5') {
@@ -5427,67 +5770,144 @@ if (pageFormat === 'A5') {
     itemsPerColOtherPages = 29;
 }
 
-const itemsFirstPage = itemsPerColFirstPage * 3;
-const itemsOtherPages = itemsPerColOtherPages * 3;
+const dims = getPageDimensions();
 
-// Calcola totale pagine necessarie
-let remainingArtists = artists.length - itemsFirstPage;
-const additionalPages = remainingArtists > 0 ? Math.ceil(remainingArtists / itemsOtherPages) : 0;
-const totalIndexPages = 1 + additionalPages;
+// Crea div di test per font-size
+const testDivFont = document.createElement('div');
+testDivFont.className = 'artist-item';
+testDivFont.style.position = 'absolute';
+testDivFont.style.visibility = 'hidden';
+testDivFont.style.width = 'auto';
+testDivFont.style.height = 'auto';
+document.body.appendChild(testDivFont);
 
-// Crea pagine indice
-for (let pageNum = 0; pageNum < totalIndexPages; pageNum++) {
-    let startIndex, endIndex;
+const columnWidth = pageFormat === 'A5' 
+    ? ((dims.width - 40) / 3) - 31
+    : ((dims.width - 40) / 3) - 25;
+
+let processedArtists = 0;
+let globalLastLetter = '';
+
+while (processedArtists < artists.length) {
+    const isFirstPage = (allFullscreenPages.length === 0);
+    const itemsPerCol = isFirstPage ? itemsPerColFirstPage : itemsPerColOtherPages;
     
-    if (pageNum === 0) {
-        startIndex = 0;
-        endIndex = Math.min(itemsFirstPage, artists.length);
-    } else {
-        startIndex = itemsFirstPage + ((pageNum - 1) * itemsOtherPages);
-        endIndex = Math.min(startIndex + itemsOtherPages, artists.length);
+    const columnData = [[], [], []];
+    let currentCol = 0;
+    let rowsInCurrentCol = 0;
+    
+    // FASE 1: DISTRIBUZIONE
+    while (processedArtists < artists.length && currentCol < 3) {
+        const artist = artists[processedArtists];
+        const artistSort = songs.find(s => s.artist === artist)?.artistSort || artist;
+        const firstLetter = artistSort.charAt(0).toUpperCase();
+        
+        const needsSeparator = (firstLetter !== globalLastLetter);
+        const rowsNeeded = needsSeparator ? 2 : 1;
+        
+        // Se serve separatore ma c'è spazio solo per quello
+        if (needsSeparator && rowsInCurrentCol + 1 === itemsPerCol && rowsInCurrentCol + 2 > itemsPerCol) {
+            columnData[currentCol].push({
+                artist: null,
+                artistSort: null,
+                needsSeparator: true,
+                separatorLetter: firstLetter,
+                isOnlySeparator: true
+            });
+            
+            globalLastLetter = firstLetter;
+            rowsInCurrentCol += 1;
+            
+            if (currentCol < 2) {
+                currentCol++;
+                rowsInCurrentCol = 0;
+            } else {
+                break;
+            }
+            
+            const rowsNeededInNewCol = 1;
+            
+            if (rowsInCurrentCol + rowsNeededInNewCol <= itemsPerCol) {
+                columnData[currentCol].push({
+                    artist: artist,
+                    artistSort: artistSort,
+                    needsSeparator: false
+                });
+                
+                rowsInCurrentCol += 1;
+                processedArtists++;
+                continue;
+            }
+        }
+        
+        if (rowsInCurrentCol + rowsNeeded > itemsPerCol) {
+            if (currentCol < 2) {
+                currentCol++;
+                rowsInCurrentCol = 0;
+            } else {
+                break;
+            }
+        }
+        
+        if (rowsInCurrentCol + rowsNeeded <= itemsPerCol) {
+            columnData[currentCol].push({
+                artist: artist,
+                artistSort: artistSort,
+                needsSeparator: (firstLetter !== globalLastLetter)
+            });
+            
+            rowsInCurrentCol += (firstLetter !== globalLastLetter) ? 2 : 1;
+            globalLastLetter = firstLetter;
+            processedArtists++;
+        } else {
+            break;
+        }
     }
     
-    const pageArtists = artists.slice(startIndex, endIndex);
-    
-    // Distribuisci in 3 colonne
-    const itemsPerCol = pageNum === 0 ? itemsPerColFirstPage : itemsPerColOtherPages;
-    const columns = [[], [], []];
-    
-    pageArtists.forEach((artist, i) => {
-        const colIndex = Math.floor(i / itemsPerCol);
-        if (colIndex < 3) {
-            columns[colIndex].push(artist);
-        }
-    });
-    
+    // FASE 2: RENDERING HTML con font-size CORRETTO
     const indexContent = `
-    ${pageNum === 0 ? '<div style="text-align: center; font-size: 32pt; font-weight: bold; margin-bottom: 30px;">ELENCO CANTANTI</div>' : ''}
-    <div class="artist-columns">
-        ${columns.map(col => `
-            <div class="artist-column">
-                ${col.map(artist => {
-                    const artistSort = songs.find(s => s.artist === artist)?.artistSort || artist;
-                    
-                    // Calcola dimensione font in base alla lunghezza
-                    let fontSize = 20;
-                    if (artistSort.length > 25) {
-                        fontSize = 16;
-                    } else if (artistSort.length > 20) {
-                        fontSize = 18;
-                    }
-                    
-                    return `<div class="artist-item" style="font-size: ${fontSize}pt;"><span class="artist-link">${artistSort}</span></div>`;
-                }).join('')}
-            </div>
-        `).join('')}
-    </div>
-`;
+        ${isFirstPage ? '<div style="text-align: center; font-size: 32pt; font-weight: bold; margin-bottom: 30px;">ELENCO CANTANTI</div>' : ''}
+        <div class="artist-columns">
+            ${columnData.map(colData => `
+                <div class="artist-column">
+                    ${colData.map(item => {
+                        let html = '';
+                        
+                        // Separatore
+                        if (item.isOnlySeparator) {
+                            html += `<div style="background: #cccccc; padding: 2px 0 2px 5px; font-weight: bold; font-size: 20pt; height: 42px; line-height: 42px; display: flex; align-items: center; margin-left: -10px;">${item.separatorLetter}</div>`;
+                            return html;
+                        }
+                        
+                        if (item.needsSeparator) {
+                            const firstLetter = item.artistSort.charAt(0).toUpperCase();
+                            html += `<div style="background: #cccccc; padding: 2px 0 2px 5px; font-weight: bold; font-size: 20pt; height: 42px; line-height: 42px; display: flex; align-items: center; margin-left: -10px;">${firstLetter}</div>`;
+                        }
+                        
+                        // ✅ CALCOLO FONT-SIZE SEMPLIFICATO (come nel vecchio)
+                        let fontSize = 20;
+                        if (item.artistSort.length > 25) {
+                            fontSize = 16;
+                        } else if (item.artistSort.length > 20) {
+                            fontSize = 18;
+                        }
+                        
+                        html += `<div class="artist-item" style="font-size: ${fontSize}pt; height: 42px; line-height: 42px;"><span class="artist-link">${item.artistSort}</span></div>`;
+                        
+                        return html;
+                    }).join('')}
+                </div>
+            `).join('')}
+        </div>
+    `;
     
     allFullscreenPages.push({
         type: 'index',
         content: indexContent
     });
 }
+
+document.body.removeChild(testDivFont);
     
         // 2. PER OGNI ARTISTA: pagina artista + tutte le canzoni
 artists.forEach(artist => {
@@ -5516,9 +5936,9 @@ artists.forEach(artist => {
     
     // Tutte le pagine di tutte le canzoni
     artistSongs.forEach(song => {
-        const songPages = generateSongPagesForBook(song);
-        allFullscreenPages.push(...songPages);
-    });
+    // const songPages = generateSongPagesForBook(song);
+    // allFullscreenPages.push(...songPages);
+});
 });
 }
 
@@ -5552,7 +5972,7 @@ function generateSongPagesForBook(song) {
     }
     
     // Calcola paginazione
-    const pagination = calculateSongPagination(song, pageFormat);
+    const pagination = calculateSongPagination(song, pageFormat, false, true); // true = isFullscreen
     
     // ✅ FOOTER HTML con link (senza onclick, gestiamo con touch events)
 const footerHtml = `
@@ -5565,18 +5985,19 @@ const footerHtml = `
     pagination.forEach((page, pageIndex) => {
         let content = '';
         
-        if (page.isFirst) {
-            content = `
-                <div style="text-align: center; margin-bottom: 25px;">
-                    <div style="font-size: 28pt; font-weight: bold; margin-bottom: 2px;">"${song.title.toUpperCase()}"</div>
-                    <div style="font-size: 13pt; margin-bottom: 2px;">(${song.artist.toUpperCase()})</div>
-                    ${notesHtml}
-                </div>
-                <div class="song-text" style="font-size: 19pt;">${page.lines.join('\n')}</div>
-            `;
-        } else {
-            content = `<div class="song-text" style="margin-top: 20px; font-size: 19pt;">${page.lines.join('\n')}</div>`;
-        }
+        // Nella sezione dove crei il content per le pagine successive:
+if (page.isFirst) {
+    content = `
+        <div style="text-align: center; margin-bottom: 25px;">
+            <div style="font-size: 36pt; font-weight: bold; margin-bottom: 2px;">"${song.title.toUpperCase()}"</div>
+            <div style="font-size: 16pt; margin-bottom: 2px;">(${song.artist.toUpperCase()})</div>
+            ${notesHtml}
+        </div>
+        <div class="song-text" style="font-size: 24pt; line-height: 1.8;">${page.lines.join('\n')}</div>
+    `;
+} else {
+    content = `<div class="song-text" style="margin-top: 20px; font-size: 24pt; line-height: 1.8;">${page.lines.join('\n')}</div>`;
+}
         
         // ✅ Aggiungi footer solo all'ULTIMA pagina della canzone
         if (page.isLast || pageIndex === pagination.length - 1) {
@@ -5785,6 +6206,15 @@ function exitFullscreenAndGoToArtist(artist) {
 function handleBookTouchStart(e) {
     if (!isFullscreen) return;
     
+    // ✅ IGNORA se stai toccando un link/elemento cliccabile
+    const target = e.target;
+    if (target.hasAttribute('data-action') || 
+        target.closest('[data-action]') ||
+        target.classList.contains('artist-item') ||
+        target.closest('.artist-item')) {
+        return; // Non iniziare lo swipe
+    }
+    
     bookTouchStartX = e.touches[0].clientX;
     bookTouchStartY = e.touches[0].clientY;
     bookTouchCurrentX = bookTouchStartX;
@@ -5800,13 +6230,11 @@ function handleBookTouchStart(e) {
     const diffX = Math.abs(bookTouchCurrentX - bookTouchStartX);
     const diffY = Math.abs(touchCurrentY - bookTouchStartY);
     
-    // BLOCCA COMPLETAMENTE qualsiasi movimento verticale
-    e.preventDefault();
-    e.stopPropagation();
-    
-    // SOLO swipe orizzontale significativo
-    if (diffX > 80 && diffX > diffY * 3) {
+    // Se è uno swipe orizzontale chiaro (80px+ e prevalentemente orizzontale)
+    if (diffX > 80 && diffX > diffY * 2) {
         bookIsSwiping = true;
+        e.preventDefault(); // BLOCCA il default SOLO se è uno swipe
+        e.stopPropagation();
     }
     
     return false;
@@ -5819,12 +6247,19 @@ function handleBookTouchEnd(e) {
     const threshold = 80;
     
     if (Math.abs(diffX) > threshold) {
+        const currentPage = allFullscreenPages[currentFullscreenIndex];
+        
+        // Per TUTTE le pagine (indice, artista, canzone), swipe normale
         if (diffX > 0) {
             // Swipe destra → pagina precedente
-            showBookPage(currentFullscreenIndex - 1);
+            if (currentFullscreenIndex > 0) {
+                showBookPage(currentFullscreenIndex - 1);
+            }
         } else {
             // Swipe sinistra → pagina successiva
-            showBookPage(currentFullscreenIndex + 1);
+            if (currentFullscreenIndex < allFullscreenPages.length - 1) {
+                showBookPage(currentFullscreenIndex + 1);
+            }
         }
     }
     
@@ -5832,6 +6267,7 @@ function handleBookTouchEnd(e) {
 }
 
 function enterFullscreen() {
+    
     // NON usare requestFullscreen() nativo - simula fullscreen
     
     // BLOCCA completamente lo scroll del body
