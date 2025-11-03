@@ -411,6 +411,12 @@ body.dark-mode .fullscreen-active .artist-item {
 /* Font più grandi per A4 */
 .page[style*="width: 793"] .song-text { font-size: 16pt; line-height: 1.4; }
 
+/* Font più grandi per FULLSCREEN */
+.fullscreen-active .song-text {
+    font-size: 24pt !important;
+    line-height: 1.8 !important;
+}
+
 /* Titoli e dettagli più grandi per A4 */
 .page[style*="width: 793"] div[style*="font-size: 18pt"] { font-size: 22pt !important; }
 .page[style*="width: 793"] div[style*="font-size: 16pt"] { font-size: 18pt !important; }
@@ -5951,16 +5957,13 @@ artists.forEach(artist => {
     
     // Tutte le pagine di tutte le canzoni
     artistSongs.forEach(song => {
-        alert('🎵 Genero pagine per: ' + song.title); // ✅ AGGIUNGI QUI
         const songPages = generateSongPagesForBook(song);
-        alert('📄 Pagine generate: ' + songPages.length); // ✅ E QUI
         allFullscreenPages.push(...songPages);
     });
 });
 }
 
 function generateSongPagesForBook(song) {
-    alert('🎵 generateSongPagesForBook chiamata per: ' + song.title); // ✅ AGGIUNGI QUESTA RIGA
     
     const pages = [];
     
@@ -5991,9 +5994,7 @@ function generateSongPagesForBook(song) {
     }
     
     // Calcola paginazione
-    alert('📏 Prima di calculateSongPagination - pageFormat: ' + pageFormat); // ✅ E QUESTA
     const pagination = calculateSongPagination(song, pageFormat, false, true);
-    alert('📄 Pagination completata - pagine: ' + pagination.length); // ✅ E QUESTA
     
     // ✅ FOOTER HTML con link (senza onclick, gestiamo con touch events)
 const footerHtml = `
@@ -6004,21 +6005,20 @@ const footerHtml = `
 `;
     
     pagination.forEach((page, pageIndex) => {
-        let content = '';
-        
-        // Nella sezione dove crei il content per le pagine successive:
-if (page.isFirst) {
-    content = `
-        <div style="text-align: center; margin-bottom: 25px;">
-            <div style="font-size: 36pt; font-weight: bold; margin-bottom: 2px;">"${song.title.toUpperCase()}"</div>
-            <div style="font-size: 16pt; margin-bottom: 2px;">(${song.artist.toUpperCase()})</div>
-            ${notesHtml}
-        </div>
-        <div class="song-text" style="font-size: 24pt !important; line-height: 1.8 !important;">${page.lines.join('\n')}</div>
-    `;
-} else {
-    content = `<div class="song-text" style="margin-top: 20px; font-size: 24pt !important; line-height: 1.8 !important;">${page.lines.join('\n')}</div>`;
-}
+    let content = '';
+    
+    if (page.isFirst) {
+        content = `
+            <div style="text-align: center; margin-bottom: 25px;">
+                <div style="font-size: 36pt; font-weight: bold; margin-bottom: 2px;">"${song.title.toUpperCase()}"</div>
+                <div style="font-size: 16pt; margin-bottom: 2px;">(${song.artist.toUpperCase()})</div>
+                ${notesHtml}
+            </div>
+            <div class="song-text">${page.lines.join('\n')}</div>
+        `;
+    } else {
+        content = `<div class="song-text" style="margin-top: 20px;">${page.lines.join('\n')}</div>`;
+    }
         
         // ✅ Aggiungi footer solo all'ULTIMA pagina della canzone
         if (page.isLast || pageIndex === pagination.length - 1) {
