@@ -1638,7 +1638,7 @@ body.dark-mode .piano-key.black {
         }
 
 // Funzione UNIFICATA per calcolare pagine di una canzone
-function calculateSongPagination(song, format, isPDF = false) {
+function calculateSongPagination(song, format, isPDF = false, isFullscreen = false) {
     // Assumiamo sempre che ci siano note (o il segnaposto)
     const hasNotes = true;
     
@@ -1650,15 +1650,26 @@ function calculateSongPagination(song, format, isPDF = false) {
     // Calcola altezze disponibili in pixel per ogni tipo di pagina
     let firstPageHeight, middlePageHeight, lastPageHeight;
     
-    if (isPDF) {
+    if (isFullscreen) {
+    // ✅ FULLSCREEN: usa l'altezza reale dello schermo
+    const screenHeight = window.innerHeight;
+    const headerHeight = 180; // Titolo + artista + dettagli
+    const footerHeight = 80;  // Footer con link
+    
+    firstPageHeight = screenHeight - headerHeight - footerHeight;
+    middlePageHeight = screenHeight - 40; // Solo margini
+    lastPageHeight = screenHeight - footerHeight - 40;
+    
+    console.log('📱 Fullscreen canzone - Altezza disponibile:', firstPageHeight, 'px');
+} else if (isPDF) {
     if (format === 'A5') {
         firstPageHeight = 650;
         middlePageHeight = 740;
         lastPageHeight = 700;
     } else {
-        firstPageHeight = 750;  // era 750
-        middlePageHeight = 1050;  // era 1000
-        lastPageHeight = 950;  // era 850
+        firstPageHeight = 750;
+        middlePageHeight = 1050;
+        lastPageHeight = 950;
     }
 } else {
     // PARAMETRI PER PERFORMANCE
@@ -1667,9 +1678,9 @@ function calculateSongPagination(song, format, isPDF = false) {
         middlePageHeight = 740;
         lastPageHeight = 700;
     } else {
-        firstPageHeight = 780;  // era 770
-        middlePageHeight = 870;  // era 870
-        lastPageHeight = 825;  // era 950
+        firstPageHeight = 780;
+        middlePageHeight = 870;
+        lastPageHeight = 825;
     }
 }
     
@@ -5748,16 +5759,21 @@ function generateAllPagesForBook() {
     artistsArray.sort((a, b) => a.artistSort.localeCompare(b.artistSort));
     const artists = artistsArray.map(item => item.artist);
     
-    // 1. PAGINA INDICE (multipagina se necessario) - LOGICA COPIATA DA PDF
-let itemsPerColFirstPage, itemsPerColOtherPages;
+    // ✅ CALCOLO DINAMICO basato sull'altezza dello schermo in fullscreen
+const screenHeight = window.innerHeight;
+const rowHeight = 37; // altezza uniforme di ogni riga
+const headerHeightFirstPage = 100; // spazio per "ELENCO CANTANTI"
+const headerHeightOtherPages = 50; // margine minimo
 
-if (pageFormat === 'A5') {
-    itemsPerColFirstPage = 19;
-    itemsPerColOtherPages = 20;
-} else { // A4
-    itemsPerColFirstPage = 27;
-    itemsPerColOtherPages = 29;
-}
+const availableHeightFirstPage = screenHeight - headerHeightFirstPage;
+const availableHeightOtherPages = screenHeight - headerHeightOtherPages;
+
+let itemsPerColFirstPage = Math.floor(availableHeightFirstPage / rowHeight);
+let itemsPerColOtherPages = Math.floor(availableHeightOtherPages / rowHeight);
+
+console.log('📱 Fullscreen - Altezza schermo:', screenHeight, 'px');
+console.log('📊 Items per colonna - Prima pagina:', itemsPerColFirstPage);
+console.log('📊 Items per colonna - Altre pagine:', itemsPerColOtherPages);
 
 const dims = getPageDimensions();
 
@@ -5973,7 +5989,7 @@ function generateSongPagesForBook(song) {
     }
     
     // Calcola paginazione
-    const pagination = calculateSongPagination(song, pageFormat);
+    const pagination = calculateSongPagination(song, pageFormat, false, true); // true = isFullscreen
     
     // ✅ FOOTER HTML con link (senza onclick, gestiamo con touch events)
 const footerHtml = `
@@ -5987,17 +6003,17 @@ const footerHtml = `
         let content = '';
         
         if (page.isFirst) {
-            content = `
-                <div style="text-align: center; margin-bottom: 25px;">
-                    <div style="font-size: 28pt; font-weight: bold; margin-bottom: 2px;">"${song.title.toUpperCase()}"</div>
-                    <div style="font-size: 13pt; margin-bottom: 2px;">(${song.artist.toUpperCase()})</div>
-                    ${notesHtml}
-                </div>
-                <div class="song-text" style="font-size: 19pt;">${page.lines.join('\n')}</div>
-            `;
-        } else {
-            content = `<div class="song-text" style="margin-top: 20px; font-size: 19pt;">${page.lines.join('\n')}</div>`;
-        }
+    content = `
+        <div style="text-align: center; margin-bottom: 25px;">
+            <div style="font-size: 36pt; font-weight: bold; margin-bottom: 2px;">"${song.title.toUpperCase()}"</div>
+            <div style="font-size: 16pt; margin-bottom: 2px;">(${song.artist.toUpperCase()})</div>
+            ${notesHtml}
+        </div>
+        <div class="song-text" style="font-size: 24pt; line-height: 1.8;">${page.lines.join('\n')}</div>
+    `;
+} else {
+    content = `<div class="song-text" style="margin-top: 20px; font-size: 24pt; line-height: 1.8;">${page.lines.join('\n')}</div>`;
+}
         
         // ✅ Aggiungi footer solo all'ULTIMA pagina della canzone
         if (page.isLast || pageIndex === pagination.length - 1) {
