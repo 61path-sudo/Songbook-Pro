@@ -1671,15 +1671,16 @@ function calculateSongPagination(song, format, isPDF = false, isFullscreen = fal
     let firstPageHeight, middlePageHeight, lastPageHeight;
     
     if (isFullscreen) {
-    // ✅ FULLSCREEN: usa l'altezza reale dello schermo
-    const screenHeight = window.innerHeight;
-    const headerHeight = 180; // Titolo + artista + dettagli
-    const footerHeight = 80;  // Footer con link
-    
-    firstPageHeight = screenHeight - headerHeight - footerHeight;
-    middlePageHeight = screenHeight - 40; // Solo margini
-    lastPageHeight = screenHeight - footerHeight - 40;
-
+    // ✅ USA GLI STESSI VALORI DI PERFORMANCE (non l'altezza reale dello schermo)
+    if (format === 'A5') {
+        firstPageHeight = 680;
+        middlePageHeight = 740;
+        lastPageHeight = 700;
+    } else { // A4
+        firstPageHeight = 780;
+        middlePageHeight = 870;
+        lastPageHeight = 825;
+    }
 } else if (isPDF) {
     if (format === 'A5') {
         firstPageHeight = 650;
