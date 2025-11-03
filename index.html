@@ -375,10 +375,10 @@ body.dark-mode .fullscreen-active .artist-item {
 
 /* Fullscreen: distanziamento uguale al resto */
 .fullscreen-active .artist-item {
-    height: 42px !important;
-    line-height: 42px !important;
-    min-height: 42px;
-    max-height: 42px;
+    height: 40px !important;
+    line-height: 40px !important;
+    min-height: 40px;
+    max-height: 40px;
     flex-shrink: 0;
     flex-grow: 0;
 }
@@ -1673,8 +1673,9 @@ function calculateSongPagination(song, format, isPDF = false, isFullscreen = fal
     firstPageHeight = screenHeight - headerHeight - footerHeight;
     middlePageHeight = screenHeight - 40; // Solo margini
     lastPageHeight = screenHeight - footerHeight - 40;
-    
-    console.log('📱 Fullscreen canzone - Altezza disponibile:', firstPageHeight, 'px');
+
+    alert('Fullscreen canzone - Altezza: ' + firstPageHeight + 'px');  // ✅ AGGIUNGI QUESTO
+
 } else if (isPDF) {
     if (format === 'A5') {
         firstPageHeight = 650;
@@ -5889,13 +5890,13 @@ while (processedArtists < artists.length) {
                         
                         // Separatore
                         if (item.isOnlySeparator) {
-                            html += `<div style="background: #cccccc; padding: 2px 0 2px 5px; font-weight: bold; font-size: 20pt; height: 42px; line-height: 42px; display: flex; align-items: center; margin-left: -10px;">${item.separatorLetter}</div>`;
+                            html += `<div style="background: #cccccc; padding: 2px 0 2px 5px; font-weight: bold; font-size: 20pt; height: 40px; line-height: 40px; display: flex; align-items: center; margin-left: -10px;">${item.separatorLetter}</div>`;
                             return html;
                         }
                         
                         if (item.needsSeparator) {
                             const firstLetter = item.artistSort.charAt(0).toUpperCase();
-                            html += `<div style="background: #cccccc; padding: 2px 0 2px 5px; font-weight: bold; font-size: 20pt; height: 42px; line-height: 42px; display: flex; align-items: center; margin-left: -10px;">${firstLetter}</div>`;
+                            html += `<div style="background: #cccccc; padding: 2px 0 2px 5px; font-weight: bold; font-size: 20pt; height: 40px; line-height: 40px; display: flex; align-items: center; margin-left: -10px;">${firstLetter}</div>`;
                         }
                         
                         // ✅ CALCOLO FONT-SIZE SEMPLIFICATO (come nel vecchio)
@@ -5906,7 +5907,7 @@ while (processedArtists < artists.length) {
                             fontSize = 18;
                         }
                         
-                        html += `<div class="artist-item" style="font-size: ${fontSize}pt; height: 42px; line-height: 42px;"><span class="artist-link">${item.artistSort}</span></div>`;
+                        html += `<div class="artist-item" style="font-size: ${fontSize}pt; height: 40px; line-height: 40px;"><span class="artist-link">${item.artistSort}</span></div>`;
                         
                         return html;
                     }).join('')}
@@ -6007,10 +6008,10 @@ if (page.isFirst) {
             <div style="font-size: 16pt; margin-bottom: 2px;">(${song.artist.toUpperCase()})</div>
             ${notesHtml}
         </div>
-        <div class="song-text" style="font-size: 24pt; line-height: 1.8;">${page.lines.join('\n')}</div>
+        <div class="song-text" style="font-size: 24pt !important; line-height: 1.8 !important;">${page.lines.join('\n')}</div>
     `;
 } else {
-    content = `<div class="song-text" style="margin-top: 20px; font-size: 24pt; line-height: 1.8;">${page.lines.join('\n')}</div>`;
+    content = `<div class="song-text" style="margin-top: 20px; font-size: 24pt !important; line-height: 1.8 !important;">${page.lines.join('\n')}</div>`;
 }
         
         // ✅ Aggiungi footer solo all'ULTIMA pagina della canzone
