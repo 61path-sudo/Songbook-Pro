@@ -5963,7 +5963,6 @@ artists.forEach(artist => {
 }
 
 function generateSongPagesForBook(song) {
-    
     const pages = [];
     
     // Parse notes
@@ -5993,33 +5992,33 @@ function generateSongPagesForBook(song) {
     }
     
     // Calcola paginazione
-    const pagination = calculateSongPagination(song, pageFormat, false, true);
+    const pagination = calculateSongPagination(song, pageFormat);
     
-    // ✅ FOOTER HTML con link (senza onclick, gestiamo con touch events)
-const footerHtml = `
-    <div style="position: absolute; bottom: 20px; left: 0; right: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; border-top: 1px solid black; padding-top: 15px;">
-        <div style="text-align: center; cursor: pointer; font-size: 18pt;" data-action="index">Torna ad Elenco cantanti</div>
-        <div style="text-align: center; cursor: pointer; font-size: 18pt;" data-action="artist" data-artist="${song.artist}">Torna al cantante</div>
-    </div>
-`;
+    // Footer HTML con link
+    const footerHtml = `
+        <div style="position: absolute; bottom: 20px; left: 0; right: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; border-top: 1px solid black; padding-top: 15px;">
+            <div style="text-align: center; cursor: pointer; font-size: 18pt;" data-action="index">Torna ad Elenco cantanti</div>
+            <div style="text-align: center; cursor: pointer; font-size: 18pt;" data-action="artist" data-artist="${song.artist}">Torna al cantante</div>
+        </div>
+    `;
     
     pagination.forEach((page, pageIndex) => {
-    let content = '';
-    
-    if (page.isFirst) {
-        content = `
-            <div style="text-align: center; margin-bottom: 25px;">
-                <div style="font-size: 36pt; font-weight: bold; margin-bottom: 2px;">"${song.title.toUpperCase()}"</div>
-                <div style="font-size: 16pt; margin-bottom: 2px;">(${song.artist.toUpperCase()})</div>
-                ${notesHtml}
-            </div>
-            <div class="song-text">${page.lines.join('\n')}</div>
-        `;
-    } else {
-        content = `<div class="song-text" style="margin-top: 20px;">${page.lines.join('\n')}</div>`;
-    }
+        let content = '';
         
-        // ✅ Aggiungi footer solo all'ULTIMA pagina della canzone
+        if (page.isFirst) {
+            content = `
+                <div style="text-align: center; margin-bottom: 25px;">
+                    <div style="font-size: 28pt; font-weight: bold; margin-bottom: 2px;">"${song.title.toUpperCase()}"</div>
+                    <div style="font-size: 13pt; margin-bottom: 2px;">(${song.artist.toUpperCase()})</div>
+                    ${notesHtml}
+                </div>
+                <div class="song-text" style="font-size: 19pt;">${page.lines.join('\n')}</div>
+            `;
+        } else {
+            content = `<div class="song-text" style="margin-top: 20px; font-size: 19pt;">${page.lines.join('\n')}</div>`;
+        }
+        
+        // Aggiungi footer solo se è l'ultima pagina
         if (page.isLast || pageIndex === pagination.length - 1) {
             content += footerHtml;
         }
