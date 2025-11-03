@@ -5735,7 +5735,7 @@ function generateAllPagesForBook() {
     artistsArray.sort((a, b) => a.artistSort.localeCompare(b.artistSort));
     const artists = artistsArray.map(item => item.artist);
     
-    // 1. PAGINA INDICE (multipagina se necessario)
+    // 1. PAGINA INDICE (multipagina se necessario) - LOGICA COPIATA DA PDF
 let itemsPerColFirstPage, itemsPerColOtherPages;
 
 if (pageFormat === 'A5') {
@@ -5746,18 +5746,8 @@ if (pageFormat === 'A5') {
     itemsPerColOtherPages = 29;
 }
 
-const itemsFirstPage = itemsPerColFirstPage * 3;
-const itemsOtherPages = itemsPerColOtherPages * 3;
-
-// Calcola totale pagine necessarie
-let remainingArtists = artists.length - itemsFirstPage;
-const additionalPages = remainingArtists > 0 ? Math.ceil(remainingArtists / itemsOtherPages) : 0;
-const totalIndexPages = 1 + additionalPages;
-
-// ✅ AGGIUNGI QUESTE RIGHE QUI:
 const dims = getPageDimensions();
 
-// Crea testDivFont per calcolare dimensioni
 const testDivFont = document.createElement('div');
 testDivFont.className = 'artist-item';
 testDivFont.style.position = 'absolute';
@@ -5766,99 +5756,138 @@ testDivFont.style.width = 'auto';
 testDivFont.style.height = 'auto';
 document.body.appendChild(testDivFont);
 
-// Calcola columnWidth
 const columnWidth = pageFormat === 'A5' 
     ? ((dims.width - 40) / 3) - 31
-    : ((dims.width - 40) / 3) - 10;
+    : ((dims.width - 40) / 3) - 25;
 
-// Crea pagine indice
-for (let pageNum = 0; pageNum < totalIndexPages; pageNum++) {
-    let startIndex, endIndex;
+// ✅ LOGICA COPIATA DAL PDF
+let processedArtists = 0;
+let globalLastLetter = '';
+
+while (processedArtists < artists.length) {
+    const isFirstPage = (allFullscreenPages.length === 0);
+    const itemsPerCol = isFirstPage ? itemsPerColFirstPage : itemsPerColOtherPages;
     
-    if (pageNum === 0) {
-        startIndex = 0;
-        endIndex = Math.min(itemsFirstPage, artists.length);
-    } else {
-        startIndex = itemsFirstPage + ((pageNum - 1) * itemsOtherPages);
-        endIndex = Math.min(startIndex + itemsOtherPages, artists.length);
+    const columns = [[], [], []];
+    let currentCol = 0;
+    let rowsInCurrentCol = 0;
+    
+    const startIndex = processedArtists;
+    
+    // FASE 1: DISTRIBUZIONE (calcola quali artisti vanno dove)
+    const columnData = [[], [], []];
+    
+    while (processedArtists < artists.length && currentCol < 3) {
+        const artist = artists[processedArtists];
+        const artistSort = songs.find(s => s.artist === artist)?.artistSort || artist;
+        const firstLetter = artistSort.charAt(0).toUpperCase();
+        
+        const needsSeparator = (firstLetter !== globalLastLetter);
+        const rowsNeeded = needsSeparator ? 2 : 1;
+        
+        // ✅ Se serve separatore ma c'è spazio solo per quello
+        if (needsSeparator && rowsInCurrentCol + 1 === itemsPerCol && rowsInCurrentCol + 2 > itemsPerCol) {
+            columnData[currentCol].push({
+                artist: null,
+                artistSort: null,
+                needsSeparator: true,
+                separatorLetter: firstLetter,
+                isOnlySeparator: true
+            });
+            
+            globalLastLetter = firstLetter;
+            rowsInCurrentCol += 1;
+            
+            if (currentCol < 2) {
+                currentCol++;
+                rowsInCurrentCol = 0;
+            } else {
+                break;
+            }
+            
+            const rowsNeededInNewCol = 1;
+            
+            if (rowsInCurrentCol + rowsNeededInNewCol <= itemsPerCol) {
+                columnData[currentCol].push({
+                    artist: artist,
+                    artistSort: artistSort,
+                    needsSeparator: false
+                });
+                
+                rowsInCurrentCol += 1;
+                processedArtists++;
+                continue;
+            }
+        }
+        
+        if (rowsInCurrentCol + rowsNeeded > itemsPerCol) {
+            if (currentCol < 2) {
+                currentCol++;
+                rowsInCurrentCol = 0;
+            } else {
+                break;
+            }
+        }
+        
+        if (rowsInCurrentCol + rowsNeeded <= itemsPerCol) {
+            columnData[currentCol].push({
+                artist: artist,
+                artistSort: artistSort,
+                needsSeparator: (firstLetter !== globalLastLetter)
+            });
+            
+            rowsInCurrentCol += (firstLetter !== globalLastLetter) ? 2 : 1;
+            globalLastLetter = firstLetter;
+            processedArtists++;
+        } else {
+            break;
+        }
     }
     
-    const pageArtists = artists.slice(startIndex, endIndex);
-    
-    // Distribuisci in 3 colonne
-    const itemsPerCol = pageNum === 0 ? itemsPerColFirstPage : itemsPerColOtherPages;
-    // ✅ NUOVO: Distribuisci artisti considerando i separatori alfabetici
-const columns = [[], [], []];
-let currentCol = 0;
-let itemsInCurrentCol = 0;
-let lastLetterInCol = '';
-
-pageArtists.forEach((artist) => {
-    const artistSort = songs.find(s => s.artist === artist)?.artistSort || artist;
-    const firstLetter = artistSort.charAt(0).toUpperCase();
-    
-    // Conta separatore se cambia lettera
-    let willAddSeparator = (firstLetter !== lastLetterInCol);
-    let itemsNeeded = willAddSeparator ? 2 : 1;  // Separatore + artista, oppure solo artista
-    
-    // Se supera il limite, vai alla colonna successiva
-    if (itemsInCurrentCol + itemsNeeded > itemsPerCol && currentCol < 2) {
-        currentCol++;
-        itemsInCurrentCol = 0;
-        lastLetterInCol = '';
-        willAddSeparator = true;  // Nuova colonna = nuovo separatore
-        itemsNeeded = 2;
-    }
-    
-    // Aggiungi alla colonna corrente
-    if (currentCol < 3) {
-        columns[currentCol].push(artist);
-        itemsInCurrentCol += itemsNeeded;
-        lastLetterInCol = firstLetter;
-    }
-});
-
-const indexContent = `
-    ${pageNum === 0 ? '<div style="text-align: center; font-size: 18pt; font-weight: bold; margin-bottom: 30px;">ELENCO CANTANTI</div>' : ''}
-    <div class="artist-columns">
-        ${columns.map(col => {
-            let lastLetter = '';  // ← Torna a lastLetter LOCALE per colonna
-            return `
-            <div class="artist-column">
-                ${col.map(artist => {
-                    const artistSort = songs.find(s => s.artist === artist)?.artistSort || artist;
-                    const firstLetter = artistSort.charAt(0).toUpperCase();
-                    
-                    let html = '';
-                    
-                    if (firstLetter !== lastLetter) {
-                        html += `<div style="background: #cccccc; padding: 1px 0 1px 5px; font-weight: bold; font-size: 14pt; height: 37px; line-height: 37px; display: flex; align-items: center; margin-left: -10px;">${firstLetter}</div>`;
-                        lastLetter = firstLetter;
-                    }
-                    
-                    // Calcola font-size dinamico usando canvas
-const canvas = document.createElement('canvas');
-const context = canvas.getContext('2d');
-context.font = '14pt "Times New Roman", serif';
-
-const textWidth = context.measureText(artistSort).width;
-const targetWidth = columnWidth * 0.94;
-
-let fontSize = 14;
-if (textWidth > targetWidth) {
-    fontSize = Math.floor(14 * (targetWidth / textWidth));
-    fontSize = Math.max(8, Math.min(14, fontSize));
-}
-                    
-                    html += `<div class="artist-item" style="font-size: ${fontSize}pt;"><span class="artist-link" style="cursor: pointer;">${artistSort}</span></div>`;
-                    
-                    return html;
-                }).join('')}
-            </div>
-            `;
-        }).join('')}
-    </div>
-`;
+    // FASE 2: RENDERING HTML
+    const indexContent = `
+        ${isFirstPage ? '<div style="text-align: center; font-size: 18pt; font-weight: bold; margin-bottom: 30px;">ELENCO CANTANTI</div>' : ''}
+        <div class="artist-columns">
+            ${columnData.map(colData => `
+                <div class="artist-column">
+                    ${colData.map(item => {
+                        let html = '';
+                        
+                        if (item.isOnlySeparator) {
+                            html += `<div style="background: #cccccc; padding: 2px 0 2px 5px; font-weight: bold; font-size: 14pt; height: 37px; line-height: 37px; display: flex; align-items: center; margin-left: -10px;">${item.separatorLetter}</div>`;
+                            return html;
+                        }
+                        
+                        if (item.needsSeparator) {
+                            const firstLetter = item.artistSort.charAt(0).toUpperCase();
+                            html += `<div style="background: #cccccc; padding: 2px 0 2px 5px; font-weight: bold; font-size: 14pt; height: 37px; line-height: 37px; display: flex; align-items: center; margin-left: -10px;">${firstLetter}</div>`;
+                        }
+                        
+                        const canvas = document.createElement('canvas');
+                        const context = canvas.getContext('2d');
+                        const targetWidth = columnWidth * 0.94;
+                        
+                        let fontSize = 14;
+                        let textWidth;
+                        
+                        for (let size = 14; size >= 8; size -= 0.5) {
+                            context.font = `${size}pt "Times New Roman", serif`;
+                            textWidth = context.measureText(item.artistSort).width;
+                            
+                            if (textWidth <= targetWidth) {
+                                fontSize = size;
+                                break;
+                            }
+                        }
+                        
+                        html += `<div class="artist-item" style="font-size: ${fontSize}pt;"><span class="artist-link">${item.artistSort}</span></div>`;
+                        
+                        return html;
+                    }).join('')}
+                </div>
+            `).join('')}
+        </div>
+    `;
     
     allFullscreenPages.push({
         type: 'index',
@@ -5866,7 +5895,7 @@ if (textWidth > targetWidth) {
     });
 }
 
-document.body.removeChild(testDivFont); // ✅ AGGIUNGI QUESTA RIGA QUI
+document.body.removeChild(testDivFont);
     
         // 2. PER OGNI ARTISTA: pagina artista + tutte le canzoni
 artists.forEach(artist => {
