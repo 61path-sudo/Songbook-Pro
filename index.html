@@ -330,19 +330,30 @@ body.dark-mode .fullscreen-active .artist-item {
     padding-left: 10px; /* Spazio tra linea e testo */
 }
 
+/* Forza altezze uniformi in fullscreen */
+.fullscreen-active .artist-column > div {
+    height: 37px !important;
+    min-height: 37px;
+    max-height: 37px;
+    line-height: 37px !important;
+    flex-shrink: 0;
+    flex-grow: 0;
+}
+
 .artist-item { 
     font-size: 14pt; 
     padding: 6px 0; 
     cursor: pointer; 
     color: black;
-    white-space: nowrap; /* Mantieni per nomi normali */
-    height: 37px;
-    line-height: 37px;
+    white-space: nowrap;
+    height: 37px !important;
+    line-height: 37px !important;
     display: flex;
     align-items: center;
     overflow: hidden;
-    text-overflow: clip; /* Cambiato da ellipsis a clip */
-    /* pointer-events: none; */
+    text-overflow: clip;
+    flex-shrink: 0;
+    flex-grow: 0;
 }
 
 /* Previeni selezione testo durante swipe in fullscreen */
@@ -353,19 +364,21 @@ body.dark-mode .fullscreen-active .artist-item {
 }
 
 /* Nessun troncamento quando il font è ridotto */
-.artist-item[style*="font-size: 13pt"],
+/*.artist-item[style*="font-size: 13pt"],
 .artist-item[style*="font-size: 12pt"],
 .artist-item[style*="font-size: 11pt"],
 .artist-item[style*="font-size: 10pt"],
 .artist-item[style*="font-size: 9pt"],
 .artist-item[style*="font-size: 8pt"] {
     overflow: visible !important;
-}
+}*/
 
-/* Fullscreen: distanziamento diverso */
+/* Fullscreen: distanziamento uguale al resto */
 .fullscreen-active .artist-item {
-    height: 42px;
-    line-height: 42px;
+    height: 37px !important;
+    line-height: 37px !important;
+    min-height: 37px;
+    max-height: 37px;
 }
 
 .artist-item.long-name {
