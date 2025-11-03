@@ -375,10 +375,10 @@ body.dark-mode .fullscreen-active .artist-item {
 
 /* Fullscreen: distanziamento uguale al resto */
 .fullscreen-active .artist-item {
-    height: 40px !important;
-    line-height: 40px !important;
-    min-height: 40px;
-    max-height: 40px;
+    height: 38px !important;
+    line-height: 38px !important;
+    min-height: 38px;
+    max-height: 38px;
     flex-shrink: 0;
     flex-grow: 0;
 }
@@ -5889,13 +5889,13 @@ while (processedArtists < artists.length) {
                         
                         // Separatore
                         if (item.isOnlySeparator) {
-                            html += `<div style="background: #cccccc; padding: 2px 0 2px 5px; font-weight: bold; font-size: 20pt; height: 40px; line-height: 40px; display: flex; align-items: center; margin-left: -10px;">${item.separatorLetter}</div>`;
+                            html += `<div style="background: #cccccc; padding: 2px 0 2px 5px; font-weight: bold; font-size: 20pt; height: 38px; line-height: 38px; display: flex; align-items: center; margin-left: -10px;">${item.separatorLetter}</div>`;
                             return html;
                         }
                         
                         if (item.needsSeparator) {
                             const firstLetter = item.artistSort.charAt(0).toUpperCase();
-                            html += `<div style="background: #cccccc; padding: 2px 0 2px 5px; font-weight: bold; font-size: 20pt; height: 40px; line-height: 40px; display: flex; align-items: center; margin-left: -10px;">${firstLetter}</div>`;
+                            html += `<div style="background: #cccccc; padding: 2px 0 2px 5px; font-weight: bold; font-size: 20pt; height: 38px; line-height: 38px; display: flex; align-items: center; margin-left: -10px;">${firstLetter}</div>`;
                         }
                         
                         // ✅ CALCOLO FONT-SIZE SEMPLIFICATO (come nel vecchio)
@@ -5906,7 +5906,7 @@ while (processedArtists < artists.length) {
                             fontSize = 18;
                         }
                         
-                        html += `<div class="artist-item" style="font-size: ${fontSize}pt; height: 40px; line-height: 40px;"><span class="artist-link">${item.artistSort}</span></div>`;
+                        html += `<div class="artist-item" style="font-size: ${fontSize}pt; height: 38px; line-height: 38px;"><span class="artist-link">${item.artistSort}</span></div>`;
                         
                         return html;
                     }).join('')}
