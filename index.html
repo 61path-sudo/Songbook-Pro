@@ -408,7 +408,19 @@ body.dark-mode .fullscreen-active .artist-item {
 
 /* Font più grandi per elenco cantanti in A4 */
 .page[style*="width: 793"] .artist-item { font-size: 17pt; }
-        .artist-item:hover { color: #3498db; text-decoration: underline; }
+        .artist-link:hover { 
+    color: #3498db; 
+    text-decoration: underline; 
+}
+
+/* Rimuovi effetti touch su spazi vuoti */
+.fullscreen-active .artist-item {
+    pointer-events: none;  /* ✅ Disabilita eventi sull'elemento intero */
+}
+
+.fullscreen-active .artist-link {
+    pointer-events: auto;  /* ✅ Riabilita solo sul testo */
+}
         .song-text { font-size: 14pt; text-transform: uppercase; line-height: 1.3; white-space: pre-line; color: black; }
 
 /* Font più grandi per A4 */
@@ -6247,7 +6259,7 @@ function handleBookTouchStart(e) {
     const diffY = Math.abs(touchCurrentY - bookTouchStartY);
     
     // Se è uno swipe orizzontale chiaro (80px+ e prevalentemente orizzontale)
-    if (diffX > 80 && diffX > diffY * 2) {
+    if (diffX > 30 && diffX > diffY * 2) {
         bookIsSwiping = true;
         e.preventDefault(); // BLOCCA il default SOLO se è uno swipe
         e.stopPropagation();
@@ -6260,7 +6272,7 @@ function handleBookTouchEnd(e) {
     if (!isFullscreen || !bookIsSwiping) return;
     
     const diffX = bookTouchCurrentX - bookTouchStartX;
-    const threshold = 80;
+    const threshold = 30;
     
     if (Math.abs(diffX) > threshold) {
         const currentPage = allFullscreenPages[currentFullscreenIndex];
