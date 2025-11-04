@@ -6205,40 +6205,25 @@ function addFullscreenLinkHandlers() {
         });
     });
 
-// Handler per titoli canzoni (con data-song-id)
+// Handler per titoli canzoni (con data-song-id) - VERSIONE SEMPLIFICATA
 document.querySelectorAll('.song-link').forEach(link => {
-    let touchStartTime = 0;
-    let hasMoved = false;
+    link.style.cursor = 'pointer'; // ✅ Mostra che è cliccabile
     
-    link.addEventListener('touchstart', (e) => {
-        touchStartTime = Date.now();
-        hasMoved = false;
-    }, { passive: true });
-    
-    link.addEventListener('touchmove', (e) => {
-        hasMoved = true;
-    }, { passive: true });
-    
-    link.addEventListener('touchend', (e) => {
-        alert('👆 Touch end! Duration: ' + (Date.now() - touchStartTime) + 'ms, Moved: ' + hasMoved); // ✅ AGGIUNGI
+    link.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
         
-        const touchDuration = Date.now() - touchStartTime;
+        const songId = parseInt(link.getAttribute('data-song-id'));
+        alert('🎵 Click su canzone ID: ' + songId); // ✅ Test
         
-        if (touchDuration < 300 && !hasMoved) {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            const songId = parseInt(link.getAttribute('data-song-id'));
-            alert('🎵 Apro canzone ID: ' + songId); // ✅ AGGIUNGI
-            
-            // Trova la pagina della canzone
-            const songPageIndex = allFullscreenPages.findIndex(p => 
-                p.type === 'song' && p.songId === songId
-            );
-            
-            if (songPageIndex >= 0) {
-                showBookPage(songPageIndex);
-            }
+        const songPageIndex = allFullscreenPages.findIndex(p => 
+            p.type === 'song' && p.songId === songId
+        );
+        
+        if (songPageIndex >= 0) {
+            showBookPage(songPageIndex);
+        } else {
+            alert('❌ Pagina non trovata per ID: ' + songId);
         }
     });
 });
