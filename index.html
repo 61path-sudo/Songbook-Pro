@@ -330,6 +330,11 @@ body.dark-mode .fullscreen-active .artist-item {
     padding-left: 10px; /* Spazio tra linea e testo */
 }
 
+/* Nascondi border su colonne vuote in fullscreen */
+.fullscreen-active .artist-column:empty {
+    border-left: none !important;
+}
+
 /* Forza altezze uniformi in fullscreen */
 .fullscreen-active .artist-column > div {
     height: 37px !important;
@@ -5946,12 +5951,12 @@ artists.forEach(artist => {
     // Pagina artista
     const escapedArtist = artist.replace(/'/g, "\\'");
     const artistContent = `
-        <div style="text-align: center; font-size: 26pt; font-weight: bold; border-top: 2px solid black; border-bottom: 2px solid black; padding: 15px 0; margin-bottom: 30px;">
-            ${artistSort.toUpperCase()}
-        </div>
-        <div>
-            ${artistSongs.map(song => `<div class="artist-item" onclick="showSong(${song.id})" style="font-size: 20pt;">${song.title.toUpperCase()}</div>`).join('')}
-        </div>
+    <div style="text-align: center; font-size: 26pt; font-weight: bold; border-top: 2px solid black; border-bottom: 2px solid black; padding: 15px 0; margin-bottom: 30px;">
+        ${artistSort.toUpperCase()}
+    </div>
+    <div>
+        ${artistSongs.map(song => `<div class="artist-item" style="font-size: 20pt;"><span class="song-link" data-song-id="${song.id}">${song.title.toUpperCase()}</span></div>`).join('')}
+    </div>
         <div style="position: absolute; bottom: 20px; left: 0; right: 0; text-align: center; border-top: 1px solid black; padding-top: 15px;">
             <span style="cursor: pointer; font-size: 18pt;" data-action="index">Torna ad Elenco cantanti</span>
         </div>
