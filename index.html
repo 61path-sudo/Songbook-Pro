@@ -5900,9 +5900,15 @@ while (processedArtists < artists.length) {
     
     // FASE 2: RENDERING HTML con font-size CORRETTO
     const indexContent = `
-        ${isFirstPage ? '<div style="text-align: center; font-size: 32pt; font-weight: bold; margin-bottom: 30px;">ELENCO CANTANTI</div>' : ''}
-        <div class="artist-columns">
-            ${columnData.map(colData => `
+    ${isFirstPage ? '<div style="text-align: center; font-size: 32pt; font-weight: bold; margin-bottom: 30px;">ELENCO CANTANTI</div>' : ''}
+    <div class="artist-columns">
+        ${columnData.map((colData, colIndex) => {
+            // ✅ Se la colonna è vuota, non renderizzarla
+            if (colData.length === 0) {
+                return '';
+            }
+            
+            return `
                 <div class="artist-column">
                     ${colData.map(item => {
                         let html = '';
@@ -5918,7 +5924,7 @@ while (processedArtists < artists.length) {
                             html += `<div style="background: #cccccc; padding: 2px 0 2px 5px; font-weight: bold; font-size: 20pt; height: 38px; line-height: 38px; display: flex; align-items: center; margin-left: -10px;">${firstLetter}</div>`;
                         }
                         
-                        // ✅ CALCOLO FONT-SIZE SEMPLIFICATO (come nel vecchio)
+                        // CALCOLO FONT-SIZE
                         let fontSize = 20;
                         if (item.artistSort.length > 25) {
                             fontSize = 16;
@@ -5931,14 +5937,15 @@ while (processedArtists < artists.length) {
                         return html;
                     }).join('')}
                 </div>
-            `).join('')}
-        </div>
-    `;
-    
-    allFullscreenPages.push({
-        type: 'index',
-        content: indexContent
-    });
+            `;
+        }).join('')}
+    </div>
+`;
+
+allFullscreenPages.push({
+    type: 'index',
+    content: indexContent
+});
 }
 
 document.body.removeChild(testDivFont);
@@ -6179,18 +6186,24 @@ function addFullscreenLinkHandlers() {
         });
     });
 
-// Handler per titoli canzoni (con data-song-id)
+// ✅ AGGIUNGI: Handler per titoli canzoni (con data-song-id)
 document.querySelectorAll('.song-link').forEach(link => {
     let touchStartTime = 0;
+    let hasMoved = false;
     
     link.addEventListener('touchstart', (e) => {
         touchStartTime = Date.now();
+        hasMoved = false;
+    }, { passive: true });
+    
+    link.addEventListener('touchmove', (e) => {
+        hasMoved = true;
     }, { passive: true });
     
     link.addEventListener('touchend', (e) => {
         const touchDuration = Date.now() - touchStartTime;
         
-        if (touchDuration < 300) {
+        if (touchDuration < 300 && !hasMoved) {
             e.preventDefault();
             e.stopPropagation();
             
