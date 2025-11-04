@@ -5977,17 +5977,16 @@ artists.forEach(artist => {
     const artistSongs = songs.filter(s => s.artist === artist).sort((a,b) => a.title.localeCompare(b.title));
     const artistSort = songs.find(s => s.artist === artist)?.artistSort || artist;
     
-    // Pagina artista
-    const escapedArtist = artist.replace(/'/g, "\\'");
-    const artistContent = `
+    // Pagina artista con elenco canzoni
+const artistContent = `
     <div style="text-align: center; font-size: 26pt; font-weight: bold; border-top: 2px solid black; border-bottom: 2px solid black; padding: 15px 0; margin-bottom: 30px;">
         ${artistSort.toUpperCase()}
     </div>
     <div>
-        ${artistSongs.map(song => `<div class="artist-item" style="font-size: 20pt;"><span class="song-link" data-song-id="${song.id}">${song.title.toUpperCase()}</span></div>`).join('')}
+        ${artistSongs.map(song => `<div class="artist-item" style="font-size: 20pt; cursor: pointer;" onclick="openSongInFullscreen(${song.id})">${song.title.toUpperCase()}</div>`).join('')}
     </div>
     <div style="position: absolute; bottom: 20px; left: 0; right: 0; text-align: center; border-top: 1px solid black; padding-top: 15px;">
-        <span style="cursor: pointer; font-size: 18pt;" data-action="index">Torna ad Elenco cantanti</span>
+        <span style="cursor: pointer; font-size: 18pt;" onclick="showBookPage(0)">Torna ad Elenco cantanti</span>
     </div>
 `;
     
@@ -6097,6 +6096,16 @@ function showBookPage(index) {
     }, 200);
     
     console.log(`Pagina ${currentFullscreenIndex + 1}/${allFullscreenPages.length} - Tipo: ${page.type}`);
+}
+
+function openSongInFullscreen(songId) {
+    const songPageIndex = allFullscreenPages.findIndex(p => 
+        p.type === 'song' && p.songId === songId
+    );
+    
+    if (songPageIndex >= 0) {
+        showBookPage(songPageIndex);
+    }
 }
 
 function addFullscreenLinkHandlers() {
