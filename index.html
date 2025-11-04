@@ -381,6 +381,8 @@ body.dark-mode .fullscreen-active .artist-item {
     max-height: 38px;
     flex-shrink: 0;
     flex-grow: 0;
+    margin: 0 !important;  /* ✅ Rimuovi eventuali margini */
+    padding: 0 !important;  /* ✅ Rimuovi eventuali padding */
 }
 
 .fullscreen-active .artist-columns {
@@ -391,7 +393,8 @@ body.dark-mode .fullscreen-active .artist-item {
 .fullscreen-active .artist-column {
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
+    justify-content: flex-start;  /* ✅ Cambiato da space-between */
+    gap: 0px;  /* ✅ Nessun gap extra */
     height: 100%;
 }
 
