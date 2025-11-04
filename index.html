@@ -325,14 +325,30 @@ body.dark-mode .fullscreen-active .artist-item {
     display: flex; 
     flex-direction: column;
     width: 100%;
-    /*overflow: hidden;*/
-    border-left: 2px solid #cccccc; /* Linea a sinistra */
-    padding-left: 10px; /* Spazio tra linea e testo */
+    overflow: hidden;
+    padding-left: 10px;
+    position: relative; /* ✅ AGGIUNTO */
 }
 
-/* Nascondi border su colonne vuote in fullscreen */
-.fullscreen-active .artist-column:empty {
-    border-left: none !important;
+/* ✅ LINEA come pseudo-elemento che segue il contenuto */
+.artist-column::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: auto; /* ✅ NON va fino in fondo */
+    height: 100%; /* ✅ Solo l'altezza del contenuto */
+    width: 2px;
+    background: #cccccc;
+    pointer-events: none;
+}
+
+.fullscreen-active .artist-column {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+    gap: 8px;
+    height: 100%;
 }
 
 /* Forza altezze uniformi in fullscreen */
@@ -6071,13 +6087,16 @@ function showBookPage(index) {
     previewContent.innerHTML = pageHtml;
     
     setTimeout(() => {
-    addFullscreenLinkHandlers();
-}, 200);
+        addFullscreenLinkHandlers(); // ✅ DEVE ESSERE QUI
+    }, 200);
     
     console.log(`Pagina ${currentFullscreenIndex + 1}/${allFullscreenPages.length} - Tipo: ${page.type}`);
 }
 
 function addFullscreenLinkHandlers() {
+    const songLinksCount = document.querySelectorAll('.song-link').length;
+    alert('🎵 Song links trovati: ' + songLinksCount);
+    
     const artistItems = document.querySelectorAll('.artist-link, .song-link');
     artistItems.forEach(item => {
         let touchStartTime = 0;
