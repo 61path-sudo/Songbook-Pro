@@ -6099,18 +6099,33 @@ function showBookPage(index) {
 }
 
 function openSongInFullscreen(songId) {
+    alert('📌 Cerco canzone con ID: ' + songId);
+    
+    // Verifica quante pagine di questa canzone esistono
+    const songPages = allFullscreenPages.filter(p => p.type === 'song' && p.songId === songId);
+    alert('📄 Trovate ' + songPages.length + ' pagine per questa canzone');
+    
     const songPageIndex = allFullscreenPages.findIndex(p => 
         p.type === 'song' && p.songId === songId
     );
     
     if (songPageIndex >= 0) {
+        alert('✅ Apro pagina index: ' + songPageIndex);
         showBookPage(songPageIndex);
+    } else {
+        alert('❌ Pagina NON trovata! ID: ' + songId);
+        
+        // Mostra tutti gli ID disponibili
+        const allSongIds = allFullscreenPages
+            .filter(p => p.type === 'song')
+            .map(p => p.songId);
+        const uniqueIds = [...new Set(allSongIds)];
+        alert('IDs disponibili: ' + uniqueIds.slice(0, 10).join(', ') + '...');
     }
 }
 
 function addFullscreenLinkHandlers() {
     const songLinksCount = document.querySelectorAll('.song-link').length;
-    alert('🎵 Song links trovati: ' + songLinksCount);
     
     const artistItems = document.querySelectorAll('.artist-link, .song-link');
     artistItems.forEach(item => {
