@@ -5985,7 +5985,7 @@ const artistContent = `
     <div>
         ${artistSongs.map(song => 
   `<div class="artist-item song-link" data-song-id="${song.id}" 
-       style="font-size: 20pt; cursor: pointer;">
+       style="font-size: 20pt; cursor: pointer; display: block; padding: 6px 0;">
     ${song.title.toUpperCase()}
   </div>`
 ).join('')}
@@ -6249,7 +6249,6 @@ document.querySelectorAll('.song-link').forEach(link => {
         e.stopPropagation();
         
         const songId = parseInt(link.getAttribute('data-song-id'));
-        alert('🎵 Click su canzone ID: ' + songId); // ✅ Test
         
         const songPageIndex = allFullscreenPages.findIndex(p => 
             p.type === 'song' && p.songId === songId
