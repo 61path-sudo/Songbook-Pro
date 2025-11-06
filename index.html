@@ -6470,7 +6470,11 @@ previewContainer.innerHTML = pageHtml;
 setTimeout(() => {
     addFullscreenLinkHandlers();
     console.log('Handler attaccati - elementi trovati:', document.querySelectorAll('.artist-link, .song-link').length);
-}, 500);
+
+    if (page.type === 'index') {
+            setTimeout(() => addColumnLinesInFullscreen(), 300);
+        }
+}, 200);
     
 // Event listeners per swipe (BLOCCATO verso il basso)
 previewContainer.addEventListener('touchstart', handleBookTouchStart, { passive: false });
