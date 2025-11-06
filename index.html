@@ -330,6 +330,23 @@ body.dark-mode .fullscreen-active .artist-item {
     position: relative; /* ✅ AGGIUNTO */
 }
 
+.artist-column::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: auto;
+    height: 100%;
+    width: 2px;
+    background: #cccccc;
+    pointer-events: none;
+}
+
+/* Disabilita ::before in fullscreen (usa JavaScript invece) */
+.fullscreen-active .artist-column::before {
+    display: none;
+}
+
 .fullscreen-active .artist-column {
     display: flex;
     flex-direction: column;
