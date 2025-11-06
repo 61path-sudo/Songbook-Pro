@@ -6037,36 +6037,34 @@ const artistContent = `
 }
 
 function addColumnLinesInFullscreen() {
-    setTimeout(() => {
-        const columns = document.querySelectorAll('.fullscreen-active .artist-column');
+    const columns = document.querySelectorAll('.fullscreen-active .artist-column');
+    
+    columns.forEach(column => {
+        const oldLine = column.querySelector('.column-line');
+        if (oldLine) oldLine.remove();
         
-        columns.forEach(column => {
-            const oldLine = column.querySelector('.column-line');
-            if (oldLine) oldLine.remove();
-            
-            const items = column.querySelectorAll('.artist-item');
-            if (items.length === 0) return;
-            
-            const lastItem = items[items.length - 1];
-            const columnRect = column.getBoundingClientRect();
-            const lastItemRect = lastItem.getBoundingClientRect();
-            
-            const lineHeight = lastItemRect.bottom - columnRect.top;
-            
-            const line = document.createElement('div');
-            line.className = 'column-line';
-            line.style.position = 'absolute';
-            line.style.left = '0';
-            line.style.top = '0';
-            line.style.width = '2px';
-            line.style.height = lineHeight + 'px';
-            line.style.background = '#cccccc';
-            line.style.pointerEvents = 'none';
-            
-            column.style.position = 'relative';
-            column.appendChild(line);
-        });
-    }, 300);
+        const items = column.querySelectorAll('.artist-item');
+        if (items.length === 0) return;
+        
+        const lastItem = items[items.length - 1];
+        const columnRect = column.getBoundingClientRect();
+        const lastItemRect = lastItem.getBoundingClientRect();
+        
+        const lineHeight = lastItemRect.bottom - columnRect.top;
+        
+        const line = document.createElement('div');
+        line.className = 'column-line';
+        line.style.position = 'absolute';
+        line.style.left = '0';
+        line.style.top = '0';
+        line.style.width = '2px';
+        line.style.height = lineHeight + 'px';
+        line.style.background = '#cccccc';
+        line.style.pointerEvents = 'none';
+        
+        column.style.position = 'relative';
+        column.appendChild(line);
+    });
 }
 
 function generateSongPagesForBook(song) {
@@ -6156,13 +6154,14 @@ function showBookPage(index) {
     
     const pageHtml = `<div class="page active" style="width: 100vw; height: 100vh;">${page.content}</div>`;
     previewContent.innerHTML = pageHtml;
-
-    if (page.type === 'index') {
-        addColumnLinesInFullscreen();
-    }
     
     setTimeout(() => {
-        addFullscreenLinkHandlers(); // ✅ DEVE ESSERE QUI
+        addFullscreenLinkHandlers();
+        
+        // ✅ SPOSTA LA CHIAMATA QUI DENTRO, DOPO addFullscreenLinkHandlers
+        if (page.type === 'index') {
+            addColumnLinesInFullscreen();
+        }
     }, 200);
     
     console.log(`Pagina ${currentFullscreenIndex + 1}/${allFullscreenPages.length} - Tipo: ${page.type}`);
