@@ -330,19 +330,6 @@ body.dark-mode .fullscreen-active .artist-item {
     position: relative; /* ✅ AGGIUNTO */
 }
 
-/* ✅ LINEA come pseudo-elemento che segue il contenuto */
-.artist-column::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: auto; /* ✅ NON va fino in fondo */
-    height: 100%; /* ✅ Solo l'altezza del contenuto */
-    width: 2px;
-    background: #cccccc;
-    pointer-events: none;
-}
-
 .fullscreen-active .artist-column {
     display: flex;
     flex-direction: column;
@@ -1516,7 +1503,7 @@ body.dark-mode .piano-key.black {
         <div id="firebase-logged-out" style="display: none;">
             <p>Accedi con Google per sincronizzare automaticamente i tuoi testi su tutti i dispositivi.</p>
             <div style="text-align: center; margin-top: 15px;">
-                <button class="btn btn-primary" onclick="loginWithGoogle()" style="background: #4285f4;">
+                <button class="btn btn-primary" onclick="loginWithGoogle()">
                     <span style="font-size: 18px;">🔐</span> Accedi con Google
                 </button>
             </div>
@@ -6032,6 +6019,39 @@ const artistContent = `
 });
 }
 
+function addColumnLinesInFullscreen() {
+    setTimeout(() => {
+        const columns = document.querySelectorAll('.fullscreen-active .artist-column');
+        
+        columns.forEach(column => {
+            const oldLine = column.querySelector('.column-line');
+            if (oldLine) oldLine.remove();
+            
+            const items = column.querySelectorAll('.artist-item');
+            if (items.length === 0) return;
+            
+            const lastItem = items[items.length - 1];
+            const columnRect = column.getBoundingClientRect();
+            const lastItemRect = lastItem.getBoundingClientRect();
+            
+            const lineHeight = lastItemRect.bottom - columnRect.top;
+            
+            const line = document.createElement('div');
+            line.className = 'column-line';
+            line.style.position = 'absolute';
+            line.style.left = '0';
+            line.style.top = '0';
+            line.style.width = '2px';
+            line.style.height = lineHeight + 'px';
+            line.style.background = '#cccccc';
+            line.style.pointerEvents = 'none';
+            
+            column.style.position = 'relative';
+            column.appendChild(line);
+        });
+    }, 300);
+}
+
 function generateSongPagesForBook(song) {
     const pages = [];
     
@@ -6119,6 +6139,10 @@ function showBookPage(index) {
     
     const pageHtml = `<div class="page active" style="width: 100vw; height: 100vh;">${page.content}</div>`;
     previewContent.innerHTML = pageHtml;
+
+    if (page.type === 'index') {
+        addColumnLinesInFullscreen();
+    }
     
     setTimeout(() => {
         addFullscreenLinkHandlers(); // ✅ DEVE ESSERE QUI
