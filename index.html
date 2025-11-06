@@ -6039,31 +6039,31 @@ const artistContent = `
 function addColumnLinesInFullscreen() {
     const columns = document.querySelectorAll('.fullscreen-active .artist-column');
     
-    columns.forEach(column => {
-        const oldLine = column.querySelector('.column-line');
-        if (oldLine) oldLine.remove();
-        
+    columns.forEach((column) => {
         const items = column.querySelectorAll('.artist-item');
         if (items.length === 0) return;
         
         const lastItem = items[items.length - 1];
-        const columnRect = column.getBoundingClientRect();
-        const lastItemRect = lastItem.getBoundingClientRect();
         
-        const lineHeight = lastItemRect.bottom - columnRect.top;
+        // Invece di creare un div, usa un border sull'ultimo elemento
+        lastItem.style.borderLeft = '2px solid #cccccc';
+        lastItem.style.position = 'relative';
+        lastItem.style.setProperty('--line-height', '100%');
         
-        const line = document.createElement('div');
-        line.className = 'column-line';
-        line.style.position = 'absolute';
-        line.style.left = '0';
-        line.style.top = '0';
-        line.style.width = '2px';
-        line.style.height = lineHeight + 'px';
-        line.style.background = '#cccccc';
-        line.style.pointerEvents = 'none';
-        
-        column.style.position = 'relative';
-        column.appendChild(line);
+        // Aggiungi pseudo-elemento tramite style inline
+        const style = document.createElement('style');
+        style.textContent = `
+            .fullscreen-active .artist-item[style*="border-left"]:before {
+                content: '';
+                position: absolute;
+                left: -12px;
+                top: -1000px;
+                bottom: 0;
+                width: 2px;
+                background: #cccccc;
+            }
+        `;
+        document.head.appendChild(style);
     });
 }
 
