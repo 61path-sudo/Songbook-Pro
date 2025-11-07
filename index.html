@@ -330,21 +330,22 @@ body.dark-mode .fullscreen-active .artist-item {
     position: relative; /* ✅ AGGIUNTO */
 }
 
+/* Linea per Performance normale */
 .artist-column::before {
     content: '';
     position: absolute;
     left: 0;
     top: 0;
-    bottom: auto;
-    height: 100%;
     width: 2px;
     background: #cccccc;
     pointer-events: none;
+    height: 100%;
 }
 
-/* Disabilita ::before in fullscreen (usa JavaScript invece) */
+/* Linea per Fullscreen - si ferma all'ultimo elemento */
 .fullscreen-active .artist-column::before {
-    display: none;
+    /* Calcola l'altezza in base al numero di figli */
+    height: calc(var(--items-count, 20) * 38px);
 }
 
 .fullscreen-active .artist-column {
@@ -5956,13 +5957,9 @@ while (processedArtists < artists.length) {
                 return '';
             }
             
-            // ✅ Calcola altezza della linea (numero di item * 38px)
-            const lineHeight = colData.length * 38;
-            
             return `
-                <div class="artist-column" style="position: relative;">
-                    <div style="position: absolute; left: 0; top: 0; width: 2px; height: ${lineHeight}px; background: #cccccc; pointer-events: none;"></div>
-                    ${colData.map(item => {
+    <div class="artist-column" style="position: relative; --items-count: ${colData.length};">
+        ${colData.map(item => {
                         let html = '';
                         
                         if (item.isOnlySeparator) {
