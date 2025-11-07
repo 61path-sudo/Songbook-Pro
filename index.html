@@ -344,8 +344,8 @@ body.dark-mode .fullscreen-active .artist-item {
 
 /* Linea per Fullscreen - si ferma all'ultimo elemento */
 .fullscreen-active .artist-column::before {
-    /* Altezza = (elementi * 38px) + (gap tra elementi * 10px) */
-    height: calc((var(--items-count, 20) * 38px) + ((var(--items-count, 20) - 1) * 10px));
+    /* Usa l'altezza reale degli elementi (38px) + gap reale (8px) */
+    height: calc((var(--items-count, 20) * 38px) + ((var(--items-count, 20) - 1) * 8px));
 }
 
 .fullscreen-active .artist-column {
@@ -354,16 +354,6 @@ body.dark-mode .fullscreen-active .artist-item {
     justify-content: space-evenly;
     gap: 8px;
     height: 100%;
-}
-
-/* Forza altezze uniformi in fullscreen */
-.fullscreen-active .artist-column > div {
-    height: 37px !important;
-    min-height: 37px;
-    max-height: 37px;
-    line-height: 37px !important;
-    flex-shrink: 0;
-    flex-grow: 0;
 }
 
 .artist-item { 
