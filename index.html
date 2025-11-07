@@ -5968,7 +5968,7 @@ colData.forEach(item => {
 });
 
 // Calcola altezza: ogni elemento 38px + gap 8px tra elementi - margine di sicurezza
-const totalHeight = (totalVisibleElements * 38 + Math.max(0, totalVisibleElements - 1) * 8) - 15;
+const totalHeight = (totalVisibleElements * 38 + Math.max(0, totalVisibleElements - 1) * 8) - 20;
 
 return `
     <div class="artist-column" style="position: relative; --items-count: ${totalVisibleElements}; --line-height: ${totalHeight}px;">
