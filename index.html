@@ -343,7 +343,7 @@ body.dark-mode .fullscreen-active .artist-item {
 }
 
 .fullscreen-active .artist-column::before {
-    height: var(--line-height, calc((var(--items-count, 20) * 38px) + ((var(--items-count, 20) - 1) * 8px)));
+    height: var(--line-height, 100%);
 }
 
 .fullscreen-active .artist-column {
@@ -5955,7 +5955,7 @@ while (processedArtists < artists.length) {
                 return '';
             }
             
-            // Calcola altezza reale per la linea (38px per elemento + 8px di gap)
+            // Calcola altezza reale per la linea
 const totalHeight = colData.length * 38 + Math.max(0, colData.length - 1) * 8;
 
 return `
