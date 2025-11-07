@@ -344,8 +344,8 @@ body.dark-mode .fullscreen-active .artist-item {
 
 /* Linea per Fullscreen - si ferma all'ultimo elemento */
 .fullscreen-active .artist-column::before {
-    /* Calcola l'altezza in base al numero di figli */
-    height: calc(var(--items-count, 20) * 38px);
+    /* Altezza = (elementi * 38px) + (gap tra elementi * 8px) */
+    height: calc((var(--items-count, 20) * 38px) + ((var(--items-count, 20) - 1) * 8px));
 }
 
 .fullscreen-active .artist-column {
