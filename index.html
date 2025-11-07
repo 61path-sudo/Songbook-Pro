@@ -343,9 +343,7 @@ body.dark-mode .fullscreen-active .artist-item {
 }
 
 .fullscreen-active .artist-column::before {
-    height: 100%;
-    bottom: 0;
-    top: auto;
+    height: var(--line-height, 100%);
 }
 
 .fullscreen-active .artist-column {
@@ -5957,11 +5955,23 @@ while (processedArtists < artists.length) {
                 return '';
             }
             
-            // Calcola altezza reale per la linea
-const totalHeight = colData.length * 38 + Math.max(0, colData.length - 1) * 8;
+            // Conta TUTTI gli elementi renderizzati (separatori + artisti)
+let totalVisibleElements = 0;
+colData.forEach(item => {
+    if (item.isOnlySeparator) {
+        totalVisibleElements += 1; // Solo separatore
+    } else if (item.needsSeparator) {
+        totalVisibleElements += 2; // Separatore + artista
+    } else {
+        totalVisibleElements += 1; // Solo artista
+    }
+});
+
+// Calcola altezza: ogni elemento 38px + gap 8px tra elementi
+const totalHeight = totalVisibleElements * 38 + Math.max(0, totalVisibleElements - 1) * 8;
 
 return `
-    <div class="artist-column" style="position: relative; --items-count: ${colData.length}; --line-height: ${totalHeight}px;">
+    <div class="artist-column" style="position: relative; --items-count: ${totalVisibleElements}; --line-height: ${totalHeight}px;">
         ${colData.map(item => {
                         let html = '';
                         
