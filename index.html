@@ -342,10 +342,8 @@ body.dark-mode .fullscreen-active .artist-item {
     height: 100%;
 }
 
-/* Linea per Fullscreen - si ferma all'ultimo elemento */
 .fullscreen-active .artist-column::before {
-    /* Usa l'altezza reale degli elementi (38px) + gap reale (8px) */
-    height: calc((var(--items-count, 20) * 38px) + ((var(--items-count, 20) - 1) * 8px));
+    height: var(--line-height, calc((var(--items-count, 20) * 38px) + ((var(--items-count, 20) - 1) * 8px)));
 }
 
 .fullscreen-active .artist-column {
@@ -354,6 +352,16 @@ body.dark-mode .fullscreen-active .artist-item {
     justify-content: space-evenly;
     gap: 8px;
     height: 100%;
+}
+
+/* Forza altezze uniformi in fullscreen */
+.fullscreen-active .artist-column > div {
+    height: 37px !important;
+    min-height: 37px;
+    max-height: 37px;
+    line-height: 37px !important;
+    flex-shrink: 0;
+    flex-grow: 0;
 }
 
 .artist-item { 
@@ -5947,8 +5955,11 @@ while (processedArtists < artists.length) {
                 return '';
             }
             
-            return `
-    <div class="artist-column" style="position: relative; --items-count: ${colData.length};">
+            // Calcola altezza reale per la linea (38px per elemento + 8px di gap)
+const totalHeight = colData.length * 38 + Math.max(0, colData.length - 1) * 8;
+
+return `
+    <div class="artist-column" style="position: relative; --items-count: ${colData.length}; --line-height: ${totalHeight}px;">
         ${colData.map(item => {
                         let html = '';
                         
