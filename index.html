@@ -1342,7 +1342,7 @@ body.dark-mode .piano-key.black {
 </head>
 <body>
     <div class="header">
-        <h1>SongBook Pro <span style="font-size: 14px; color: rgba(255,255,255,0.7); font-weight: normal;">v1.0</span></h1>
+        <h1>SongBook Pro <span style="font-size: 14px; color: rgba(255,255,255,0.7); font-weight: normal;">v2.0</span></h1>
         <p>Organizza i tuoi testi per concerti</p>
         <button id="dark-mode-toggle" class="dark-mode-btn" onclick="toggleDarkMode()">🌙</button>
     </div>
@@ -1352,6 +1352,7 @@ body.dark-mode .piano-key.black {
         <button class="tab-btn" onclick="showTab('manage')">Gestisci</button>
         <button class="tab-btn" onclick="showTab('performance')">Performance</button>
         <button class="tab-btn" onclick="showTab('importexport')">Export/Import</button>
+        <button class="tab-btn" onclick="showTab('preferiti')">Preferiti</button>
     </div>
 
     <div class="content">
@@ -1507,6 +1508,38 @@ body.dark-mode .piano-key.black {
     </div>
 </div>
 
+        <!-- Preferiti -->
+        <div id="preferiti-tab" class="tab-content">
+            <h2>Preferiti & Categorie</h2>
+            
+            <!-- Gestione Categorie -->
+            <div style="background: #fff3e0; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <h3 style="margin-top: 0;">Gestione Categorie</h3>
+                <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                    <input type="text" id="new-category-input" placeholder="Nome nuova categoria..." style="flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                    <button class="btn btn-primary" onclick="addCategory()">Aggiungi</button>
+                </div>
+                <div id="categories-list" style="display: flex; flex-wrap: wrap; gap: 10px;"></div>
+            </div>
+            
+            <!-- Gestione Preferiti -->
+            <div style="background: #e8f5e9; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <h3 style="margin-top: 0;">Gestione Preferiti</h3>
+                
+                <!-- Filtri -->
+                <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px;">
+                    <button class="btn btn-primary" id="filter-all-btn" onclick="filterPreferiti('all')" style="font-size: 13px;">Tutte le canzoni</button>
+                    <button class="btn btn-secondary" id="filter-preferiti-btn" onclick="filterPreferiti('preferiti')" style="font-size: 13px;">Solo Preferiti</button>
+                </div>
+                
+                <!-- Ricerca -->
+                <input type="text" id="preferiti-search" placeholder="🔍 Cerca canzone o cantante..." oninput="updatePreferitiList()" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin-bottom: 15px;">
+                
+                <!-- Lista canzoni -->
+                <div id="preferiti-songs-list" style="max-height: 500px; overflow-y: auto; border: 1px solid #ddd; border-radius: 5px; background: white;"></div>
+            </div>
+        </div>
+        
 <!-- Export/Import -->
 <div id="importexport-tab" class="tab-content">
     <h2>Export/Import</h2>
@@ -2299,6 +2332,10 @@ function saveData() {
         updateTrashUI();
     }
     if (tabName === 'performance') updatePerformance();
+    if (tabName === 'preferiti') {
+        updateCategoriesList();
+        updatePreferitiList();
+    }
 }
 
         function addSong() {
@@ -3144,8 +3181,9 @@ console.log('Artisti processati:', processedArtists, '/', artists.length);
             <div>
                 ${pageSongs.map(song => `<div class="artist-item" onclick="showSong(${song.id})" style="font-size: 16pt;">${song.title.toUpperCase()}</div>`).join('')}
             </div>
-            <div style="position: absolute; bottom: 20px; left: 0; right: 0; text-align: center; border-top: 1px solid black; padding-top: 15px;">
-                <span style="cursor: pointer; font-size: 16pt;" onclick="updatePerformance()">Torna ad Elenco cantanti</span>
+            <div style="position: absolute; bottom: 20px; left: 0; right: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; border-top: 1px solid black; padding-top: 15px;">
+                <div style="text-align: center; cursor: pointer; font-size: 16pt;" onclick="updatePerformance()">Torna ad Elenco cantanti</div>
+                <div style="text-align: center; cursor: pointer; font-size: 16pt;" onclick="showPreferitiInPerformance()">Preferiti</div>
             </div>
         `;
         
@@ -3207,11 +3245,12 @@ if (rhythmic || key || tempo) {
     
     // Footer HTML
     const footerHtml = `
-        <div style="position: absolute; bottom: 20px; left: 0; right: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; border-top: 1px solid black; padding-top: 15px;">
-            <div style="text-align: center; cursor: pointer; font-size: 16pt;" onclick="updatePerformance()">Torna ad Elenco cantanti</div>
-            <div style="text-align: center; cursor: pointer; font-size: 16pt;" onclick="showArtist('${song.artist.replace(/'/g, "\\'")}')" >Torna al cantante</div>
-        </div>
-    `;
+            <div style="position: absolute; bottom: 20px; left: 0; right: 0; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; border-top: 1px solid black; padding-top: 15px;">
+                <div style="text-align: center; cursor: pointer; font-size: 16pt;" onclick="updatePerformance()">Torna ad Elenco cantanti</div>
+                <div style="text-align: center; cursor: pointer; font-size: 16pt;" onclick="showArtist('${song.artist.replace(/'/g, "\\'")}')" >Torna al cantante</div>
+                <div style="text-align: center; cursor: pointer; font-size: 16pt;" onclick="showPreferitiInPerformance()">Preferiti</div>
+            </div>
+        `;
     
     // Costruisci pagine HTML
     const htmlPages = pagination.map(page => {
@@ -4041,6 +4080,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     loadData();
+    loadPreferitiData();
 
 // Rileva quando torni online
     window.addEventListener('online', () => {
@@ -6016,22 +6056,23 @@ artists.forEach(artist => {
     const artistSort = songs.find(s => s.artist === artist)?.artistSort || artist;
     
     // Pagina artista con elenco canzoni
-const artistContent = `
-    <div style="text-align: center; font-size: 26pt; font-weight: bold; border-top: 2px solid black; border-bottom: 2px solid black; padding: 15px 0; margin-bottom: 30px;">
-        ${artistSort.toUpperCase()}
-    </div>
-    <div>
-        ${artistSongs.map(song => 
-  `<div class="artist-item song-link" data-song-id="${song.id}" 
-       style="font-size: 20pt; cursor: pointer; display: block; width: fit-content; padding: 6px 0;">
-    ${song.title.toUpperCase()}
-  </div>`
-).join('')}
-    </div>
-    <div style="position: absolute; bottom: 20px; left: 0; right: 0; text-align: center; border-top: 1px solid black; padding-top: 15px;">
-        <span style="cursor: pointer; font-size: 18pt;" onclick="showBookPage(0)">Torna ad Elenco cantanti</span>
-    </div>
-`;
+    const artistContent = `
+        <div style="text-align: center; font-size: 26pt; font-weight: bold; border-top: 2px solid black; border-bottom: 2px solid black; padding: 15px 0; margin-bottom: 30px;">
+            ${artistSort.toUpperCase()}
+        </div>
+        <div>
+            ${artistSongs.map(song => 
+      `<div class="artist-item song-link" data-song-id="${song.id}"
+           style="font-size: 20pt; cursor: pointer; display: block; width: fit-content; padding: 6px 0;">
+        ${song.title.toUpperCase()}
+      </div>`
+    ).join('')}
+        </div>
+        <div style="position: absolute; bottom: 20px; left: 0; right: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; border-top: 1px solid black; padding-top: 15px;">
+            <div style="text-align: center; cursor: pointer; font-size: 18pt;" data-action="index">Torna ad Elenco cantanti</div>
+            <div style="text-align: center; cursor: pointer; font-size: 18pt;" data-action="preferiti">Preferiti</div>
+        </div>
+    `;
     
     allFullscreenPages.push({
         type: 'artist',
@@ -6082,11 +6123,12 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
     
     // Footer HTML con link
     const footerHtml = `
-        <div style="position: absolute; bottom: 20px; left: 0; right: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; border-top: 1px solid black; padding-top: 15px;">
-            <div style="text-align: center; cursor: pointer; font-size: 18pt;" data-action="index">Torna ad Elenco cantanti</div>
-            <div style="text-align: center; cursor: pointer; font-size: 18pt;" data-action="artist" data-artist="${song.artist}">Torna al cantante</div>
-        </div>
-    `;
+            <div style="position: absolute; bottom: 20px; left: 0; right: 0; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; border-top: 1px solid black; padding-top: 15px;">
+                <div style="text-align: center; cursor: pointer; font-size: 18pt;" data-action="index">Torna ad Elenco cantanti</div>
+                <div style="text-align: center; cursor: pointer; font-size: 18pt;" data-action="artist" data-artist="${song.artist}">Torna al cantante</div>
+                <div style="text-align: center; cursor: pointer; font-size: 18pt;" data-action="preferiti">Preferiti</div>
+            </div>
+        `;
     
     pagination.forEach((page, pageIndex) => {
         let content = '';
@@ -6123,6 +6165,176 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
     return pages;
 }
 
+        function showPreferitiInPerformance(filterCategoryId = 'all') {
+            const previewContent = document.getElementById('preview-content');
+            const dims = getPageDimensions();
+            
+            // Filtra canzoni preferite
+            let preferitiSongs = songs.filter(s => isPreferito(s.id));
+            
+            // Applica filtro categoria
+            if (filterCategoryId !== 'all') {
+                preferitiSongs = preferitiSongs.filter(s => {
+                    const prefData = preferiti.find(p => p.songId === s.id);
+                    return prefData && prefData.categories.includes(filterCategoryId);
+                });
+            }
+            
+            // Ordina per artista poi titolo
+            preferitiSongs.sort((a, b) => {
+                const artistCompare = (a.artistSort || a.artist).localeCompare(b.artistSort || b.artist);
+                if (artistCompare !== 0) return artistCompare;
+                return a.title.localeCompare(b.title);
+            });
+            
+            // Crea pulsanti filtro categorie
+            const filterButtons = `
+                <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px;">
+                    <div style="padding: 6px 15px; border-radius: 20px; font-size: 14pt; cursor: pointer; border: 2px solid #f39c12;
+                        ${filterCategoryId === 'all' ? 'background: #f39c12; color: white;' : 'background: white; color: #e67e22;'}"
+                        onclick="showPreferitiInPerformance('all')">
+                        Tutti
+                    </div>
+                    ${categories.map(cat => `
+                        <div style="padding: 6px 15px; border-radius: 20px; font-size: 14pt; cursor: pointer; border: 2px solid #f39c12;
+                            ${filterCategoryId === cat.id ? 'background: #f39c12; color: white;' : 'background: white; color: #e67e22;'}"
+                            onclick="showPreferitiInPerformance(${cat.id})">
+                            ${cat.name}
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            
+            // Crea lista canzoni
+            const songsList = preferitiSongs.length > 0
+                ? preferitiSongs.map(song => `
+                    <div class="artist-item" onclick="showSong(${song.id})"
+                        style="font-size: 16pt; cursor: pointer; padding: 8px 0; border-bottom: 1px solid #eee;">
+                        <span style="font-weight: 600;">${song.title.toUpperCase()}</span>
+                        <span style="font-size: 12pt; color: #666; margin-left: 10px;">- ${song.artist}</span>
+                    </div>
+                `).join('')
+                : '<div style="text-align: center; color: #999; font-size: 14pt; margin-top: 30px;">Nessuna canzone trovata</div>';
+            
+            const content = `
+                <div style="text-align: center; font-size: 20pt; font-weight: bold; border-top: 2px solid black; border-bottom: 2px solid black; padding: 15px 0; margin-bottom: 20px;">
+                    PREFERITI
+                </div>
+                ${filterButtons}
+                <div>
+                    ${songsList}
+                </div>
+                <div style="position: absolute; bottom: 20px; left: 0; right: 0; text-align: center; border-top: 1px solid black; padding-top: 15px;">
+                    <span style="cursor: pointer; font-size: 16pt;" onclick="updatePerformance()">Torna ad Elenco cantanti</span>
+                </div>
+            `;
+            
+            previewContent.innerHTML = createPage(content, 0);
+            totalPages = 1;
+            currentPage = 0;
+            showPage(0);
+        }
+        
+function showPreferitiInFullscreen(filterCategoryId = 'all') {
+            const previewContent = document.getElementById('preview-content');
+            
+            // Filtra canzoni preferite
+            let preferitiSongs = songs.filter(s => isPreferito(s.id));
+            
+            // Applica filtro categoria
+            if (filterCategoryId !== 'all') {
+                preferitiSongs = preferitiSongs.filter(s => {
+                    const prefData = preferiti.find(p => p.songId === s.id);
+                    return prefData && prefData.categories.includes(filterCategoryId);
+                });
+            }
+            
+            // Ordina per artista poi titolo
+            preferitiSongs.sort((a, b) => {
+                const artistCompare = (a.artistSort || a.artist).localeCompare(b.artistSort || b.artist);
+                if (artistCompare !== 0) return artistCompare;
+                return a.title.localeCompare(b.title);
+            });
+            
+            // Crea pulsanti filtro categorie
+            const filterButtons = `
+                <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px;">
+                    <div style="padding: 8px 20px; border-radius: 20px; font-size: 16pt; cursor: pointer; border: 2px solid #f39c12;
+                        ${filterCategoryId === 'all' ? 'background: #f39c12; color: white;' : 'background: white; color: #e67e22;'}"
+                        data-action="preferiti-filter" data-filter="all">
+                        Tutti
+                    </div>
+                    ${categories.map(cat => `
+                        <div style="padding: 8px 20px; border-radius: 20px; font-size: 16pt; cursor: pointer; border: 2px solid #f39c12;
+                            ${filterCategoryId === cat.id ? 'background: #f39c12; color: white;' : 'background: white; color: #e67e22;'}"
+                            data-action="preferiti-filter" data-filter="${cat.id}">
+                            ${cat.name}
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            
+            // Crea lista canzoni
+            const songsList = preferitiSongs.length > 0
+                ? preferitiSongs.map(song => `
+                    <div class="artist-item song-link" data-song-id="${song.id}"
+                        style="font-size: 18pt; cursor: pointer; padding: 8px 0; border-bottom: 1px solid #eee;">
+                        <span style="font-weight: 600;">${song.title.toUpperCase()}</span>
+                        <span style="font-size: 14pt; color: #666; margin-left: 10px;">- ${song.artist}</span>
+                    </div>
+                `).join('')
+                : '<div style="text-align: center; color: #999; font-size: 16pt; margin-top: 30px;">Nessuna canzone trovata</div>';
+            
+            const content = `
+                <div style="text-align: center; font-size: 26pt; font-weight: bold; border-top: 2px solid black; border-bottom: 2px solid black; padding: 15px 0; margin-bottom: 20px;">
+                    PREFERITI
+                </div>
+                ${filterButtons}
+                <div style="overflow-y: auto; max-height: calc(100vh - 250px);">
+                    ${songsList}
+                </div>
+                <div style="position: absolute; bottom: 20px; left: 0; right: 0; border-top: 1px solid black; padding-top: 15px; text-align: center;">
+                    <span style="cursor: pointer; font-size: 18pt;" data-action="index">Torna ad Elenco cantanti</span>
+                </div>
+            `;
+            
+            const pageHtml = `<div class="page active" style="width: 100vw; height: 100vh;">${content}</div>`;
+            previewContent.innerHTML = pageHtml;
+            
+            // Aggiungi handlers per filtri e canzoni
+            setTimeout(() => {
+                // Handler filtri categoria
+                document.querySelectorAll('[data-action="preferiti-filter"]').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const filterId = btn.getAttribute('data-filter');
+                        const filterValue = filterId === 'all' ? 'all' : parseInt(filterId);
+                        showPreferitiInFullscreen(filterValue);
+                    });
+                });
+                
+                // Handler canzoni
+                document.querySelectorAll('.song-link').forEach(link => {
+                    link.addEventListener('click', (e) => {
+                        const songId = parseInt(link.getAttribute('data-song-id'));
+                        const songPageIndex = allFullscreenPages.findIndex(p =>
+                            p.type === 'song' && p.songId === songId
+                        );
+                        if (songPageIndex >= 0) {
+                            showBookPage(songPageIndex);
+                        }
+                    });
+                });
+                
+                // Handler torna ad elenco
+                document.querySelectorAll('[data-action="index"]').forEach(link => {
+                    link.addEventListener('click', () => {
+                        showBookPage(0);
+                    });
+                });
+                
+            }, 200);
+        }
+        
 function showBookPage(index) {
     const targetIndex = Math.max(0, Math.min(index, allFullscreenPages.length - 1));
     
@@ -6246,6 +6458,29 @@ function addFullscreenLinkHandlers() {
                 e.stopPropagation();
                 showBookPage(0); // Torna alla prima pagina (indice)
             }
+        });
+    });
+    
+    // Handler per "Preferiti"
+    document.querySelectorAll('[data-action="preferiti"]').forEach(link => {
+        let touchStartTime = 0;
+        
+        link.addEventListener('touchstart', (e) => {
+            touchStartTime = Date.now();
+        }, { passive: true });
+        
+        link.addEventListener('touchend', (e) => {
+            const touchDuration = Date.now() - touchStartTime;
+            if (touchDuration < 300) {
+                e.preventDefault();
+                e.stopPropagation();
+                showPreferitiInFullscreen();
+            }
+        });
+        
+        // Click per desktop
+        link.addEventListener('click', (e) => {
+            showPreferitiInFullscreen();
         });
     });
     
@@ -6617,6 +6852,251 @@ function handleTouchEnd(e) {
     isSwiping = false;
 }
 
+        // ===== PREFERITI & CATEGORIE =====
+        let categories = [];
+        let preferiti = [];
+        let currentPreferitiFilter = 'all';
+
+        function loadPreferitiData() {
+            try {
+                const savedCategories = localStorage.getItem('songbookCategories');
+                const savedPreferiti = localStorage.getItem('songbookPreferiti');
+                if (savedCategories) categories = JSON.parse(savedCategories);
+                if (savedPreferiti) preferiti = JSON.parse(savedPreferiti);
+            } catch (error) {
+                console.error('Errore caricamento preferiti:', error);
+                categories = [];
+                preferiti = [];
+            }
+        }
+
+        function savePreferitiData() {
+            try {
+                localStorage.setItem('songbookCategories', JSON.stringify(categories));
+                localStorage.setItem('songbookPreferiti', JSON.stringify(preferiti));
+                
+                // Salva su Firebase se loggato
+                if (syncEnabled && currentUser) {
+                    savePreferitiToFirebase();
+                }
+            } catch (error) {
+                console.error('Errore salvataggio preferiti:', error);
+            }
+        }
+
+        function savePreferitiToFirebase() {
+            if (!syncEnabled || !currentUser) return;
+            
+            const userDoc = window.firebaseDoc(window.firebaseDb, 'users', currentUser.uid);
+            
+            window.firebaseSetDoc(userDoc, {
+                categories: categories,
+                preferiti: preferiti
+            }, { merge: true })
+            .then(() => {
+                console.log('✅ Preferiti salvati su Firebase');
+            })
+            .catch((error) => {
+                console.error('❌ Errore salvataggio preferiti Firebase:', error);
+            });
+        }
+
+        function loadPreferitiFromFirebase() {
+            if (!currentUser) return;
+            
+            const userDoc = window.firebaseDoc(window.firebaseDb, 'users', currentUser.uid);
+            
+            window.firebaseGetDoc(userDoc)
+                .then((docSnap) => {
+                    if (docSnap.exists()) {
+                        const data = docSnap.data();
+                        if (data.categories) categories = data.categories;
+                        if (data.preferiti) preferiti = data.preferiti;
+                        
+                        // Aggiorna UI se siamo nella tab Preferiti
+                        if (document.getElementById('preferiti-tab').classList.contains('active')) {
+                            updateCategoriesList();
+                            updatePreferitiList();
+                        }
+                        
+                        console.log('✅ Preferiti caricati da Firebase');
+                    }
+                })
+                .catch((error) => {
+                    console.error('❌ Errore caricamento preferiti Firebase:', error);
+                });
+        }
+
+        // GESTIONE CATEGORIE
+        function addCategory() {
+            const input = document.getElementById('new-category-input');
+            const name = input.value.trim();
+            
+            if (!name) {
+                showModal('', 'Inserisci il nome della categoria!', null, false);
+                return;
+            }
+            
+            if (categories.find(c => c.name.toLowerCase() === name.toLowerCase())) {
+                showModal('', 'Questa categoria esiste già!', null, false);
+                return;
+            }
+            
+            categories.push({
+                id: Date.now(),
+                name: name
+            });
+            
+            savePreferitiData();
+            input.value = '';
+            updateCategoriesList();
+        }
+
+        function deleteCategory(id) {
+            showModal('', 'Eliminare questa categoria? Verrà rimossa anche da tutte le canzoni.', () => {
+                categories = categories.filter(c => c.id !== id);
+                
+                // Rimuovi categoria da tutti i preferiti
+                preferiti = preferiti.map(p => ({
+                    ...p,
+                    categories: (p.categories || []).filter(cId => cId !== id)
+                }));
+                
+                savePreferitiData();
+                updateCategoriesList();
+                updatePreferitiList();
+            }, true);
+        }
+
+        function updateCategoriesList() {
+            const list = document.getElementById('categories-list');
+            if (!list) return;
+            
+            if (categories.length === 0) {
+                list.innerHTML = '<div style="color: #999; font-size: 14px;">Nessuna categoria creata</div>';
+                return;
+            }
+            
+            list.innerHTML = categories.map(cat => `
+                <div style="display: flex; align-items: center; gap: 8px; background: #fff3e0; border: 2px solid #f39c12; border-radius: 20px; padding: 6px 12px;">
+                    <span style="font-weight: 600; color: #e67e22;">${cat.name}</span>
+                    <button onclick="deleteCategory(${cat.id})" style="background: none; border: none; color: #e74c3c; cursor: pointer; font-size: 16px; padding: 0; line-height: 1;">✕</button>
+                </div>
+            `).join('');
+        }
+
+        // GESTIONE PREFERITI
+        function togglePreferito(songId) {
+            const index = preferiti.findIndex(p => p.songId === songId);
+            
+            if (index >= 0) {
+                // Rimuovi dai preferiti
+                preferiti.splice(index, 1);
+            } else {
+                // Aggiungi ai preferiti
+                preferiti.push({
+                    songId: songId,
+                    categories: []
+                });
+            }
+            
+            savePreferitiData();
+            updatePreferitiList();
+        }
+
+        function isPreferito(songId) {
+            return preferiti.some(p => p.songId === songId);
+        }
+
+        function toggleCategoryForSong(songId, categoryId) {
+            const prefIndex = preferiti.findIndex(p => p.songId === songId);
+            if (prefIndex < 0) return;
+            
+            const catIndex = preferiti[prefIndex].categories.indexOf(categoryId);
+            if (catIndex >= 0) {
+                preferiti[prefIndex].categories.splice(catIndex, 1);
+            } else {
+                preferiti[prefIndex].categories.push(categoryId);
+            }
+            
+            savePreferitiData();
+            updatePreferitiList();
+        }
+
+        function filterPreferiti(filter) {
+            currentPreferitiFilter = filter;
+            
+            // Aggiorna pulsanti
+            document.getElementById('filter-all-btn').className = filter === 'all' ? 'btn btn-primary' : 'btn btn-secondary';
+            document.getElementById('filter-preferiti-btn').className = filter === 'preferiti' ? 'btn btn-primary' : 'btn btn-secondary';
+            
+            updatePreferitiList();
+        }
+
+        function updatePreferitiList() {
+            const list = document.getElementById('preferiti-songs-list');
+            if (!list) return;
+            
+            const searchTerm = document.getElementById('preferiti-search')?.value.toLowerCase() || '';
+            
+            // Filtra canzoni
+            let filteredSongs = songs;
+            
+            if (currentPreferitiFilter === 'preferiti') {
+                filteredSongs = songs.filter(s => isPreferito(s.id));
+            }
+            
+            if (searchTerm) {
+                filteredSongs = filteredSongs.filter(s =>
+                    s.title.toLowerCase().includes(searchTerm) ||
+                    s.artist.toLowerCase().includes(searchTerm)
+                );
+            }
+            
+            // Ordina per artista poi titolo
+            filteredSongs.sort((a, b) => {
+                const artistCompare = (a.artistSort || a.artist).localeCompare(b.artistSort || b.artist);
+                if (artistCompare !== 0) return artistCompare;
+                return a.title.localeCompare(b.title);
+            });
+            
+            if (filteredSongs.length === 0) {
+                list.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">Nessuna canzone trovata</div>';
+                return;
+            }
+            
+            list.innerHTML = filteredSongs.map(song => {
+                const isPref = isPreferito(song.id);
+                const prefData = preferiti.find(p => p.songId === song.id);
+                const songCategories = prefData ? prefData.categories : [];
+                
+                return `
+                    <div style="padding: 12px; border-bottom: 1px solid #eee; ${isPref ? 'background: #fffde7;' : ''}">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <button onclick="togglePreferito(${song.id})" style="background: none; border: none; font-size: 22px; cursor: pointer; padding: 0; line-height: 1;">
+                                ${isPref ? '⭐' : '☆'}
+                            </button>
+                            <div style="flex: 1;">
+                                <div style="font-weight: 600;">${song.title.toUpperCase()}</div>
+                                <div style="font-size: 12px; color: #666;">${song.artist}</div>
+                            </div>
+                        </div>
+                        ${isPref && categories.length > 0 ? `
+                            <div style="margin-top: 8px; margin-left: 40px; display: flex; flex-wrap: wrap; gap: 6px;">
+                                ${categories.map(cat => `
+                                    <button onclick="toggleCategoryForSong(${song.id}, ${cat.id})" 
+                                        style="padding: 3px 10px; border-radius: 15px; font-size: 12px; cursor: pointer; border: 2px solid #f39c12;
+                                        ${songCategories.includes(cat.id) ? 'background: #f39c12; color: white;' : 'background: white; color: #e67e22;'}">
+                                        ${cat.name}
+                                    </button>
+                                `).join('')}
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+        
 // Font-size textarea lyrics
 let currentLyricsFontSize = 14; // dimensione iniziale in px
 
@@ -6760,7 +7240,6 @@ function changeOctave(direction) {
     document.getElementById('octave-display').textContent = `Ottava: ${currentOctave}`;
     renderPianoKeyboard();
 }
-
     </script>
 </body>
 </html>
