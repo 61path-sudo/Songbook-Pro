@@ -6189,32 +6189,61 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
             
             // Crea pulsanti filtro categorie
             const filterButtons = `
-                <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px;">
-                    <div style="padding: 6px 15px; border-radius: 20px; font-size: 14pt; cursor: pointer; border: 2px solid #f39c12;
-                        ${filterCategoryId === 'all' ? 'background: #f39c12; color: white;' : 'background: white; color: #e67e22;'}"
-                        onclick="showPreferitiInPerformance('all')">
-                        Tutti
-                    </div>
-                    ${categories.map(cat => `
+                    <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
                         <div style="padding: 6px 15px; border-radius: 20px; font-size: 14pt; cursor: pointer; border: 2px solid #f39c12;
-                            ${filterCategoryId === cat.id ? 'background: #f39c12; color: white;' : 'background: white; color: #e67e22;'}"
-                            onclick="showPreferitiInPerformance(${cat.id})">
-                            ${cat.name}
+                            ${filterCategoryId === 'all' ? 'background: #f39c12; color: white;' : 'background: white; color: #e67e22;'}"
+                            onclick="showPreferitiInPerformance('all')">
+                            Tutti
                         </div>
-                    `).join('')}
-                </div>
-            `;
-            
-            // Crea lista canzoni
-            const songsList = preferitiSongs.length > 0
-                ? preferitiSongs.map(song => `
-                    <div class="artist-item" onclick="showSong(${song.id})"
-                        style="font-size: 16pt; cursor: pointer; padding: 8px 0; border-bottom: 1px solid #eee;">
-                        <span style="font-weight: 600;">${song.title.toUpperCase()}</span>
-                        <span style="font-size: 12pt; color: #666; margin-left: 10px;">- ${song.artist}</span>
+                        ${categories.map(cat => `
+                            <div style="padding: 6px 15px; border-radius: 20px; font-size: 14pt; cursor: pointer; border: 2px solid #f39c12;
+                                ${filterCategoryId === cat.id ? 'background: #f39c12; color: white;' : 'background: white; color: #e67e22;'}"
+                                onclick="showPreferitiInPerformance(${cat.id})">
+                                ${cat.name}
+                            </div>
+                        `).join('')}
                     </div>
-                `).join('')
-                : '<div style="text-align: center; color: #999; font-size: 14pt; margin-top: 30px;">Nessuna canzone trovata</div>';
+                    <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                        <div style="padding: 6px 15px; border-radius: 20px; font-size: 14pt; cursor: pointer; border: 2px solid #3498db;
+                            ${currentPreferitiSort === 'title' ? 'background: #3498db; color: white;' : 'background: white; color: #3498db;'}"
+                            onclick="currentPreferitiSort='title'; showPreferitiInPerformance('${filterCategoryId}')">
+                            A-Z Titolo
+                        </div>
+                        <div style="padding: 6px 15px; border-radius: 20px; font-size: 14pt; cursor: pointer; border: 2px solid #3498db;
+                            ${currentPreferitiSort === 'artist' ? 'background: #3498db; color: white;' : 'background: white; color: #3498db;'}"
+                            onclick="currentPreferitiSort='artist'; showPreferitiInPerformance('${filterCategoryId}')">
+                            A-Z Cantante
+                        </div>
+                    </div>
+                `;
+            
+            // Crea lista canzoni in 2 colonne ordinate alfabeticamente
+            const half = Math.ceil(preferitiSongs.length / 2);
+            const col1 = preferitiSongs.slice(0, half);
+            const col2 = preferitiSongs.slice(half);
+
+            const songsList = preferitiSongs.length > 0
+                ? `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div>
+                        ${col1.map(song => `
+                            <div class="song-link" data-song-id="${song.id}"
+                                style="font-size: 16pt; cursor: pointer; padding: 6px 0; border-bottom: 1px solid #eee;">
+                                <span style="font-weight: 600;">${song.title.toUpperCase()}</span>
+                                <span style="font-size: 12pt; color: #666; display: block;">${song.artist}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div>
+                        ${col2.map(song => `
+                            <div class="song-link" data-song-id="${song.id}"
+                                style="font-size: 16pt; cursor: pointer; padding: 6px 0; border-bottom: 1px solid #eee;">
+                                <span style="font-weight: 600;">${song.title.toUpperCase()}</span>
+                                <span style="font-size: 12pt; color: #666; display: block;">${song.artist}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>`
+                : '<div style="text-align: center; color: #999; font-size: 16pt; margin-top: 30px;">Nessuna canzone trovata</div>';
             
             const content = `
                 <div style="text-align: center; font-size: 20pt; font-weight: bold; border-top: 2px solid black; border-bottom: 2px solid black; padding: 15px 0; margin-bottom: 20px;">
@@ -6249,30 +6278,46 @@ function showPreferitiInFullscreen(filterCategoryId = 'all') {
                 });
             }
             
-            // Ordina per artista poi titolo
-            preferitiSongs.sort((a, b) => {
-                const artistCompare = (a.artistSort || a.artist).localeCompare(b.artistSort || b.artist);
-                if (artistCompare !== 0) return artistCompare;
-                return a.title.localeCompare(b.title);
-            });
+            // Ordina in base alla scelta
+                if (currentPreferitiSort === 'title') {
+                    preferitiSongs.sort((a, b) => a.title.localeCompare(b.title));
+                } else {
+                    preferitiSongs.sort((a, b) => {
+                        const artistCompare = (a.artistSort || a.artist).localeCompare(b.artistSort || b.artist);
+                        if (artistCompare !== 0) return artistCompare;
+                        return a.title.localeCompare(b.title);
+                    });
+                }
             
-            // Crea pulsanti filtro categorie
-            const filterButtons = `
-                <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px;">
-                    <div style="padding: 8px 20px; border-radius: 20px; font-size: 16pt; cursor: pointer; border: 2px solid #f39c12;
-                        ${filterCategoryId === 'all' ? 'background: #f39c12; color: white;' : 'background: white; color: #e67e22;'}"
-                        data-action="preferiti-filter" data-filter="all">
-                        Tutti
-                    </div>
-                    ${categories.map(cat => `
+            // Crea pulsanti filtro categorie + ordinamento
+                const filterButtons = `
+                    <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
                         <div style="padding: 8px 20px; border-radius: 20px; font-size: 16pt; cursor: pointer; border: 2px solid #f39c12;
-                            ${filterCategoryId === cat.id ? 'background: #f39c12; color: white;' : 'background: white; color: #e67e22;'}"
-                            data-action="preferiti-filter" data-filter="${cat.id}">
-                            ${cat.name}
+                            ${filterCategoryId === 'all' ? 'background: #f39c12; color: white;' : 'background: white; color: #e67e22;'}"
+                            data-action="preferiti-filter" data-filter="all">
+                            Tutti
                         </div>
-                    `).join('')}
-                </div>
-            `;
+                        ${categories.map(cat => `
+                            <div style="padding: 8px 20px; border-radius: 20px; font-size: 16pt; cursor: pointer; border: 2px solid #f39c12;
+                                ${filterCategoryId === cat.id ? 'background: #f39c12; color: white;' : 'background: white; color: #e67e22;'}"
+                                data-action="preferiti-filter" data-filter="${cat.id}">
+                                ${cat.name}
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                        <div style="padding: 6px 15px; border-radius: 20px; font-size: 14pt; cursor: pointer; border: 2px solid #3498db;
+                            ${currentPreferitiSort === 'title' ? 'background: #3498db; color: white;' : 'background: white; color: #3498db;'}"
+                            data-action="preferiti-sort" data-sort="title">
+                            A-Z Titolo
+                        </div>
+                        <div style="padding: 6px 15px; border-radius: 20px; font-size: 14pt; cursor: pointer; border: 2px solid #3498db;
+                            ${currentPreferitiSort === 'artist' ? 'background: #3498db; color: white;' : 'background: white; color: #3498db;'}"
+                            data-action="preferiti-sort" data-sort="artist">
+                            A-Z Cantante
+                        </div>
+                    </div>
+                `;
             
             // Crea lista canzoni
             const songsList = preferitiSongs.length > 0
@@ -6303,6 +6348,14 @@ function showPreferitiInFullscreen(filterCategoryId = 'all') {
             
             // Aggiungi handlers per filtri e canzoni
             setTimeout(() => {
+                // Handler ordinamento
+                        document.querySelectorAll('[data-action="preferiti-sort"]').forEach(btn => {
+                            btn.addEventListener('click', (e) => {
+                                currentPreferitiSort = btn.getAttribute('data-sort');
+                                showPreferitiInFullscreen(filterCategoryId);
+                            });
+                        });
+                        
                 // Handler filtri categoria
                 document.querySelectorAll('[data-action="preferiti-filter"]').forEach(btn => {
                     btn.addEventListener('click', (e) => {
@@ -6856,6 +6909,7 @@ function handleTouchEnd(e) {
         let categories = [];
         let preferiti = [];
         let currentPreferitiFilter = 'all';
+        let currentPreferitiSort = 'title';
 
         function loadPreferitiData() {
             try {
@@ -7053,12 +7107,16 @@ function handleTouchEnd(e) {
                 );
             }
             
-            // Ordina per artista poi titolo
-            filteredSongs.sort((a, b) => {
-                const artistCompare = (a.artistSort || a.artist).localeCompare(b.artistSort || b.artist);
-                if (artistCompare !== 0) return artistCompare;
-                return a.title.localeCompare(b.title);
-            });
+            // Ordina in base alla scelta
+                if (currentPreferitiSort === 'title') {
+                    preferitiSongs.sort((a, b) => a.title.localeCompare(b.title));
+                } else {
+                    preferitiSongs.sort((a, b) => {
+                        const artistCompare = (a.artistSort || a.artist).localeCompare(b.artistSort || b.artist);
+                        if (artistCompare !== 0) return artistCompare;
+                        return a.title.localeCompare(b.title);
+                    });
+                }
             
             if (filteredSongs.length === 0) {
                 list.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">Nessuna canzone trovata</div>';
