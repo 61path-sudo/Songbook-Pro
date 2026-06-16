@@ -6319,16 +6319,33 @@ function showPreferitiInFullscreen(filterCategoryId = 'all') {
                     </div>
                 `;
             
-            // Crea lista canzoni
+            // Crea lista canzoni in 2 colonne
+            const half = Math.ceil(preferitiSongs.length / 2);
+            const col1 = preferitiSongs.slice(0, half);
+            const col2 = preferitiSongs.slice(half);
+
             const songsList = preferitiSongs.length > 0
-                ? preferitiSongs.map(song => `
-                    <div class="artist-item song-link" data-song-id="${song.id}"
-                        style="font-size: 18pt; cursor: pointer; padding: 8px 0; border-bottom: 1px solid #eee;">
-                        <span style="font-weight: 600;">${song.title.toUpperCase()}</span>
-                        <span style="font-size: 14pt; color: #666; margin-left: 10px;">- ${song.artist}</span>
+                ? `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div>
+                        ${col1.map(song => `
+                            <div onclick="showSong(${song.id})"
+                                style="font-size: 16pt; cursor: pointer; padding: 6px 0; border-bottom: 1px solid #eee;">
+                                <span style="font-weight: 600;">${song.title.toUpperCase()}</span>
+                                <span style="font-size: 12pt; color: #666; display: block;">${song.artist}</span>
+                            </div>
+                        `).join('')}
                     </div>
-                `).join('')
-                : '<div style="text-align: center; color: #999; font-size: 16pt; margin-top: 30px;">Nessuna canzone trovata</div>';
+                    <div>
+                        ${col2.map(song => `
+                            <div onclick="showSong(${song.id})"
+                                style="font-size: 16pt; cursor: pointer; padding: 6px 0; border-bottom: 1px solid #eee;">
+                                <span style="font-weight: 600;">${song.title.toUpperCase()}</span>
+                                <span style="font-size: 12pt; color: #666; display: block;">${song.artist}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>`
+                : '<div style="text-align: center; color: #999; font-size: 14pt; margin-top: 30px;">Nessuna canzone trovata</div>';
             
             const content = `
                 <div style="text-align: center; font-size: 26pt; font-weight: bold; border-top: 2px solid black; border-bottom: 2px solid black; padding: 15px 0; margin-bottom: 20px;">
