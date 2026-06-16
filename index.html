@@ -6218,9 +6218,9 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
                 `;
             
             // Crea lista canzoni in 2 colonne ordinate alfabeticamente
-            const half = Math.ceil(filteredSongs.length / 2);
-            const col1 = filteredSongs.slice(0, half);
-            const col2 = filteredSongs.slice(half);
+            const half = Math.ceil(preferitiSongs.length / 2);
+            const col1 = preferitiSongs.slice(0, half);
+            const col2 = preferitiSongs.slice(half);
 
             const songsList = preferitiSongs.length > 0
                 ? `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
