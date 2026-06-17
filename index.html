@@ -6189,33 +6189,35 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
             
             // Crea pulsanti filtro categorie
             const filterButtons = `
-                    <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
-                        <div style="padding: 6px 15px; border-radius: 20px; font-size: 14pt; cursor: pointer; border: 2px solid #f39c12;
+                <div style="overflow-x: auto; white-space: nowrap; padding-bottom: 10px; margin-bottom: 5px; -webkit-overflow-scrolling: touch;">
+                    <div style="display: inline-flex; gap: 10px;">
+                        <div style="display: inline-block; padding: 6px 15px; border-radius: 20px; font-size: 14pt; cursor: pointer; border: 2px solid #f39c12;
                             ${filterCategoryId === 'all' ? 'background: #f39c12; color: white;' : 'background: white; color: #e67e22;'}"
                             onclick="showPreferitiInPerformance('all')">
                             Tutti
                         </div>
                         ${categories.map(cat => `
-                            <div style="padding: 6px 15px; border-radius: 20px; font-size: 14pt; cursor: pointer; border: 2px solid #f39c12;
+                            <div style="display: inline-block; padding: 6px 15px; border-radius: 20px; font-size: 14pt; cursor: pointer; border: 2px solid #f39c12;
                                 ${filterCategoryId === cat.id ? 'background: #f39c12; color: white;' : 'background: white; color: #e67e22;'}"
                                 onclick="showPreferitiInPerformance(${cat.id})">
                                 ${cat.name}
                             </div>
                         `).join('')}
                     </div>
-                    <div style="display: flex; gap: 10px; margin-bottom: 20px;">
-                        <div style="padding: 6px 15px; border-radius: 20px; font-size: 14pt; cursor: pointer; border: 2px solid #3498db;
-                            ${currentPreferitiSort === 'title' ? 'background: #3498db; color: white;' : 'background: white; color: #3498db;'}"
-                            onclick="currentPreferitiSort='title'; showPreferitiInPerformance('${filterCategoryId}')">
-                            A-Z Titolo
-                        </div>
-                        <div style="padding: 6px 15px; border-radius: 20px; font-size: 14pt; cursor: pointer; border: 2px solid #3498db;
-                            ${currentPreferitiSort === 'artist' ? 'background: #3498db; color: white;' : 'background: white; color: #3498db;'}"
-                            onclick="currentPreferitiSort='artist'; showPreferitiInPerformance('${filterCategoryId}')">
-                            A-Z Cantante
-                        </div>
+                </div>
+                <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                    <div style="padding: 6px 15px; border-radius: 20px; font-size: 14pt; cursor: pointer; border: 2px solid #3498db;
+                        ${currentPreferitiSort === 'title' ? 'background: #3498db; color: white;' : 'background: white; color: #3498db;'}"
+                        onclick="currentPreferitiSort='title'; showPreferitiInPerformance('${filterCategoryId}')">
+                        A-Z Titolo
                     </div>
-                `;
+                    <div style="padding: 6px 15px; border-radius: 20px; font-size: 14pt; cursor: pointer; border: 2px solid #3498db;
+                        ${currentPreferitiSort === 'artist' ? 'background: #3498db; color: white;' : 'background: white; color: #3498db;'}"
+                        onclick="currentPreferitiSort='artist'; showPreferitiInPerformance('${filterCategoryId}')">
+                        A-Z Cantante
+                    </div>
+                </div>
+            `;
             
             // Crea lista canzoni in 2 colonne ordinate alfabeticamente
             const half = Math.ceil(preferitiSongs.length / 2);
@@ -6290,43 +6292,45 @@ function showPreferitiInFullscreen(filterCategoryId = 'all') {
                 }
             
             // Crea pulsanti filtro categorie + ordinamento
-                const filterButtons = `
-                    <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
-                        <div style="padding: 8px 20px; border-radius: 20px; font-size: 16pt; cursor: pointer; border: 2px solid #f39c12;
+            const filterButtons = `
+                <div style="overflow-x: auto; white-space: nowrap; padding-bottom: 10px; margin-bottom: 5px; -webkit-overflow-scrolling: touch;">
+                    <div style="display: inline-flex; gap: 10px;">
+                        <div style="display: inline-block; padding: 8px 20px; border-radius: 20px; font-size: 16pt; cursor: pointer; border: 2px solid #f39c12;
                             ${filterCategoryId === 'all' ? 'background: #f39c12; color: white;' : 'background: white; color: #e67e22;'}"
                             data-action="preferiti-filter" data-filter="all">
                             Tutti
                         </div>
                         ${categories.map(cat => `
-                            <div style="padding: 8px 20px; border-radius: 20px; font-size: 16pt; cursor: pointer; border: 2px solid #f39c12;
+                            <div style="display: inline-block; padding: 8px 20px; border-radius: 20px; font-size: 16pt; cursor: pointer; border: 2px solid #f39c12;
                                 ${filterCategoryId === cat.id ? 'background: #f39c12; color: white;' : 'background: white; color: #e67e22;'}"
                                 data-action="preferiti-filter" data-filter="${cat.id}">
                                 ${cat.name}
                             </div>
                         `).join('')}
                     </div>
-                    <div style="display: flex; gap: 10px; margin-bottom: 20px;">
-                        <div style="padding: 6px 15px; border-radius: 20px; font-size: 14pt; cursor: pointer; border: 2px solid #3498db;
-                            ${currentPreferitiSort === 'title' ? 'background: #3498db; color: white;' : 'background: white; color: #3498db;'}"
-                            data-action="preferiti-sort" data-sort="title">
-                            A-Z Titolo
-                        </div>
-                        <div style="padding: 6px 15px; border-radius: 20px; font-size: 14pt; cursor: pointer; border: 2px solid #3498db;
-                            ${currentPreferitiSort === 'artist' ? 'background: #3498db; color: white;' : 'background: white; color: #3498db;'}"
-                            data-action="preferiti-sort" data-sort="artist">
-                            A-Z Cantante
-                        </div>
+                </div>
+                <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                    <div style="padding: 6px 15px; border-radius: 20px; font-size: 14pt; cursor: pointer; border: 2px solid #3498db;
+                        ${currentPreferitiSort === 'title' ? 'background: #3498db; color: white;' : 'background: white; color: #3498db;'}"
+                        data-action="preferiti-sort" data-sort="title">
+                        A-Z Titolo
                     </div>
-                `;
+                    <div style="padding: 6px 15px; border-radius: 20px; font-size: 14pt; cursor: pointer; border: 2px solid #3498db;
+                        ${currentPreferitiSort === 'artist' ? 'background: #3498db; color: white;' : 'background: white; color: #3498db;'}"
+                        data-action="preferiti-sort" data-sort="artist">
+                        A-Z Cantante
+                    </div>
+                </div>
+            `;
             
             // Crea lista canzoni in 2 colonne
             const songsList = preferitiSongs.length > 0
-                ? `<div style="columns: 2; column-gap: 20px; column-fill: auto; height: calc(100vh - 300px);">
+                ? `<div style="overflow-y: auto; height: calc(100vh - 280px);">
                     ${preferitiSongs.map(song => `
                         <div class="song-link" data-song-id="${song.id}"
-                            style="break-inside: avoid; font-size: 16pt; cursor: pointer; padding: 6px 0; border-bottom: 1px solid #eee;">
+                            style="font-size: 18pt; cursor: pointer; padding: 8px 0; border-bottom: 1px solid #eee;">
                             <span style="font-weight: 600;">${song.title.toUpperCase()}</span>
-                            <span style="font-size: 12pt; color: #666; display: block;">${song.artist}</span>
+                            <span style="font-size: 14pt; color: #666; display: block;">${song.artist}</span>
                         </div>
                     `).join('')}
                 </div>`
