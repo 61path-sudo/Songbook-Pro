@@ -6324,12 +6324,12 @@ function showPreferitiInFullscreen(filterCategoryId = 'all') {
             `;
             
             // Crea lista canzoni in 2 colonne
-            const itemsPerCol = 13; // ← MODIFICA QUESTO per aggiustare
+            const itemsPerCol = 20; // ← MODIFICA QUESTO per aggiustare
             const col1 = preferitiSongs.slice(0, itemsPerCol);
             const col2 = preferitiSongs.slice(itemsPerCol, itemsPerCol * 2);
 
             const songsList = preferitiSongs.length > 0
-                ? `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 20px; height: calc(100vh - 280px);">
+                ? `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 20px; height: calc(100vh - 220px);">
                     <div>
                         ${col1.map(song => `
                             <div class="song-link" data-song-id="${song.id}"
