@@ -6324,7 +6324,7 @@ function showPreferitiInFullscreen(filterCategoryId = 'all') {
             `;
             
             // Crea lista canzoni in 2 colonne
-            const itemsPerCol = 20;
+            const itemsPerCol = Math.ceil(preferitiSongs.length / 2);
             const col1 = preferitiSongs.slice(0, itemsPerCol);
             const col2 = preferitiSongs.slice(itemsPerCol, itemsPerCol * 2);
 
