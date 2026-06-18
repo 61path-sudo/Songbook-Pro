@@ -6220,9 +6220,21 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
             `;
             
             // Crea lista canzoni in 2 colonne ordinate alfabeticamente
-            const half = Math.ceil(preferitiSongs.length / 2);
-            const col1 = preferitiSongs.slice(0, half);
-            const col2 = preferitiSongs.slice(half);
+            const testDiv = document.createElement('div');
+            testDiv.style.cssText = 'position:absolute;visibility:hidden;width:45%;font-size:16pt;padding:6px 0;border-bottom:1px solid #eee;';
+            testDiv.innerHTML = '<span style="font-weight:600;display:block;">TITOLO DI PROVA</span><span style="font-size:12pt;color:#666;display:block;">Artista</span>';
+            document.body.appendChild(testDiv);
+            const itemHeight = testDiv.offsetHeight;
+            document.body.removeChild(testDiv);
+
+            const dims = getPageDimensions();
+            const headerHeight = 220;
+            const footerHeight = 80;
+            const availableHeight = dims.height - headerHeight - footerHeight;
+            const maxPerCol = Math.max(1, Math.floor(availableHeight / itemHeight));
+
+            const col1 = preferitiSongs.slice(0, maxPerCol);
+            const col2 = preferitiSongs.slice(maxPerCol, maxPerCol * 2);
 
             const songsList = preferitiSongs.length > 0
                 ? `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
@@ -6324,9 +6336,21 @@ function showPreferitiInFullscreen(filterCategoryId = 'all') {
             `;
             
             // Crea lista canzoni in 2 colonne
-            const itemsPerCol = Math.ceil(preferitiSongs.length / 2);
-            const col1 = preferitiSongs.slice(0, itemsPerCol);
-            const col2 = preferitiSongs.slice(itemsPerCol, itemsPerCol * 2);
+            const testDiv = document.createElement('div');
+            testDiv.style.cssText = 'position:absolute;visibility:hidden;width:45%;font-size:16pt;padding:6px 0;border-bottom:1px solid #eee;';
+            testDiv.innerHTML = '<span style="font-weight:600;display:block;">TITOLO DI PROVA</span><span style="font-size:12pt;color:#666;display:block;">Artista</span>';
+            document.body.appendChild(testDiv);
+            const itemHeight = testDiv.offsetHeight;
+            document.body.removeChild(testDiv);
+
+            const dims = getPageDimensions();
+            const headerHeight = 220;
+            const footerHeight = 80;
+            const availableHeight = dims.height - headerHeight - footerHeight;
+            const maxPerCol = Math.max(1, Math.floor(availableHeight / itemHeight));
+
+            const col1 = preferitiSongs.slice(0, maxPerCol);
+            const col2 = preferitiSongs.slice(maxPerCol, maxPerCol * 2);
 
             const songsList = preferitiSongs.length > 0
                 ? `<div style="display: grid; grid-template-columns: 1fr 1fr; column-gap: 30px;">
