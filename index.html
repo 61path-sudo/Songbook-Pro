@@ -6324,26 +6324,26 @@ function showPreferitiInFullscreen(filterCategoryId = 'all') {
             `;
             
             // Crea lista canzoni in 2 colonne
-            const itemsPerCol = 20; // ← MODIFICA QUESTO per aggiustare
+            const itemsPerCol = 20;
             const col1 = preferitiSongs.slice(0, itemsPerCol);
             const col2 = preferitiSongs.slice(itemsPerCol, itemsPerCol * 2);
 
             const songsList = preferitiSongs.length > 0
-                ? `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 20px; height: calc(100vh - 220px);">
-                    <div>
+                ? `<div style="display: grid; grid-template-columns: 1fr 1fr; column-gap: 30px;">
+                    <div style="border-right: 1px solid #ddd; padding-right: 15px;">
                         ${col1.map(song => `
                             <div class="song-link" data-song-id="${song.id}"
                                 style="font-size: 16pt; cursor: pointer; padding: 6px 0; border-bottom: 1px solid #eee;">
-                                <span style="font-weight: 600;">${song.title.toUpperCase()}</span>
+                                <span style="font-weight: 600; display: block;">${song.title.toUpperCase()}</span>
                                 <span style="font-size: 12pt; color: #666; display: block;">${song.artist}</span>
                             </div>
                         `).join('')}
                     </div>
-                    <div>
+                    <div style="padding-left: 15px;">
                         ${col2.map(song => `
                             <div class="song-link" data-song-id="${song.id}"
                                 style="font-size: 16pt; cursor: pointer; padding: 6px 0; border-bottom: 1px solid #eee;">
-                                <span style="font-weight: 600;">${song.title.toUpperCase()}</span>
+                                <span style="font-weight: 600; display: block;">${song.title.toUpperCase()}</span>
                                 <span style="font-size: 12pt; color: #666; display: block;">${song.artist}</span>
                             </div>
                         `).join('')}
