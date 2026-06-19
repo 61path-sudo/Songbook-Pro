@@ -1041,6 +1041,39 @@ body.dark-mode #empty-trash-btn:hover {
     cursor: not-allowed !important;
     opacity: 0.6;
 }
+       
+       #edit-category-btn {
+           background: #3498db !important;
+           color: white !important;
+       }
+
+       #edit-category-btn:hover:not(:disabled) {
+           background: #2980b9 !important;
+       }
+
+       #delete-category-btn {
+           background: #e74c3c !important;
+           color: white !important;
+       }
+
+       #delete-category-btn:hover:not(:disabled) {
+           background: #c0392b !important;
+       }
+
+       #edit-category-btn:disabled,
+       #delete-category-btn:disabled {
+           background: #f1f1f1 !important;
+           color: #aaa !important;
+           cursor: not-allowed !important;
+           opacity: 0.6;
+       }
+       
+       #add-category-btn:disabled {
+           background: #f1f1f1 !important;
+           color: #aaa !important;
+           cursor: not-allowed !important;
+           opacity: 0.6;
+       }
 
 body.dark-mode #restore-btn:disabled,
 body.dark-mode #empty-trash-btn:disabled {
@@ -1519,8 +1552,10 @@ body.dark-mode .piano-key.black {
             <div style="background: #fff3e0; padding: 20px; border-radius: 8px; margin: 20px 0;">
                 <h3 style="margin-top: 0;">Gestione Categorie</h3>
                 <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-                    <input type="text" id="new-category-input" placeholder="Nome nuova categoria..." style="flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
-                    <button class="btn btn-primary" onclick="addCategory()">Aggiungi</button>
+                    <input type="text" id="new-category-input" placeholder="Nome categoria..." style="width: 200px; padding: 10px; border: 1px solid #ddd; border-radius: 5px;" onfocus="deselectCategory()">
+                        <button class="btn btn-primary" onclick="addCategory()" id="add-category-btn">Aggiungi</button>
+                    <button class="btn btn-secondary" onclick="editSelectedCategory()" id="edit-category-btn" disabled>Modifica</button>
+                    <button class="btn btn-secondary" onclick="deleteSelectedCategory()" id="delete-category-btn" disabled>Elimina</button>
                 </div>
                 <div id="categories-list" style="display: flex; flex-wrap: wrap; gap: 10px;"></div>
             </div>
@@ -6955,6 +6990,20 @@ function handleTouchEnd(e) {
         let preferiti = [];
         let currentPreferitiFilter = 'all';
         let currentPreferitiSort = 'title';
+        let selectedCategoryId = null;
+        
+        const categoryColors = [
+            { bg: '#3498db', text: 'white' },
+            { bg: '#27ae60', text: 'white' },
+            { bg: '#e74c3c', text: 'white' },
+            { bg: '#9b59b6', text: 'white' },
+            { bg: '#16a085', text: 'white' },
+            { bg: '#e67e22', text: 'white' },
+            { bg: '#2c3e50', text: 'white' },
+            { bg: '#c0392b', text: 'white' },
+            { bg: '#8e44ad', text: 'white' },
+            { bg: '#d35400', text: 'white' }
+        ];
 
         function loadPreferitiData() {
             try {
@@ -7041,9 +7090,12 @@ function handleTouchEnd(e) {
                 return;
             }
             
+            const randomColor = categoryColors[Math.floor(Math.random() * categoryColors.length)];
             categories.push({
                 id: Date.now(),
-                name: name
+                name: name,
+                color: randomColor.bg,
+                textColor: randomColor.text
             });
             
             savePreferitiData();
@@ -7076,12 +7128,72 @@ function handleTouchEnd(e) {
                 return;
             }
             
-            list.innerHTML = categories.map(cat => `
-                <div style="display: flex; align-items: center; gap: 8px; background: #fff3e0; border: 2px solid #f39c12; border-radius: 20px; padding: 6px 12px;">
-                    <span style="font-weight: 600; color: #e67e22;">${cat.name}</span>
-                    <button onclick="deleteCategory(${cat.id})" style="background: none; border: none; color: #e74c3c; cursor: pointer; font-size: 16px; padding: 0; line-height: 1;">✕</button>
+            list.innerHTML = categories.map(cat => {
+                const color = cat.color || '#f39c12';
+                const isSelected = selectedCategoryId === cat.id;
+                return `
+                <div onclick="selectCategory(${cat.id})" style="cursor: pointer; background: ${isSelected ? color : 'white'}; border: 2px solid ${color}; border-radius: 20px; padding: 6px 14px;">
+                    <span style="font-weight: 600; color: ${isSelected ? 'white' : color};">${cat.name}</span>
                 </div>
-            `).join('');
+                `;
+            }).join('');
+        }
+        
+        function selectCategory(id) {
+            selectedCategoryId = (selectedCategoryId === id) ? null : id;
+            document.getElementById('edit-category-btn').disabled = !selectedCategoryId;
+            document.getElementById('delete-category-btn').disabled = !selectedCategoryId;
+            document.getElementById('add-category-btn').disabled = !!selectedCategoryId;
+            updateCategoriesList();
+        }
+        
+        function deselectCategory() {
+            if (!selectedCategoryId) return;
+            selectedCategoryId = null;
+            document.getElementById('edit-category-btn').disabled = true;
+            document.getElementById('delete-category-btn').disabled = true;
+            document.getElementById('add-category-btn').disabled = false;
+            updateCategoriesList();
+        }
+
+        function editSelectedCategory() {
+            if (!selectedCategoryId) return;
+            const cat = categories.find(c => c.id === selectedCategoryId);
+            if (!cat) return;
+            
+            showModalWithInput(
+                'Modifica Categoria',
+                'Nuovo nome:',
+                cat.name,
+                (newName) => {
+                    if (newName && newName.trim()) {
+                        cat.name = newName.trim();
+                        savePreferitiData();
+                        updateCategoriesList();
+                    }
+                }
+            );
+        }
+
+        function deleteSelectedCategory() {
+            if (!selectedCategoryId) return;
+            const idToDelete = selectedCategoryId;
+            
+            showModal('', 'Eliminare questa categoria? Verrà rimossa anche da tutte le canzoni.', () => {
+                categories = categories.filter(c => c.id !== idToDelete);
+                preferiti = preferiti.map(p => ({
+                    ...p,
+                    categories: (p.categories || []).filter(cId => cId !== idToDelete)
+                }));
+                
+                savePreferitiData();
+                selectedCategoryId = null;
+                document.getElementById('edit-category-btn').disabled = true;
+                document.getElementById('delete-category-btn').disabled = true;
+                document.getElementById('add-category-btn').disabled = false;
+                updateCategoriesList();
+                updatePreferitiList();
+            }, true);
         }
 
         // GESTIONE PREFERITI
