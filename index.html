@@ -6166,6 +6166,7 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
 }
 
         function showPreferitiInPerformance(filterCategoryId = 'all') {
+            if (filterCategoryId !== 'all') filterCategoryId = parseInt(filterCategoryId);
             const previewContent = document.getElementById('preview-content');
             const dims = getPageDimensions();
             
@@ -6337,8 +6338,7 @@ function showPreferitiInFullscreen(filterCategoryId = 'all') {
             document.body.appendChild(prefTestDiv);
             const prefItemHeight = prefTestDiv.offsetHeight;
             document.body.removeChild(prefTestDiv);
-            const prefDims = getPageDimensions();
-            const prefMaxPerCol = Math.max(1, Math.floor((prefDims.height - 280) / prefItemHeight));
+            const prefMaxPerCol = Math.max(1, Math.floor((window.innerHeight - 320) / prefItemHeight));
             const col1 = preferitiSongs.slice(0, prefMaxPerCol);
             const col2 = preferitiSongs.slice(prefMaxPerCol, prefMaxPerCol * 2);
 
