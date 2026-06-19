@@ -6194,8 +6194,8 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
             
             // Crea pulsanti filtro categorie
             const filterButtons = `
-                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
-                    <div style="overflow-x: auto; white-space: nowrap; flex: 1; -webkit-overflow-scrolling: touch;">
+                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px; height: 34px;">
+                            <div style="overflow-x: auto; white-space: nowrap; flex: 1; -webkit-overflow-scrolling: touch; height: 34px; display: flex; align-items: center;">
                         <div style="display: inline-flex; gap: 8px;">
                             <div style="display: inline-block; padding: 5px 12px; border-radius: 16px; font-size: 12pt; cursor: pointer; border: 2px solid #f39c12;
                                 ${filterCategoryId === 'all' ? 'background: #f39c12; color: white;' : 'background: white; color: #e67e22;'}"
