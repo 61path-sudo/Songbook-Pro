@@ -6194,32 +6194,34 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
             
             // Crea pulsanti filtro categorie
             const filterButtons = `
-                <div style="overflow-x: auto; white-space: nowrap; padding-bottom: 10px; margin-bottom: 5px; -webkit-overflow-scrolling: touch;">
-                    <div style="display: inline-flex; gap: 10px;">
-                        <div style="display: inline-block; padding: 6px 15px; border-radius: 20px; font-size: 14pt; cursor: pointer; border: 2px solid #f39c12;
-                            ${filterCategoryId === 'all' ? 'background: #f39c12; color: white;' : 'background: white; color: #e67e22;'}"
-                            onclick="showPreferitiInPerformance('all')">
-                            Tutti
-                        </div>
-                        ${categories.map(cat => `
-                            <div style="display: inline-block; padding: 6px 15px; border-radius: 20px; font-size: 14pt; cursor: pointer; border: 2px solid #f39c12;
-                                ${filterCategoryId === cat.id ? 'background: #f39c12; color: white;' : 'background: white; color: #e67e22;'}"
-                                onclick="showPreferitiInPerformance(${cat.id})">
-                                ${cat.name}
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                    <div style="overflow-x: auto; white-space: nowrap; flex: 1; -webkit-overflow-scrolling: touch;">
+                        <div style="display: inline-flex; gap: 8px;">
+                            <div style="display: inline-block; padding: 5px 12px; border-radius: 16px; font-size: 12pt; cursor: pointer; border: 2px solid #f39c12;
+                                ${filterCategoryId === 'all' ? 'background: #f39c12; color: white;' : 'background: white; color: #e67e22;'}"
+                                onclick="showPreferitiInPerformance('all')">
+                                Tutti
                             </div>
-                        `).join('')}
+                            ${categories.map(cat => `
+                                <div style="display: inline-block; padding: 5px 12px; border-radius: 16px; font-size: 12pt; cursor: pointer; border: 2px solid #f39c12;
+                                    ${filterCategoryId === cat.id ? 'background: #f39c12; color: white;' : 'background: white; color: #e67e22;'}"
+                                    onclick="showPreferitiInPerformance(${cat.id})">
+                                    ${cat.name}
+                                </div>
+                            `).join('')}
+                        </div>
                     </div>
-                </div>
-                <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-                    <div style="padding: 6px 15px; border-radius: 20px; font-size: 14pt; cursor: pointer; border: 2px solid #3498db;
-                        ${currentPreferitiSort === 'title' ? 'background: #3498db; color: white;' : 'background: white; color: #3498db;'}"
-                        onclick="currentPreferitiSort='title'; showPreferitiInPerformance('${filterCategoryId}')">
-                        A-Z Titolo
-                    </div>
-                    <div style="padding: 6px 15px; border-radius: 20px; font-size: 14pt; cursor: pointer; border: 2px solid #3498db;
-                        ${currentPreferitiSort === 'artist' ? 'background: #3498db; color: white;' : 'background: white; color: #3498db;'}"
-                        onclick="currentPreferitiSort='artist'; showPreferitiInPerformance('${filterCategoryId}')">
-                        A-Z Cantante
+                    <div style="display: flex; gap: 6px; flex-shrink: 0;">
+                        <div style="padding: 5px 12px; border-radius: 16px; font-size: 12pt; cursor: pointer; border: 2px solid #3498db; white-space: nowrap;
+                            ${currentPreferitiSort === 'title' ? 'background: #3498db; color: white;' : 'background: white; color: #3498db;'}"
+                            onclick="currentPreferitiSort='title'; showPreferitiInPerformance('${filterCategoryId}')">
+                            A-Z Titolo
+                        </div>
+                        <div style="padding: 5px 12px; border-radius: 16px; font-size: 12pt; cursor: pointer; border: 2px solid #3498db; white-space: nowrap;
+                            ${currentPreferitiSort === 'artist' ? 'background: #3498db; color: white;' : 'background: white; color: #3498db;'}"
+                            onclick="currentPreferitiSort='artist'; showPreferitiInPerformance('${filterCategoryId}')">
+                            A-Z Cantante
+                        </div>
                     </div>
                 </div>
             `;
