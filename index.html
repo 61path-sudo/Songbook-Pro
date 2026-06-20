@@ -1074,6 +1074,21 @@ body.dark-mode #empty-trash-btn:hover {
            cursor: not-allowed !important;
            opacity: 0.6;
        }
+       
+       #add-category-btn:disabled {
+           background: #f1f1f1 !important;
+           color: #aaa !important;
+           cursor: not-allowed !important;
+           opacity: 0.6;
+       }
+
+       #move-left-btn:disabled,
+       #move-right-btn:disabled {
+           background: #f1f1f1 !important;
+           color: #aaa !important;
+           cursor: not-allowed !important;
+           opacity: 0.6;
+       }
 
 body.dark-mode #restore-btn:disabled,
 body.dark-mode #empty-trash-btn:disabled {
@@ -1556,6 +1571,8 @@ body.dark-mode .piano-key.black {
                         <button class="btn btn-primary" onclick="addCategory()" id="add-category-btn">Aggiungi</button>
                     <button class="btn btn-secondary" onclick="editSelectedCategory()" id="edit-category-btn" disabled>Modifica</button>
                     <button class="btn btn-secondary" onclick="deleteSelectedCategory()" id="delete-category-btn" disabled>Elimina</button>
+                    <button class="btn btn-secondary" onclick="moveCategory(-1)" id="move-left-btn" disabled>◀</button>
+                    <button class="btn btn-secondary" onclick="moveCategory(1)" id="move-right-btn" disabled>▶</button>
                 </div>
                 <div id="categories-list" style="display: flex; flex-wrap: wrap; gap: 10px;"></div>
             </div>
@@ -6240,13 +6257,17 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
                                 onclick="showPreferitiInPerformance('all')">
                                 Tutti
                             </div>
-                            ${categories.map(cat => `
-                                <div style="display: inline-block; padding: 5px 12px; border-radius: 16px; font-size: 12pt; cursor: pointer; border: 2px solid #f39c12;
-                                    ${filterCategoryId === cat.id ? 'background: #f39c12; color: white;' : 'background: white; color: #e67e22;'}"
-                                    onclick="showPreferitiInPerformance(${cat.id})">
-                                    ${cat.name}
-                                </div>
-                            `).join('')}
+                            ${categories.map(cat => {
+                                const color = cat.color || '#f39c12';
+                                const isActive = filterCategoryId === cat.id;
+                                return `
+                                    <div style="display: inline-block; padding: 5px 12px; border-radius: 16px; font-size: 12pt; cursor: pointer; border: 2px solid ${color};
+                                        ${isActive ? `background: ${color}; color: white;` : `background: white; color: ${color};`}"
+                                        onclick="showPreferitiInPerformance(${cat.id})">
+                                        ${cat.name}
+                                    </div>
+                                `;
+                            }).join('')}
                         </div>
                     </div>
                             <div style="width: 1px; height: 30px; background: #ddd; flex-shrink: 0; align-self: center;"></div>
@@ -6266,55 +6287,93 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
             `;
             
             // Crea lista canzoni in 2 colonne ordinate alfabeticamente
-            const prefTestDiv = document.createElement('div');
-            prefTestDiv.style.cssText = 'position:absolute;visibility:hidden;width:45%;font-size:16pt;padding:6px 0;border-bottom:1px solid #eee;';
-            prefTestDiv.innerHTML = '<span style="font-weight:600;display:block;">TITOLO DI PROVA</span><span style="font-size:12pt;color:#666;display:block;">Artista</span>';
-            document.body.appendChild(prefTestDiv);
-            const prefItemHeight = prefTestDiv.offsetHeight;
-            document.body.removeChild(prefTestDiv);
-            const prefDims = getPageDimensions();
-            const prefMaxPerCol = Math.max(1, Math.floor((prefDims.height - 280) / prefItemHeight));
-            const col1 = preferitiSongs.slice(0, prefMaxPerCol);
-            const col2 = preferitiSongs.slice(prefMaxPerCol, prefMaxPerCol * 2);
+            function getPrefTitleFontSize(title) {
+                const len = title.length;
+                if (len > 35) return 11;
+                if (len > 28) return 12;
+                if (len > 22) return 13;
+                if (len > 16) return 14;
+                return 15;
+            }
 
-            const songsList = preferitiSongs.length > 0
-                ? `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                    <div>
-                        ${col1.map(song => `
-                            <div class="song-link" data-song-id="${song.id}"
-                                style="font-size: 16pt; cursor: pointer; padding: 6px 0; border-bottom: 1px solid #eee;">
-                                <span style="font-weight: 600;">${song.title.toUpperCase()}</span>
-                                <span style="font-size: 12pt; color: #666; display: block;">${song.artist}</span>
-                            </div>
-                        `).join('')}
+            function renderPrefSongItem(song) {
+                return `
+                    <div class="song-link" data-song-id="${song.id}"
+                        style="cursor: pointer; padding: 5px 0; border-bottom: 1px solid #eee; height: 49px; box-sizing: border-box; overflow: hidden;">
+                        <div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                            <span style="font-weight: 600; font-size: ${getPrefTitleFontSize(song.title)}pt;">${song.title.toUpperCase()}</span>
+                        </div>
+                        <div style="font-size: 11pt; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${song.artist.toUpperCase()}</div>
                     </div>
-                    <div>
-                        ${col2.map(song => `
-                            <div class="song-link" data-song-id="${song.id}"
-                                style="font-size: 16pt; cursor: pointer; padding: 6px 0; border-bottom: 1px solid #eee;">
-                                <span style="font-weight: 600;">${song.title.toUpperCase()}</span>
-                                <span style="font-size: 12pt; color: #666; display: block;">${song.artist}</span>
-                            </div>
-                        `).join('')}
+                `;
+            }
+
+            const prefItemHeight = 46;
+            const prefMaxPerColFirst = Math.max(1, Math.floor((dims.height - 280) / prefItemHeight));
+            const prefMaxPerColOther = Math.max(1, Math.floor((dims.height - 140) / prefItemHeight));
+
+            const prefPages = [];
+            let processed = 0;
+
+            if (preferitiSongs.length === 0) {
+                prefPages.push(`
+                    ${filterButtons}
+                    <div style="text-align: center; color: #999; font-size: 16pt; margin-top: 30px;">Nessuna canzone trovata</div>
+                `);
+            } else {
+                // Prima pagina (con header e filtri)
+                const firstPageSongs = preferitiSongs.slice(0, prefMaxPerColFirst * 2);
+                const fCol1 = firstPageSongs.slice(0, prefMaxPerColFirst);
+                const fCol2 = firstPageSongs.slice(prefMaxPerColFirst, prefMaxPerColFirst * 2);
+                
+                prefPages.push(`
+                    <div style="text-align: center; font-size: 20pt; font-weight: bold; border-top: 2px solid black; border-bottom: 2px solid black; padding: 15px 0; margin-bottom: 20px;">
+                        PREFERITI
                     </div>
-                </div>`
-                : '<div style="text-align: center; color: #999; font-size: 16pt; margin-top: 30px;">Nessuna canzone trovata</div>';
-            
-            const content = `
-                <div style="text-align: center; font-size: 20pt; font-weight: bold; border-top: 2px solid black; border-bottom: 2px solid black; padding: 15px 0; margin-bottom: 20px;">
-                    PREFERITI
-                </div>
-                ${filterButtons}
-                <div>
-                    ${songsList}
-                </div>
-                <div style="position: absolute; bottom: 20px; left: 0; right: 0; text-align: center; border-top: 1px solid black; padding-top: 15px;">
-                    <span style="cursor: pointer; font-size: 16pt;" onclick="updatePerformance()">Torna ad Elenco cantanti</span>
-                </div>
-            `;
-            
-            previewContent.innerHTML = createPage(content, 0);
-            totalPages = 1;
+                    ${filterButtons}
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; column-gap: 30px;">
+                        <div style="border-right: 1px solid #ddd; padding-right: 15px;">
+                            ${fCol1.map(renderPrefSongItem).join('')}
+                        </div>
+                        <div style="padding-left: 15px;">
+                            ${fCol2.map(renderPrefSongItem).join('')}
+                        </div>
+                    </div>
+                    <div style="position: absolute; bottom: 20px; left: 0; right: 0; text-align: center; border-top: 1px solid black; padding-top: 15px;">
+                        <span style="cursor: pointer; font-size: 16pt;" onclick="updatePerformance()">Torna ad Elenco cantanti</span>
+                    </div>
+                `);
+                
+                processed = firstPageSongs.length;
+                
+                // Pagine successive (solo canzoni, senza header)
+                while (processed < preferitiSongs.length) {
+                    const pageSongs = preferitiSongs.slice(processed, processed + prefMaxPerColOther * 2);
+                    const oCol1 = pageSongs.slice(0, prefMaxPerColOther);
+                    const oCol2 = pageSongs.slice(prefMaxPerColOther, prefMaxPerColOther * 2);
+                    
+                    const isLastPage = (processed + pageSongs.length >= preferitiSongs.length);
+                    
+                    prefPages.push(`
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; column-gap: 30px; margin-top: 10px;">
+                            <div style="border-right: 1px solid #ddd; padding-right: 15px;">
+                                ${oCol1.map(renderPrefSongItem).join('')}
+                            </div>
+                            <div style="padding-left: 15px;">
+                                ${oCol2.map(renderPrefSongItem).join('')}
+                            </div>
+                        </div>
+                        <div style="position: absolute; bottom: 20px; left: 0; right: 0; text-align: center; border-top: 1px solid black; padding-top: 15px;">
+                            <span style="cursor: pointer; font-size: 16pt;" onclick="updatePerformance()">Torna ad Elenco cantanti</span>
+                        </div>
+                    `);
+                    
+                    processed += pageSongs.length;
+                }
+            }
+
+            previewContent.innerHTML = prefPages.map((content, index) => createPage(content, index)).join('');
+            totalPages = prefPages.length;
             currentPage = 0;
             showPage(0);
         }
@@ -6377,13 +6436,8 @@ function showPreferitiInFullscreen(filterCategoryId = 'all') {
             `;
             
             // Crea lista canzoni in 2 colonne
-            const prefTestDiv = document.createElement('div');
-            prefTestDiv.style.cssText = 'position:absolute;visibility:hidden;width:45%;font-size:16pt;padding:6px 0;border-bottom:1px solid #eee;';
-            prefTestDiv.innerHTML = '<span style="font-weight:600;display:block;">TITOLO DI PROVA</span><span style="font-size:12pt;color:#666;display:block;">Artista</span>';
-            document.body.appendChild(prefTestDiv);
-            const prefItemHeight = prefTestDiv.offsetHeight;
-            document.body.removeChild(prefTestDiv);
-            const prefMaxPerCol = Math.max(1, Math.floor((window.innerHeight - 320) / prefItemHeight));
+            const prefItemHeight = 42;
+            const prefMaxPerCol = Math.max(1, Math.floor((dims.height - 280) / prefItemHeight));
             const col1 = preferitiSongs.slice(0, prefMaxPerCol);
             const col2 = preferitiSongs.slice(prefMaxPerCol, prefMaxPerCol * 2);
 
@@ -7101,6 +7155,7 @@ function handleTouchEnd(e) {
             savePreferitiData();
             input.value = '';
             updateCategoriesList();
+            updatePreferitiList();
         }
 
         function deleteCategory(id) {
@@ -7144,6 +7199,8 @@ function handleTouchEnd(e) {
             document.getElementById('edit-category-btn').disabled = !selectedCategoryId;
             document.getElementById('delete-category-btn').disabled = !selectedCategoryId;
             document.getElementById('add-category-btn').disabled = !!selectedCategoryId;
+            document.getElementById('move-left-btn').disabled = !selectedCategoryId;
+            document.getElementById('move-right-btn').disabled = !selectedCategoryId;
             updateCategoriesList();
         }
         
@@ -7153,7 +7210,25 @@ function handleTouchEnd(e) {
             document.getElementById('edit-category-btn').disabled = true;
             document.getElementById('delete-category-btn').disabled = true;
             document.getElementById('add-category-btn').disabled = false;
+            document.getElementById('move-left-btn').disabled = true;
+            document.getElementById('move-right-btn').disabled = true;
             updateCategoriesList();
+        }
+        
+        function moveCategory(direction) {
+            if (!selectedCategoryId) return;
+            const index = categories.findIndex(c => c.id === selectedCategoryId);
+            const newIndex = index + direction;
+            
+            if (newIndex < 0 || newIndex >= categories.length) return;
+            
+            const temp = categories[index];
+            categories[index] = categories[newIndex];
+            categories[newIndex] = temp;
+            
+            savePreferitiData();
+            updateCategoriesList();
+            updatePreferitiList();
         }
 
         function editSelectedCategory() {
@@ -7170,6 +7245,7 @@ function handleTouchEnd(e) {
                         cat.name = newName.trim();
                         savePreferitiData();
                         updateCategoriesList();
+                        updatePreferitiList();
                     }
                 }
             );
