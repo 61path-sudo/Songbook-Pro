@@ -5209,6 +5209,7 @@ function initFirebaseAuth() {
             console.log('Utente loggato:', user.email);
             syncEnabled = true;
             loadFromFirebase();
+            loadPreferitiFromFirebase();
         } else {
             console.log('Utente non loggato');
             syncEnabled = false;
