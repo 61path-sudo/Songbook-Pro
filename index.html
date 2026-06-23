@@ -6625,8 +6625,14 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
                     swipeStartX = e.touches[0].clientX;
                 }, { passive: true });
                 
-                previewContent.addEventListener('touchend', (e) => {
-                    const diffX = e.changedTouches[0].clientX - swipeStartX;
+                previewContent.addEventListener('touchstart', (e) => {
+                    const scrollable = e.target.closest('.hide-scrollbar');
+                    if (scrollable) {
+                        swipeStartX = 0;
+                        return;
+                    }
+                    swipeStartX = e.touches[0].clientX;
+                }, { passive: true });
                     if (Math.abs(diffX) > 50) {
                         if (diffX < 0 && currentPrefPage < prefPages.length - 1) {
                             currentPrefPage++;
