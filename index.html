@@ -345,9 +345,9 @@ body.dark-mode .fullscreen-active .artist-item {
     height: 100%;
 }
 
-.fullscreen-active .artist-column::before {
-    height: var(--line-height, 100%);
-}
+       .fullscreen-active .artist-column::before {
+           height: 100%; /* corretto: colonna è ora height:auto */
+       }
 
 .fullscreen-active .artist-column {
     display: flex;
@@ -355,16 +355,6 @@ body.dark-mode .fullscreen-active .artist-item {
     justify-content: space-evenly;
     gap: 8px;
     height: 100%;
-}
-
-/* Forza altezze uniformi in fullscreen */
-.fullscreen-active .artist-column > div {
-    height: 37px !important;
-    min-height: 37px;
-    max-height: 37px;
-    line-height: 37px !important;
-    flex-shrink: 0;
-    flex-grow: 0;
 }
 
 .artist-item { 
@@ -401,29 +391,28 @@ body.dark-mode .fullscreen-active .artist-item {
 }*/
 
 /* Fullscreen: distanziamento uguale al resto */
-.fullscreen-active .artist-item {
-    height: 38px !important;
-    line-height: 38px !important;
-    min-height: 38px;
-    max-height: 38px;
-    flex-shrink: 0;
-    flex-grow: 0;
-    margin: 0 !important;  /* ✅ Rimuovi eventuali margini */
-    padding: 0 !important;  /* ✅ Rimuovi eventuali padding */
-}
+       .fullscreen-active .artist-item {
+           height: 37px !important;
+           line-height: 37px !important;
+           min-height: 37px;
+           max-height: 37px;
+           flex-shrink: 0;
+           flex-grow: 0;
+           margin: 0 !important;
+           padding: 0 !important;
+       }
 
-.fullscreen-active .artist-columns {
-    height: 100%;
-    align-items: stretch;
-}
+       .fullscreen-active .artist-columns {
+           height: auto;
+           align-items: start;
+       }
 
-.fullscreen-active .artist-column {
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    gap: 8px;  /* ✅ PROVA DIVERSI VALORI: 0px, 1px, 2px, 3px, 4px */
-    height: 100%;
-}
+       .fullscreen-active .artist-column {
+           display: flex;
+           flex-direction: column;
+           justify-content: flex-start;
+           height: auto; /* si adatta al contenuto come in Performance */
+       }
 
 .artist-item.long-name {
     font-size: 12pt;
@@ -6064,31 +6053,31 @@ colData.forEach(item => {
 });
 
 // Calcola altezza: ogni elemento 38px + gap 8px tra elementi - margine di sicurezza
-const totalHeight = (totalVisibleElements * 38 + Math.max(0, totalVisibleElements - 1) * 8) - 20;
-
 return `
     <div class="artist-column" style="position: relative; --items-count: ${totalVisibleElements}; --line-height: ${totalHeight}px;">
         ${colData.map(item => {
                         let html = '';
                         
                         if (item.isOnlySeparator) {
-                            html += `<div style="background: #cccccc; padding: 2px 0 2px 5px; font-weight: bold; font-size: 20pt; height: 38px; line-height: 38px; display: flex; align-items: center; margin-left: -10px;">${item.separatorLetter}</div>`;
-                            return html;
+                            html += `<div style="background: #cccccc; padding: 2px 0 2px 5px; font-weight: bold; font-size: 14pt; height: 37px; line-height: 37px; display: flex; align-items: center; margin-left: -10px;">${item.separatorLetter}</div>`;
+                                                    return html;
                         }
                         
                         if (item.needsSeparator) {
-                            const firstLetter = item.artistSort.charAt(0).toUpperCase();
-                            html += `<div style="background: #cccccc; padding: 2px 0 2px 5px; font-weight: bold; font-size: 20pt; height: 38px; line-height: 38px; display: flex; align-items: center; margin-left: -10px;">${firstLetter}</div>`;
-                        }
-                        
-                        let fontSize = 20;
-                        if (item.artistSort.length > 25) {
-                            fontSize = 16;
-                        } else if (item.artistSort.length > 20) {
-                            fontSize = 18;
-                        }
-                        
-                        html += `<div class="artist-item" style="font-size: ${fontSize}pt; height: 38px; line-height: 38px;"><span class="artist-link">${item.artistSort}</span></div>`;
+                                                    const firstLetter = item.artistSort.charAt(0).toUpperCase();
+                                                    html += `<div style="background: #cccccc; padding: 2px 0 2px 5px; font-weight: bold; font-size: 14pt; height: 37px; line-height: 37px; display: flex; align-items: center; margin-left: -10px;">${firstLetter}</div>`;
+                                                }
+                                                
+                                                const _cv = document.createElement('canvas');
+                                                const _cx = _cv.getContext('2d');
+                                                const _tw = columnWidth * 0.94;
+                                                let fontSize = 14;
+                                                for (let _s = 14; _s >= 8; _s -= 0.5) {
+                                                    _cx.font = `${_s}pt "Times New Roman", serif`;
+                                                    if (_cx.measureText(item.artistSort).width <= _tw) { fontSize = _s; break; }
+                                                }
+                                                
+                                                html += `<div class="artist-item" style="font-size: ${fontSize}pt;"><span class="artist-link">${item.artistSort}</span></div>`;
                         
                         return html;
                     }).join('')}
@@ -6338,7 +6327,7 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
                         PREFERITI
                     </div>
                     ${filterButtons}
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; column-gap: 30px; width: 100%; box-sizing: border-box;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; column-gap: 30px;">
                         <div style="border-right: 1px solid #ddd; padding-right: 15px;">
                             ${fCol1.map(renderPrefSongItem).join('')}
                         </div>
@@ -6885,6 +6874,7 @@ let bookTouchStartX = 0;
 let bookTouchStartY = 0;
 let bookTouchCurrentX = 0;
 let bookIsSwiping = false;
+let touchStartedOnScrollable = false;
 
 function exitFullscreenAndGoToIndex() {
     exitFullscreen();
@@ -6900,12 +6890,17 @@ function exitFullscreenAndGoToArtist(artist) {
     }, 200);
 }
 
-function handleBookTouchStart(e) {
-    if (!isFullscreen) return;
-    
-    // ✅ IGNORA se stai toccando un link/elemento cliccabile
-    const target = e.target;
-    if (target.hasAttribute('data-action') || 
+        function handleBookTouchStart(e) {
+            if (!isFullscreen) return;
+            
+            const target = e.target;
+            
+            // Se il touch parte da un container con scroll orizzontale, non intercettare
+            touchStartedOnScrollable = !!target.closest('.hide-scrollbar');
+            if (touchStartedOnScrollable) return;
+            
+            // IGNORA se stai toccando un link/elemento cliccabile
+            if (target.hasAttribute('data-action') ||
         target.closest('[data-action]') ||
         target.classList.contains('artist-item') ||
         target.closest('.artist-item')) {
@@ -6918,10 +6913,11 @@ function handleBookTouchStart(e) {
     bookIsSwiping = false;
 }
 
-    function handleBookTouchMove(e) {
-    if (!isFullscreen) return;
-    
-    bookTouchCurrentX = e.touches[0].clientX;
+        function handleBookTouchMove(e) {
+            if (!isFullscreen) return;
+            if (touchStartedOnScrollable) return; // lascia scorrere il container
+            
+            bookTouchCurrentX = e.touches[0].clientX;
     const touchCurrentY = e.touches[0].clientY;
     
     const diffX = Math.abs(bookTouchCurrentX - bookTouchStartX);
@@ -6937,8 +6933,13 @@ function handleBookTouchStart(e) {
     return false;
 }
 
-function handleBookTouchEnd(e) {
-    if (!isFullscreen || !bookIsSwiping) return;
+        function handleBookTouchEnd(e) {
+            if (touchStartedOnScrollable) {
+                touchStartedOnScrollable = false;
+                bookIsSwiping = false;
+                return;
+            }
+            if (!isFullscreen || !bookIsSwiping) return;
     
     const diffX = bookTouchCurrentX - bookTouchStartX;
     const threshold = 30;
