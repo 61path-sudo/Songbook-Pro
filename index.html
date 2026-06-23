@@ -6385,7 +6385,8 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
             showPage(0);
         }
         
-function showPreferitiInFullscreen(filterCategoryId = 'all') {
+        function showPreferitiInFullscreen(filterCategoryId = 'all') {
+            if (filterCategoryId !== 'all') filterCategoryId = parseInt(filterCategoryId);
             const previewContent = document.getElementById('preview-content');
             
             // Filtra canzoni preferite
@@ -6400,114 +6401,196 @@ function showPreferitiInFullscreen(filterCategoryId = 'all') {
             }
             
             // Ordina in base alla scelta
-                if (currentPreferitiSort === 'title') {
-                    preferitiSongs.sort((a, b) => a.title.localeCompare(b.title));
-                } else {
-                    preferitiSongs.sort((a, b) => {
-                        const artistCompare = (a.artistSort || a.artist).localeCompare(b.artistSort || b.artist);
-                        if (artistCompare !== 0) return artistCompare;
-                        return a.title.localeCompare(b.title);
-                    });
-                }
+            if (currentPreferitiSort === 'title') {
+                preferitiSongs.sort((a, b) => a.title.localeCompare(b.title));
+            } else {
+                preferitiSongs.sort((a, b) => {
+                    const artistCompare = (a.artistSort || a.artist).localeCompare(b.artistSort || b.artist);
+                    if (artistCompare !== 0) return artistCompare;
+                    return a.title.localeCompare(b.title);
+                });
+            }
             
             // Crea pulsanti filtro categorie + ordinamento
             const filterButtons = `
-                <div style="overflow-x: auto; white-space: nowrap; padding-bottom: 10px; margin-bottom: 5px; -webkit-overflow-scrolling: touch;">
-                    <div style="display: inline-flex; gap: 10px;">
-                        <div style="display: inline-block; padding: 8px 20px; border-radius: 20px; font-size: 16pt; cursor: pointer; border: 2px solid #f39c12;
-                            ${filterCategoryId === 'all' ? 'background: #f39c12; color: white;' : 'background: white; color: #e67e22;'}"
-                            data-action="preferiti-filter" data-filter="all">
-                            Tutti
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                    <div style="overflow-x: auto; white-space: nowrap; flex: 1; -webkit-overflow-scrolling: touch; scrollbar-width: none; -ms-overflow-style: none;" class="hide-scrollbar">
+                        <div style="display: inline-flex; gap: 8px;">
+                            <div style="display: inline-block; padding: 6px 14px; border-radius: 16px; font-size: 14pt; cursor: pointer; border: 2px solid #f39c12;
+                                ${filterCategoryId === 'all' ? 'background: #f39c12; color: white;' : 'background: white; color: #e67e22;'}"
+                                data-action="preferiti-filter" data-filter="all">
+                                Tutti
+                            </div>
+                            ${categories.map(cat => {
+                                const color = cat.color || '#f39c12';
+                                const isActive = filterCategoryId === cat.id;
+                                return `
+                                    <div style="display: inline-block; padding: 6px 14px; border-radius: 16px; font-size: 14pt; cursor: pointer; border: 2px solid ${color};
+                                        ${isActive ? `background: ${color}; color: white;` : `background: white; color: ${color};`}"
+                                        data-action="preferiti-filter" data-filter="${cat.id}">
+                                        ${cat.name}
+                                    </div>
+                                `;
+                            }).join('')}
                         </div>
-                        ${categories.map(cat => `
-                            <div style="display: inline-block; padding: 8px 20px; border-radius: 20px; font-size: 16pt; cursor: pointer; border: 2px solid #f39c12;
-                                ${filterCategoryId === cat.id ? 'background: #f39c12; color: white;' : 'background: white; color: #e67e22;'}"
-                                data-action="preferiti-filter" data-filter="${cat.id}">
-                                ${cat.name}
-                            </div>
-                        `).join('')}
                     </div>
-                </div>
-                <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-                    <div style="padding: 6px 15px; border-radius: 20px; font-size: 14pt; cursor: pointer; border: 2px solid #3498db;
-                        ${currentPreferitiSort === 'title' ? 'background: #3498db; color: white;' : 'background: white; color: #3498db;'}"
-                        data-action="preferiti-sort" data-sort="title">
-                        A-Z Titolo
-                    </div>
-                    <div style="padding: 6px 15px; border-radius: 20px; font-size: 14pt; cursor: pointer; border: 2px solid #3498db;
-                        ${currentPreferitiSort === 'artist' ? 'background: #3498db; color: white;' : 'background: white; color: #3498db;'}"
-                        data-action="preferiti-sort" data-sort="artist">
-                        A-Z Cantante
+                    <div style="width: 1px; height: 30px; background: #ddd; flex-shrink: 0; align-self: center;"></div>
+                    <div style="display: flex; gap: 6px; flex-shrink: 0;">
+                        <div style="padding: 6px 14px; border-radius: 16px; font-size: 14pt; cursor: pointer; border: 2px solid #3498db; white-space: nowrap;
+                            ${currentPreferitiSort === 'title' ? 'background: #3498db; color: white;' : 'background: white; color: #3498db;'}"
+                            data-action="preferiti-sort" data-sort="title">
+                            A-Z Titolo
+                        </div>
+                        <div style="padding: 6px 14px; border-radius: 16px; font-size: 14pt; cursor: pointer; border: 2px solid #3498db; white-space: nowrap;
+                            ${currentPreferitiSort === 'artist' ? 'background: #3498db; color: white;' : 'background: white; color: #3498db;'}"
+                            data-action="preferiti-sort" data-sort="artist">
+                            A-Z Cantante
+                        </div>
                     </div>
                 </div>
             `;
             
-            // Crea lista canzoni in 2 colonne
-            const prefItemHeight = 42;
-            const prefMaxPerCol = Math.max(1, Math.floor((dims.height - 280) / prefItemHeight));
-            const col1 = preferitiSongs.slice(0, prefMaxPerCol);
-            const col2 = preferitiSongs.slice(prefMaxPerCol, prefMaxPerCol * 2);
-
-            const songsList = preferitiSongs.length > 0
-                ? `<div style="display: grid; grid-template-columns: 1fr 1fr; column-gap: 30px;">
-                    <div style="border-right: 1px solid #ddd; padding-right: 15px;">
-                        ${col1.map(song => `
-                            <div class="song-link" data-song-id="${song.id}"
-                                style="font-size: 16pt; cursor: pointer; padding: 6px 0; border-bottom: 1px solid #eee;">
-                                <span style="font-weight: 600; display: block;">${song.title.toUpperCase()}</span>
-                                <span style="font-size: 12pt; color: #666; display: block;">${song.artist}</span>
-                            </div>
-                        `).join('')}
+            // Funzione font dinamico
+            function getPrefTitleFontSizeFS(title) {
+                const len = title.length;
+                if (len > 35) return 11;
+                if (len > 28) return 12;
+                if (len > 22) return 13;
+                if (len > 16) return 14;
+                return 15;
+            }
+            
+            // Funzione rendering singola canzone
+            function renderPrefSongItemFS(song) {
+                return `
+                    <div class="song-link" data-song-id="${song.id}"
+                        style="cursor: pointer; padding: 5px 0; border-bottom: 1px solid #eee; height: 49px; box-sizing: border-box; overflow: hidden;">
+                        <div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                            <span style="font-weight: 600; font-size: ${getPrefTitleFontSizeFS(song.title)}pt;">${song.title.toUpperCase()}</span>
+                        </div>
+                        <div style="font-size: 11pt; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${song.artist.toUpperCase()}</div>
                     </div>
-                    <div style="padding-left: 15px;">
-                        ${col2.map(song => `
-                            <div class="song-link" data-song-id="${song.id}"
-                                style="font-size: 16pt; cursor: pointer; padding: 6px 0; border-bottom: 1px solid #eee;">
-                                <span style="font-weight: 600; display: block;">${song.title.toUpperCase()}</span>
-                                <span style="font-size: 12pt; color: #666; display: block;">${song.artist}</span>
-                            </div>
-                        `).join('')}
+                `;
+            }
+            
+            // Calcola righe per pagina
+            const prefItemHeight = 49;
+            const prefMaxPerColFirst = Math.max(1, Math.floor((window.innerHeight - 280) / prefItemHeight));
+            const prefMaxPerColOther = Math.max(1, Math.floor((window.innerHeight - 140) / prefItemHeight));
+            
+            // Genera pagine
+            const prefPages = [];
+            let processed = 0;
+            
+            if (preferitiSongs.length === 0) {
+                prefPages.push(`
+                    <div style="text-align: center; font-size: 26pt; font-weight: bold; border-top: 2px solid black; border-bottom: 2px solid black; padding: 15px 0; margin-bottom: 20px;">
+                        PREFERITI
                     </div>
-                </div>`
-                : '<div style="text-align: center; color: #999; font-size: 16pt; margin-top: 30px;">Nessuna canzone trovata</div>';
+                    ${filterButtons}
+                    <div style="text-align: center; color: #999; font-size: 16pt; margin-top: 30px;">Nessuna canzone trovata</div>
+                    <div style="position: absolute; bottom: 20px; left: 0; right: 0; border-top: 1px solid black; padding-top: 15px; text-align: center;">
+                        <span style="cursor: pointer; font-size: 18pt;" data-action="index">Torna ad Elenco cantanti</span>
+                    </div>
+                `);
+            } else {
+                // Prima pagina (con header e filtri)
+                const firstPageSongs = preferitiSongs.slice(0, prefMaxPerColFirst * 2);
+                const fCol1 = firstPageSongs.slice(0, prefMaxPerColFirst);
+                const fCol2 = firstPageSongs.slice(prefMaxPerColFirst, prefMaxPerColFirst * 2);
+                
+                prefPages.push(`
+                    <div style="text-align: center; font-size: 26pt; font-weight: bold; border-top: 2px solid black; border-bottom: 2px solid black; padding: 15px 0; margin-bottom: 20px;">
+                        PREFERITI
+                    </div>
+                    ${filterButtons}
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; column-gap: 30px;">
+                        <div style="border-right: 1px solid #ddd; padding-right: 15px;">
+                            ${fCol1.map(renderPrefSongItemFS).join('')}
+                        </div>
+                        <div style="padding-left: 15px;">
+                            ${fCol2.map(renderPrefSongItemFS).join('')}
+                        </div>
+                    </div>
+                    <div style="position: absolute; bottom: 20px; left: 0; right: 0; border-top: 1px solid black; padding-top: 15px; text-align: center;">
+                        <span style="cursor: pointer; font-size: 18pt;" data-action="index">Torna ad Elenco cantanti</span>
+                    </div>
+                `);
+                
+                processed = firstPageSongs.length;
+                
+                // Pagine successive
+                while (processed < preferitiSongs.length) {
+                    const pageSongs = preferitiSongs.slice(processed, processed + prefMaxPerColOther * 2);
+                    const oCol1 = pageSongs.slice(0, prefMaxPerColOther);
+                    const oCol2 = pageSongs.slice(prefMaxPerColOther, prefMaxPerColOther * 2);
+                    
+                    prefPages.push(`
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; column-gap: 30px; margin-top: 10px;">
+                            <div style="border-right: 1px solid #ddd; padding-right: 15px;">
+                                ${oCol1.map(renderPrefSongItemFS).join('')}
+                            </div>
+                            <div style="padding-left: 15px;">
+                                ${oCol2.map(renderPrefSongItemFS).join('')}
+                            </div>
+                        </div>
+                        <div style="position: absolute; bottom: 20px; left: 0; right: 0; border-top: 1px solid black; padding-top: 15px; text-align: center;">
+                            <span style="cursor: pointer; font-size: 18pt;" data-action="index">Torna ad Elenco cantanti</span>
+                        </div>
+                    `);
+                    
+                    processed += pageSongs.length;
+                }
+            }
             
-            const content = `
-                <div style="text-align: center; font-size: 26pt; font-weight: bold; border-top: 2px solid black; border-bottom: 2px solid black; padding: 15px 0; margin-bottom: 20px;">
-                    PREFERITI
-                </div>
-                ${filterButtons}
-                <div style="overflow-y: auto; max-height: calc(100vh - 250px);">
-                    ${songsList}
-                </div>
-                <div style="position: absolute; bottom: 20px; left: 0; right: 0; border-top: 1px solid black; padding-top: 15px; text-align: center;">
-                    <span style="cursor: pointer; font-size: 18pt;" data-action="index">Torna ad Elenco cantanti</span>
-                </div>
-            `;
+            // Mostra prima pagina
+            previewContent.innerHTML = `<div class="page active" style="width: 100vw; height: 100vh; height: 100dvh;">${prefPages[0]}</div>`;
             
-            const pageHtml = `<div class="page active" style="width: 100vw; height: 100vh;">${content}</div>`;
-            previewContent.innerHTML = pageHtml;
-            
-            // Aggiungi handlers per filtri e canzoni
+            // Handlers
             setTimeout(() => {
-                // Handler ordinamento
-                        document.querySelectorAll('[data-action="preferiti-sort"]').forEach(btn => {
-                            btn.addEventListener('click', (e) => {
-                                currentPreferitiSort = btn.getAttribute('data-sort');
-                                showPreferitiInFullscreen(filterCategoryId);
-                            });
-                        });
-                        
-                // Handler filtri categoria
+                // Ordinamento
+                document.querySelectorAll('[data-action="preferiti-sort"]').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        currentPreferitiSort = btn.getAttribute('data-sort');
+                        showPreferitiInFullscreen(filterCategoryId);
+                    });
+                    btn.addEventListener('touchend', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        currentPreferitiSort = btn.getAttribute('data-sort');
+                        showPreferitiInFullscreen(filterCategoryId);
+                    });
+                });
+                
+                // Filtri categoria
                 document.querySelectorAll('[data-action="preferiti-filter"]').forEach(btn => {
                     btn.addEventListener('click', (e) => {
                         const filterId = btn.getAttribute('data-filter');
                         const filterValue = filterId === 'all' ? 'all' : parseInt(filterId);
                         showPreferitiInFullscreen(filterValue);
                     });
+                    btn.addEventListener('touchend', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const filterId = btn.getAttribute('data-filter');
+                        const filterValue = filterId === 'all' ? 'all' : parseInt(filterId);
+                        showPreferitiInFullscreen(filterValue);
+                    });
                 });
                 
-                // Handler canzoni
+                // Canzoni
                 document.querySelectorAll('.song-link').forEach(link => {
+                    link.addEventListener('touchend', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const songId = parseInt(link.getAttribute('data-song-id'));
+                        const songPageIndex = allFullscreenPages.findIndex(p =>
+                            p.type === 'song' && p.songId === songId
+                        );
+                        if (songPageIndex >= 0) {
+                            showBookPage(songPageIndex);
+                        }
+                    });
                     link.addEventListener('click', (e) => {
                         const songId = parseInt(link.getAttribute('data-song-id'));
                         const songPageIndex = allFullscreenPages.findIndex(p =>
@@ -6519,14 +6602,62 @@ function showPreferitiInFullscreen(filterCategoryId = 'all') {
                     });
                 });
                 
-                // Handler torna ad elenco
+                // Torna ad elenco
                 document.querySelectorAll('[data-action="index"]').forEach(link => {
-                    link.addEventListener('click', () => {
+                    link.addEventListener('click', () => showBookPage(0));
+                    link.addEventListener('touchend', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
                         showBookPage(0);
                     });
                 });
                 
             }, 200);
+            
+            // Swipe tra pagine preferiti in fullscreen
+            if (prefPages.length > 1) {
+                let currentPrefPage = 0;
+                let swipeStartX = 0;
+                
+                previewContent.addEventListener('touchstart', (e) => {
+                    swipeStartX = e.touches[0].clientX;
+                }, { passive: true });
+                
+                previewContent.addEventListener('touchend', (e) => {
+                    const diffX = e.changedTouches[0].clientX - swipeStartX;
+                    if (Math.abs(diffX) > 50) {
+                        if (diffX < 0 && currentPrefPage < prefPages.length - 1) {
+                            currentPrefPage++;
+                        } else if (diffX > 0 && currentPrefPage > 0) {
+                            currentPrefPage--;
+                        }
+                        previewContent.innerHTML = `<div class="page active" style="width: 100vw; height: 100vh; height: 100dvh;">${prefPages[currentPrefPage]}</div>`;
+                        setTimeout(() => {
+                            document.querySelectorAll('[data-action="index"]').forEach(link => {
+                                link.addEventListener('click', () => showBookPage(0));
+                                link.addEventListener('touchend', (e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    showBookPage(0);
+                                });
+                            });
+                            document.querySelectorAll('.song-link').forEach(link => {
+                                link.addEventListener('touchend', (e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    const songId = parseInt(link.getAttribute('data-song-id'));
+                                    const songPageIndex = allFullscreenPages.findIndex(p =>
+                                        p.type === 'song' && p.songId === songId
+                                    );
+                                    if (songPageIndex >= 0) {
+                                        showBookPage(songPageIndex);
+                                    }
+                                });
+                            });
+                        }, 200);
+                    }
+                });
+            }
         }
         
 function showBookPage(index) {
