@@ -6338,7 +6338,7 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
                         PREFERITI
                     </div>
                     ${filterButtons}
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; column-gap: 30px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; column-gap: 30px; width: 100%; box-sizing: border-box;">
                         <div style="border-right: 1px solid #ddd; padding-right: 15px;">
                             ${fCol1.map(renderPrefSongItem).join('')}
                         </div>
@@ -6504,7 +6504,7 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
                         PREFERITI
                     </div>
                     ${filterButtons}
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; column-gap: 30px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; column-gap: 30px; width: 100%; box-sizing: border-box;">
                         <div style="border-right: 1px solid #ddd; padding-right: 15px;">
                             ${fCol1.map(renderPrefSongItemFS).join('')}
                         </div>
@@ -6620,6 +6620,8 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
                 let swipeStartX = 0;
                 
                 previewContent.addEventListener('touchstart', (e) => {
+                    const scrollable = e.target.closest('.hide-scrollbar');
+                    if (scrollable) return;
                     swipeStartX = e.touches[0].clientX;
                 }, { passive: true });
                 
