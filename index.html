@@ -6980,7 +6980,12 @@ function enterFullscreen() {
     const previewContainer = document.getElementById('preview-content');
     
     // Genera tutte le pagine in sequenza (come un libro)
-    generateAllPagesForBook();
+    try {
+        generateAllPagesForBook();
+    } catch(e) {
+        alert('ERRORE: ' + e.message + '\n\nRiga: ' + e.stack);
+        return;
+    }
     
     // Aggiungi classe fullscreen SENZA usare API nativa
     performanceTab.classList.add('fullscreen-active');
