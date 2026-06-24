@@ -679,10 +679,15 @@ body.dark-mode .fullscreen-active .artist-item {
     background: white !important;
     z-index: 9999 !important;
     overflow: hidden !important;
-    touch-action: pan-x !important; /* BLOCCA scroll verticale */
+    touch-action: none; /* swipe gestito da JS */
     overscroll-behavior: none !important; /* Blocca bounce scroll */
 }
 
+       .fullscreen-active .hide-scrollbar {
+           touch-action: pan-x !important;
+           overflow-x: auto !important;
+       }
+       
 /* Assicurati che il body sia scrollabile normalmente */
 body:not(:has(.fullscreen-active)) {
     overflow: auto !important;
