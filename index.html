@@ -6542,26 +6542,44 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
             setTimeout(() => {
                 // Ordinamento
                 document.querySelectorAll('[data-action="preferiti-sort"]').forEach(btn => {
+                    let sortStartX = 0, sortMoved = false;
+                    btn.addEventListener('touchstart', (e) => {
+                        sortStartX = e.touches[0].clientX;
+                        sortMoved = false;
+                    }, { passive: true });
+                    btn.addEventListener('touchmove', (e) => {
+                        if (Math.abs(e.touches[0].clientX - sortStartX) > 8) sortMoved = true;
+                    }, { passive: true });
                     btn.addEventListener('click', (e) => {
                         currentPreferitiSort = btn.getAttribute('data-sort');
                         showPreferitiInFullscreen(filterCategoryId);
                     });
                     btn.addEventListener('touchend', (e) => {
+                        if (sortMoved) return; // era uno scroll, non un tap
                         e.preventDefault();
                         e.stopPropagation();
                         currentPreferitiSort = btn.getAttribute('data-sort');
                         showPreferitiInFullscreen(filterCategoryId);
                     });
                 });
-                
+
                 // Filtri categoria
                 document.querySelectorAll('[data-action="preferiti-filter"]').forEach(btn => {
+                    let filterStartX = 0, filterMoved = false;
+                    btn.addEventListener('touchstart', (e) => {
+                        filterStartX = e.touches[0].clientX;
+                        filterMoved = false;
+                    }, { passive: true });
+                    btn.addEventListener('touchmove', (e) => {
+                        if (Math.abs(e.touches[0].clientX - filterStartX) > 8) filterMoved = true;
+                    }, { passive: true });
                     btn.addEventListener('click', (e) => {
                         const filterId = btn.getAttribute('data-filter');
                         const filterValue = filterId === 'all' ? 'all' : parseInt(filterId);
                         showPreferitiInFullscreen(filterValue);
                     });
                     btn.addEventListener('touchend', (e) => {
+                        if (filterMoved) return; // era uno scroll, non un tap
                         e.preventDefault();
                         e.stopPropagation();
                         const filterId = btn.getAttribute('data-filter');
