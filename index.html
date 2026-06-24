@@ -6054,7 +6054,7 @@ colData.forEach(item => {
 
 // Calcola altezza: ogni elemento 38px + gap 8px tra elementi - margine di sicurezza
 return `
-    <div class="artist-column" style="position: relative; --items-count: ${totalVisibleElements}; --line-height: ${totalHeight}px;">
+<div class="artist-column" style="position: relative;">
         ${colData.map(item => {
                         let html = '';
                         
