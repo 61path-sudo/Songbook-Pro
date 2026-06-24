@@ -6626,26 +6626,35 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
             }, 200);
             
             // Swipe tra pagine preferiti in fullscreen
-            if (prefPages.length > 1) {
-                let currentPrefPage = 0;
-                let swipeStartX = 0;
-                
-                let prefSwipeOnScrollable = false;
-
-                previewContent.addEventListener('touchstart', (e) => {
-                    swipeStartX = e.touches[0].clientX;
-                    prefSwipeOnScrollable = !!e.target.closest('.hide-scrollbar');
-                }, { passive: true });
-
-                previewContent.addEventListener('touchend', (e) => {
-                    if (prefSwipeOnScrollable) { prefSwipeOnScrollable = false; return; }
-                    const diffX = e.changedTouches[0].clientX - swipeStartX;
-                    if (Math.abs(diffX) > 50) {
-                        if (diffX < 0 && currentPrefPage < prefPages.length - 1) {
-                            currentPrefPage++;
-                        } else if (diffX > 0 && currentPrefPage > 0) {
-                            currentPrefPage--;
+                        // Rimuovi handler precedenti prima di aggiungerne nuovi
+                        if (prefSwipeStart) {
+                            previewContent.removeEventListener('touchstart', prefSwipeStart);
+                            prefSwipeStart = null;
                         }
+                        if (prefSwipeEnd) {
+                            previewContent.removeEventListener('touchend', prefSwipeEnd);
+                            prefSwipeEnd = null;
+                        }
+
+                        if (prefPages.length > 1) {
+                            let currentPrefPage = 0;
+                            let swipeStartX = 0;
+                            let prefSwipeOnScrollable = false;
+
+                            prefSwipeStart = (e) => {
+                                swipeStartX = e.touches[0].clientX;
+                                prefSwipeOnScrollable = !!e.target.closest('.hide-scrollbar');
+                            };
+
+                            prefSwipeEnd = (e) => {
+                                if (prefSwipeOnScrollable) { prefSwipeOnScrollable = false; return; }
+                                const diffX = e.changedTouches[0].clientX - swipeStartX;
+                                if (Math.abs(diffX) > 50) {
+                                    if (diffX < 0 && currentPrefPage < prefPages.length - 1) {
+                                        currentPrefPage++;
+                                    } else if (diffX > 0 && currentPrefPage > 0) {
+                                        currentPrefPage--;
+                                    }
                         previewContent.innerHTML = `<div class="page active" style="width: 100vw; height: 100vh; height: 100dvh;">${prefPages[currentPrefPage]}</div>`;
                         setTimeout(() => {
                             document.querySelectorAll('[data-action="index"]').forEach(link => {
@@ -6670,12 +6679,26 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
                                 });
                             });
                         }, 200);
-                    }
-                });
+                                }
+                                                };
+
+                                                previewContent.addEventListener('touchstart', prefSwipeStart, { passive: true });
+                                                previewContent.addEventListener('touchend', prefSwipeEnd);
+                                            }
+                                        }
+                                        
+                                        function showBookPage(index) {
+            // Rimuovi handler swipe preferiti se attivi
+            const previewContent2 = document.getElementById('preview-content');
+            if (prefSwipeStart) {
+                previewContent2.removeEventListener('touchstart', prefSwipeStart);
+                prefSwipeStart = null;
             }
-        }
-        
-function showBookPage(index) {
+            if (prefSwipeEnd) {
+                previewContent2.removeEventListener('touchend', prefSwipeEnd);
+                prefSwipeEnd = null;
+            }
+            
     const targetIndex = Math.max(0, Math.min(index, allFullscreenPages.length - 1));
     
     if (targetIndex === currentFullscreenIndex) return;
@@ -6901,6 +6924,8 @@ let bookTouchStartY = 0;
 let bookTouchCurrentX = 0;
 let bookIsSwiping = false;
 let touchStartedOnScrollable = false;
+let prefSwipeStart = null;
+let prefSwipeEnd = null;
 
 function exitFullscreenAndGoToIndex() {
     exitFullscreen();
