@@ -6059,25 +6059,23 @@ return `
                         let html = '';
                         
                         if (item.isOnlySeparator) {
-                            html += `<div style="background: #cccccc; padding: 2px 0 2px 5px; font-weight: bold; font-size: 14pt; height: 37px; line-height: 37px; display: flex; align-items: center; margin-left: -10px;">${item.separatorLetter}</div>`;
+                            html += `<div style="background: #cccccc; padding: 2px 0 2px 5px; font-weight: bold; font-size: 20pt; height: 38px; line-height: 38px; display: flex; align-items: center; margin-left: -10px;">${item.separatorLetter}</div>`;
                                                     return html;
                         }
                         
                         if (item.needsSeparator) {
                                                     const firstLetter = item.artistSort.charAt(0).toUpperCase();
-                                                    html += `<div style="background: #cccccc; padding: 2px 0 2px 5px; font-weight: bold; font-size: 14pt; height: 37px; line-height: 37px; display: flex; align-items: center; margin-left: -10px;">${firstLetter}</div>`;
-                                                }
-                                                
-                                                const _cv = document.createElement('canvas');
-                                                const _cx = _cv.getContext('2d');
-                                                const _tw = columnWidth * 0.94;
-                                                let fontSize = 14;
-                                                for (let _s = 14; _s >= 8; _s -= 0.5) {
-                                                    _cx.font = `${_s}pt "Times New Roman", serif`;
-                                                    if (_cx.measureText(item.artistSort).width <= _tw) { fontSize = _s; break; }
-                                                }
-                                                
-                                                html += `<div class="artist-item" style="font-size: ${fontSize}pt;"><span class="artist-link">${item.artistSort}</span></div>`;
+                                                    html += `<div style="background: #cccccc; padding: 2px 0 2px 5px; font-weight: bold; font-size: 20pt; height: 38px; line-height: 38px; display: flex; align-items: center; margin-left: -10px;">${firstLetter}</div>`;
+                                                                            }
+                                                                            
+                                                                            let fontSize = 20;
+                                                                            if (item.artistSort.length > 25) {
+                                                                                fontSize = 16;
+                                                                            } else if (item.artistSort.length > 20) {
+                                                                                fontSize = 18;
+                                                                            }
+                                                                            
+                                                                            html += `<div class="artist-item" style="font-size: ${fontSize}pt; height: 38px; line-height: 38px;"><span class="artist-link">${item.artistSort}</span></div>`;
                         
                         return html;
                     }).join('')}
