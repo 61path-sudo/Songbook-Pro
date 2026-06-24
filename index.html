@@ -6925,12 +6925,8 @@ function exitFullscreenAndGoToArtist(artist) {
     
     // Se è uno swipe orizzontale chiaro (80px+ e prevalentemente orizzontale)
     if (diffX > 30 && diffX > diffY * 2) {
-        bookIsSwiping = true;
-        e.preventDefault(); // BLOCCA il default SOLO se è uno swipe
-        e.stopPropagation();
-    }
-    
-    return false;
+            bookIsSwiping = true;
+        }
 }
 
         function handleBookTouchEnd(e) {
@@ -7015,7 +7011,7 @@ setTimeout(() => {
     
 // Event listeners per swipe (BLOCCATO verso il basso)
 previewContainer.addEventListener('touchstart', handleBookTouchStart, { passive: false });
-previewContainer.addEventListener('touchmove', handleBookTouchMove, { passive: false });
+previewContainer.addEventListener('touchmove', handleBookTouchMove, { passive: true });
 previewContainer.addEventListener('touchend', handleBookTouchEnd, { passive: false });
 
 // Long press per uscire
@@ -7049,7 +7045,7 @@ function exitFullscreen() {
     
     // Rimuovi event listeners
     previewContainer.removeEventListener('touchstart', handleBookTouchStart);
-    previewContainer.removeEventListener('touchmove', handleBookTouchMove);
+    previewContainer.removeEventListener('touchmove', handleBookTouchMove, { passive: true });
     previewContainer.removeEventListener('touchend', handleBookTouchEnd);
     previewContainer.removeEventListener('touchstart', handleLongPressStart);
     previewContainer.removeEventListener('touchend', handleLongPressEnd);
