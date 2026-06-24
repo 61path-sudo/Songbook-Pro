@@ -6606,11 +6606,15 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
                 let currentPrefPage = 0;
                 let swipeStartX = 0;
                 
+                let prefSwipeOnScrollable = false;
+
                 previewContent.addEventListener('touchstart', (e) => {
                     swipeStartX = e.touches[0].clientX;
+                    prefSwipeOnScrollable = !!e.target.closest('.hide-scrollbar');
                 }, { passive: true });
-                
+
                 previewContent.addEventListener('touchend', (e) => {
+                    if (prefSwipeOnScrollable) { prefSwipeOnScrollable = false; return; }
                     const diffX = e.changedTouches[0].clientX - swipeStartX;
                     if (Math.abs(diffX) > 50) {
                         if (diffX < 0 && currentPrefPage < prefPages.length - 1) {
@@ -6892,8 +6896,6 @@ function exitFullscreenAndGoToArtist(artist) {
             if (!isFullscreen) return;
             
             const target = e.target;
-            
-            // Se il touch parte da un container con scroll orizzontale, non intercettare
             touchStartedOnScrollable = !!target.closest('.hide-scrollbar');
             if (touchStartedOnScrollable) return;
             
