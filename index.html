@@ -6543,91 +6543,53 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
             // Mostra prima pagina
             previewContent.innerHTML = `<div class="page active" style="width: 100vw; height: 100vh; height: 100dvh;">${prefPages[0]}</div>`;
             
-            // Handlers
-            setTimeout(() => {
-                // Ordinamento
-                document.querySelectorAll('[data-action="preferiti-sort"]').forEach(btn => {
-                    let sortStartX = 0, sortMoved = false;
-                    btn.addEventListener('touchstart', (e) => {
-                        sortStartX = e.touches[0].clientX;
-                        sortMoved = false;
-                    }, { passive: true });
-                    btn.addEventListener('touchmove', (e) => {
-                        if (Math.abs(e.touches[0].clientX - sortStartX) > 8) sortMoved = true;
-                    }, { passive: true });
-                    btn.addEventListener('click', (e) => {
-                        currentPreferitiSort = btn.getAttribute('data-sort');
-                        showPreferitiInFullscreen(filterCategoryId);
-                    });
-                    btn.addEventListener('touchend', (e) => {
-                        if (sortMoved) return; // era uno scroll, non un tap
-                        e.preventDefault();
-                        e.stopPropagation();
-                        currentPreferitiSort = btn.getAttribute('data-sort');
-                        showPreferitiInFullscreen(filterCategoryId);
-                    });
-                });
-
-                // Filtri categoria
-                document.querySelectorAll('[data-action="preferiti-filter"]').forEach(btn => {
-                    let filterStartX = 0, filterMoved = false;
-                    btn.addEventListener('touchstart', (e) => {
-                        filterStartX = e.touches[0].clientX;
-                        filterMoved = false;
-                    }, { passive: true });
-                    btn.addEventListener('touchmove', (e) => {
-                        if (Math.abs(e.touches[0].clientX - filterStartX) > 8) filterMoved = true;
-                    }, { passive: true });
-                    btn.addEventListener('click', (e) => {
-                        const filterId = btn.getAttribute('data-filter');
-                        const filterValue = filterId === 'all' ? 'all' : parseInt(filterId);
-                        showPreferitiInFullscreen(filterValue);
-                    });
-                    btn.addEventListener('touchend', (e) => {
-                        if (filterMoved) return; // era uno scroll, non un tap
-                        e.preventDefault();
-                        e.stopPropagation();
-                        const filterId = btn.getAttribute('data-filter');
-                        const filterValue = filterId === 'all' ? 'all' : parseInt(filterId);
-                        showPreferitiInFullscreen(filterValue);
-                    });
-                });
-                
-                // Canzoni
-                document.querySelectorAll('.song-link').forEach(link => {
-                    link.addEventListener('touchend', (e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        const songId = parseInt(link.getAttribute('data-song-id'));
-                        const songPageIndex = allFullscreenPages.findIndex(p =>
-                            p.type === 'song' && p.songId === songId
-                        );
-                        if (songPageIndex >= 0) {
-                            showBookPage(songPageIndex);
-                        }
-                    });
-                    link.addEventListener('click', (e) => {
-                        const songId = parseInt(link.getAttribute('data-song-id'));
-                        const songPageIndex = allFullscreenPages.findIndex(p =>
-                            p.type === 'song' && p.songId === songId
-                        );
-                        if (songPageIndex >= 0) {
-                            showBookPage(songPageIndex);
-                        }
-                    });
-                });
-                
-                // Torna ad elenco
-                document.querySelectorAll('[data-action="index"]').forEach(link => {
-                    link.addEventListener('click', () => showBookPage(0));
-                    link.addEventListener('touchend', (e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        showBookPage(0);
-                    });
-                });
-                
-            }, 200);
+            // Handlers - event delegation
+                        const _setupPrefHandlers = () => {
+                            const pageEl = previewContent.querySelector('.page');
+                            if (!pageEl) return;
+                            let _sx = 0, _sy = 0, _mv = false;
+                            pageEl.addEventListener('touchstart', (e) => {
+                                _sx = e.touches[0].clientX;
+                                _sy = e.touches[0].clientY;
+                                _mv = false;
+                            }, { passive: true });
+                            pageEl.addEventListener('touchmove', (e) => {
+                                if (Math.abs(e.touches[0].clientX - _sx) > 12 ||
+                                    Math.abs(e.touches[0].clientY - _sy) > 12) _mv = true;
+                            }, { passive: true });
+                            const _handleAction = (target) => {
+                                const actionEl = target.closest('[data-action]');
+                                if (actionEl) {
+                                    const action = actionEl.getAttribute('data-action');
+                                    if (action === 'preferiti-filter') {
+                                        const filterId = actionEl.getAttribute('data-filter');
+                                        showPreferitiInFullscreen(filterId === 'all' ? 'all' : parseInt(filterId));
+                                    } else if (action === 'preferiti-sort') {
+                                        currentPreferitiSort = actionEl.getAttribute('data-sort');
+                                        showPreferitiInFullscreen(filterCategoryId);
+                                    } else if (action === 'index') {
+                                        showBookPage(0);
+                                    }
+                                    return true;
+                                }
+                                const sl = target.closest('.song-link');
+                                if (sl) {
+                                    const sid = parseInt(sl.getAttribute('data-song-id'));
+                                    const idx = allFullscreenPages.findIndex(p => p.type === 'song' && p.songId === sid);
+                                    if (idx >= 0) showBookPage(idx);
+                                    return true;
+                                }
+                                return false;
+                            };
+                            pageEl.addEventListener('touchend', (e) => {
+                                if (_mv) return;
+                                if (_handleAction(e.target)) e.preventDefault();
+                            });
+                            pageEl.addEventListener('click', (e) => {
+                                _handleAction(e.target);
+                            });
+                        };
+                        _setupPrefHandlers();
             
             // Swipe tra pagine preferiti in fullscreen
                         // Rimuovi handler precedenti prima di aggiungerne nuovi
@@ -6659,30 +6621,8 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
                                     } else if (diffX > 0 && currentPrefPage > 0) {
                                         currentPrefPage--;
                                     }
-                        previewContent.innerHTML = `<div class="page active" style="width: 100vw; height: 100vh; height: 100dvh;">${prefPages[currentPrefPage]}</div>`;
-                        setTimeout(() => {
-                            document.querySelectorAll('[data-action="index"]').forEach(link => {
-                                link.addEventListener('click', () => showBookPage(0));
-                                link.addEventListener('touchend', (e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    showBookPage(0);
-                                });
-                            });
-                            document.querySelectorAll('.song-link').forEach(link => {
-                                link.addEventListener('touchend', (e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    const songId = parseInt(link.getAttribute('data-song-id'));
-                                    const songPageIndex = allFullscreenPages.findIndex(p =>
-                                        p.type === 'song' && p.songId === songId
-                                    );
-                                    if (songPageIndex >= 0) {
-                                        showBookPage(songPageIndex);
-                                    }
-                                });
-                            });
-                        }, 200);
+                                    previewContent.innerHTML = `<div class="page active" style="width: 100vw; height: 100vh; height: 100dvh;">${prefPages[currentPrefPage]}</div>`;
+                                                            _setupPrefHandlers();
                                 }
                                                 };
 
