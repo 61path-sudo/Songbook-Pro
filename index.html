@@ -6409,6 +6409,10 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
             if (filterCategoryId !== 'all') filterCategoryId = parseInt(filterCategoryId);
             const previewContent = document.getElementById('preview-content');
             
+            // Salva posizione scroll pillole prima del re-render
+            const existingScroll = previewContent.querySelector('.hide-scrollbar');
+            const savedScrollLeft = existingScroll ? existingScroll.scrollLeft : 0;
+            
             // Filtra canzoni preferite
             let preferitiSongs = songs.filter(s => isPreferito(s.id));
             
@@ -6585,16 +6589,11 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
                                     
                                     // Scorri sulla pillola attiva
                                     setTimeout(() => {
-                                        const scrollContainer = previewContent.querySelector('.hide-scrollbar');
-                                        if (scrollContainer && filterCategoryId !== 'all') {
-                                            const activeEl = scrollContainer.querySelector(`[data-filter="${filterCategoryId}"]`);
-                                            if (activeEl) {
-                                                const cr = scrollContainer.getBoundingClientRect();
-                                                const er = activeEl.getBoundingClientRect();
-                                                scrollContainer.scrollLeft += er.left - cr.left - (cr.width / 2) + (er.width / 2);
+                                            const scrollContainer = previewContent.querySelector('.hide-scrollbar');
+                                            if (scrollContainer) {
+                                                scrollContainer.scrollLeft = savedScrollLeft;
                                             }
-                                        }
-                                    }, 50);
+                                        }, 50);
                                     
                                     // Swipe tra pagine preferiti in fullscreen
                         // Rimuovi handler precedenti prima di aggiungerne nuovi
