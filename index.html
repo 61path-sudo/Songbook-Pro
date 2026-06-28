@@ -6439,14 +6439,14 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
                             <div style="display: inline-block; padding: 6px 14px; border-radius: 16px; font-size: 14pt; cursor: pointer; border: 2px solid #f39c12;
                                 ${filterCategoryId === 'all' ? 'background: #f39c12; color: white;' : 'background: white; color: #e67e22;'}"
                                 data-action="preferiti-filter" data-filter="all"
-                                onclick="showPreferitiInFullscreen('all')">Tutti</div>
+                                ontouchstart="void(0)" onclick="showPreferitiInFullscreen('all')">Tutti</div>
                             ${categories.map(cat => {
                                 const color = cat.color || '#f39c12';
                                 const isActive = filterCategoryId === cat.id;
                                 return `<div style="display: inline-block; padding: 6px 14px; border-radius: 16px; font-size: 14pt; cursor: pointer; border: 2px solid ${color};
                                     ${isActive ? `background: ${color}; color: white;` : `background: white; color: ${color};`}"
                                     data-action="preferiti-filter" data-filter="${cat.id}"
-                                    onclick="showPreferitiInFullscreen(${cat.id})">${cat.name}</div>`;
+                                    ontouchstart="void(0)" onclick="showPreferitiInFullscreen(${cat.id})">${cat.name}</div>`;
                             }).join('')}
                         </div>
                     </div>
@@ -6455,11 +6455,11 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
                         <div style="padding: 6px 14px; border-radius: 16px; font-size: 14pt; cursor: pointer; border: 2px solid #3498db; white-space: nowrap;
                             ${currentPreferitiSort === 'title' ? 'background: #3498db; color: white;' : 'background: white; color: #3498db;'}"
                             data-action="preferiti-sort" data-sort="title"
-                            onclick="currentPreferitiSort='title'; showPreferitiInFullscreen(${filterCategoryId === 'all' ? "'all'" : filterCategoryId})">A-Z Titolo</div>
+                            ontouchstart="void(0)" onclick="currentPreferitiSort='title'; showPreferitiInFullscreen(${filterCategoryId === 'all' ? "'all'" : filterCategoryId})">A-Z Titolo</div>
                         <div style="padding: 6px 14px; border-radius: 16px; font-size: 14pt; cursor: pointer; border: 2px solid #3498db; white-space: nowrap;
                             ${currentPreferitiSort === 'artist' ? 'background: #3498db; color: white;' : 'background: white; color: #3498db;'}"
                             data-action="preferiti-sort" data-sort="artist"
-                            onclick="currentPreferitiSort='artist'; showPreferitiInFullscreen(${filterCategoryId === 'all' ? "'all'" : filterCategoryId})">A-Z Cantante</div>
+                            ontouchstart="void(0)" onclick="currentPreferitiSort='artist'; showPreferitiInFullscreen(${filterCategoryId === 'all' ? "'all'" : filterCategoryId})">A-Z Cantante</div>
                     </div>
                 </div>
             `;
@@ -6568,22 +6568,25 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
             previewContent.innerHTML = `<div class="page active" style="width: 100vw; height: 100vh; height: 100dvh;">${prefPages[0]}</div>`;
             
             // Handlers - event delegation
-                        const _setupPrefHandlers = () => {
+            const _setupPrefHandlers = () => {
                             const pageEl = previewContent.querySelector('.page');
                             if (!pageEl) return;
                             let _sx = 0, _sy = 0;
-                                            pageEl.addEventListener('touchstart', (e) => {
-                                                _sx = e.touches[0].clientX;
-                                                _sy = e.touches[0].clientY;
-                                            }, { passive: true });
-                                            pageEl.addEventListener('touchend', (e) => {
-                                                const endX = e.changedTouches[0].clientX;
-                                                const endY = e.changedTouches[0].clientY;
-                                                if (Math.abs(endX - _sx) > 20 || Math.abs(endY - _sy) > 20) return;
-                                                if (_handleAction(e.target)) e.preventDefault();
-                                            });
-                            pageEl.addEventListener('click', (e) => {
-                                _handleAction(e.target);
+                            pageEl.addEventListener('touchstart', (e) => {
+                                _sx = e.touches[0].clientX;
+                                _sy = e.touches[0].clientY;
+                            }, { passive: true });
+                            pageEl.addEventListener('touchend', (e) => {
+                                const endX = e.changedTouches[0].clientX;
+                                const endY = e.changedTouches[0].clientY;
+                                if (Math.abs(endX - _sx) > 20 || Math.abs(endY - _sy) > 20) return;
+                                const sl = e.target.closest('.song-link');
+                                if (sl) {
+                                    e.preventDefault();
+                                    const sid = parseInt(sl.getAttribute('data-song-id'));
+                                    const idx = allFullscreenPages.findIndex(p => p.type === 'song' && p.songId === sid);
+                                    if (idx >= 0) showBookPage(idx);
+                                }
                             });
                         };
                         _setupPrefHandlers();
