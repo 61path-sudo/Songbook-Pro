@@ -5400,6 +5400,7 @@ function saveToFirebaseImmediate() {
             categories: categories,
             preferiti: preferiti,
             lastModified: timestamp,
+            songsModified: timestamp,        // ← aggiunto
             deviceInfo: navigator.userAgent,
             totalSongs: songs.length
         })
@@ -5541,51 +5542,78 @@ function loadFromFirebase() {
         const metaDoc = window.firebaseDoc(window.firebaseDb, 'users', currentUser.uid);
         
         window.syncListener = window.firebaseOnSnapshot(metaDoc, (docSnap) => {
-            if (!docSnap.exists()) return;
-            
-            const data = docSnap.data();
-            const cloudTimestamp = data.lastModified;
-            const localTimestamp = localStorage.getItem('lastModified');
-            
-            if (window.isSavingToCloud) return;
-            
-            if (cloudTimestamp && localTimestamp && cloudTimestamp > localTimestamp) {
-                console.log('🔄 Aggiornamenti dal cloud in tempo reale');
-                setSyncStatus('syncing');
-                
-                const cloudSongs = data.songs || [];
-                
-                let modalShown = false;
-                
-                // Timeout di sicurezza: mostra modal dopo 2 secondi
-                const timeoutId = setTimeout(() => {
-                    if (!modalShown) {
-                        console.log('⏱️ Timeout - forzo modal');
-                        modalShown = true;
-                        showMergeModal({added: [], modified: [], localOnly: []}, cloudSongs, cloudTimestamp, data.deviceInfo);
+                    if (!docSnap.exists()) return;
+                    
+                    const data = docSnap.data();
+                    const cloudTimestamp = data.lastModified;
+                    const localTimestamp = localStorage.getItem('lastModified');
+                    
+                    if (window.isSavingToCloud) return;
+                    
+                    if (cloudTimestamp && localTimestamp && cloudTimestamp > localTimestamp) {
+                        console.log('🔄 Aggiornamenti dal cloud in tempo reale');
+                        setSyncStatus('syncing');
+                        
+                        // ✅ Aggiorna categories e preferiti in tempo reale
+                        const cloudCategories = data.categories || [];
+                        const cloudPreferiti = data.preferiti || [];
+                        
+                        if (cloudCategories.length > 0 || cloudPreferiti.length > 0) {
+                            categories = cloudCategories;
+                            preferiti = cloudPreferiti;
+                            localStorage.setItem('songbookCategories', JSON.stringify(categories));
+                            localStorage.setItem('songbookPreferiti', JSON.stringify(preferiti));
+                            console.log('✅ Categories/preferiti aggiornati dal cloud');
+                            
+                            // Aggiorna UI se siamo nella tab Preferiti
+                            if (document.getElementById('preferiti-tab').classList.contains('active')) {
+                                updateCategoriesList();
+                                updatePreferitiList();
+                            }
+                        }
+                        
+                        // Gestione canzoni (invariata)
+                        const cloudSongs = data.songs || [];
+                        
+                        // Se sono cambiate SOLO categories/preferiti (non le canzoni)
+                        // aggiorna timestamp e non mostrare modal merge
+                        const songsTimestamp = data.songsModified || cloudTimestamp;
+                        const localSongsTimestamp = localStorage.getItem('lastSongsModified') || localTimestamp;
+                        
+                        if (songsTimestamp <= localSongsTimestamp) {
+                            localStorage.setItem('lastModified', cloudTimestamp);
+                            setSyncStatus('synced');
+                            return;
+                        }
+                        
+                        let modalShown = false;
+                        
+                        const timeoutId = setTimeout(() => {
+                            if (!modalShown) {
+                                modalShown = true;
+                                showMergeModal({added: [], modified: [], localOnly: []}, cloudSongs, cloudTimestamp, data.deviceInfo);
+                            }
+                        }, 2000);
+                        
+                        smartMerge(cloudSongs, songs).then(diff => {
+                            clearTimeout(timeoutId);
+                            if (!modalShown) {
+                                modalShown = true;
+                                showMergeModal(diff, cloudSongs, cloudTimestamp, data.deviceInfo);
+                            }
+                        }).catch(error => {
+                            clearTimeout(timeoutId);
+                            console.error('Errore smartMerge:', error);
+                            if (!modalShown) {
+                                modalShown = true;
+                                showMergeModal({added: [], modified: [], localOnly: []}, cloudSongs, cloudTimestamp, data.deviceInfo);
+                            }
+                        });
                     }
-                }, 2000);
-                
-                // Prova smartMerge
-                smartMerge(cloudSongs, songs).then(diff => {
-                    clearTimeout(timeoutId);
-                    if (!modalShown) {
-                        modalShown = true;
-                        showMergeModal(diff, cloudSongs, cloudTimestamp, data.deviceInfo);
-                    }
-                }).catch(error => {
-                    clearTimeout(timeoutId);
-                    console.error('Errore smartMerge:', error);
-                    if (!modalShown) {
-                        modalShown = true;
-                        showMergeModal({added: [], modified: [], localOnly: []}, cloudSongs, cloudTimestamp, data.deviceInfo);
-                    }
+                }, (error) => {
+                    console.error('Errore listener:', error);
+                    setSyncStatus('offline');
                 });
-            }
-        }, (error) => {
-            console.error('Errore listener:', error);
-            setSyncStatus('offline');
-        });
         
         console.log('✅ Listener real-time Firebase attivato');
     }
@@ -7227,9 +7255,10 @@ function handleTouchEnd(e) {
             const userDoc = window.firebaseDoc(window.firebaseDb, 'users', currentUser.uid);
             
             window.firebaseSetDoc(userDoc, {
-                categories: categories,
-                preferiti: preferiti
-            }, { merge: true })
+                    categories: categories,
+                    preferiti: preferiti,
+                    lastModified: new Date().toISOString()
+                }, { merge: true })
             .then(() => {
                 console.log('✅ Preferiti salvati su Firebase');
             })
