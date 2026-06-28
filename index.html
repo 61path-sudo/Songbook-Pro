@@ -6436,21 +6436,17 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
                 <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
                     <div style="overflow-x: auto; white-space: nowrap; flex: 1; -webkit-overflow-scrolling: touch; scrollbar-width: none; -ms-overflow-style: none;" class="hide-scrollbar">
                         <div style="display: inline-flex; gap: 8px;">
-                            <div style="display: inline-block; padding: 6px 14px; border-radius: 16px; font-size: 12pt; cursor: pointer; border: 2px solid #f39c12;
+                            <div style="display: inline-block; padding: 6px 14px; border-radius: 16px; font-size: 14pt; cursor: pointer; border: 2px solid #f39c12;
                                 ${filterCategoryId === 'all' ? 'background: #f39c12; color: white;' : 'background: white; color: #e67e22;'}"
-                                data-action="preferiti-filter" data-filter="all">
-                                Tutti
-                            </div>
+                                data-action="preferiti-filter" data-filter="all"
+                                onclick="showPreferitiInFullscreen('all')">Tutti</div>
                             ${categories.map(cat => {
                                 const color = cat.color || '#f39c12';
                                 const isActive = filterCategoryId === cat.id;
-                                return `
-                                    <div style="display: inline-block; padding: 6px 14px; border-radius: 16px; font-size: 14pt; cursor: pointer; border: 2px solid ${color};
-                                        ${isActive ? `background: ${color}; color: white;` : `background: white; color: ${color};`}"
-                                        data-action="preferiti-filter" data-filter="${cat.id}">
-                                        ${cat.name}
-                                    </div>
-                                `;
+                                return `<div style="display: inline-block; padding: 6px 14px; border-radius: 16px; font-size: 14pt; cursor: pointer; border: 2px solid ${color};
+                                    ${isActive ? `background: ${color}; color: white;` : `background: white; color: ${color};`}"
+                                    data-action="preferiti-filter" data-filter="${cat.id}"
+                                    onclick="showPreferitiInFullscreen(${cat.id})">${cat.name}</div>`;
                             }).join('')}
                         </div>
                     </div>
@@ -6458,14 +6454,12 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
                     <div style="display: flex; gap: 6px; flex-shrink: 0;">
                         <div style="padding: 6px 14px; border-radius: 16px; font-size: 14pt; cursor: pointer; border: 2px solid #3498db; white-space: nowrap;
                             ${currentPreferitiSort === 'title' ? 'background: #3498db; color: white;' : 'background: white; color: #3498db;'}"
-                            data-action="preferiti-sort" data-sort="title">
-                            A-Z Titolo
-                        </div>
+                            data-action="preferiti-sort" data-sort="title"
+                            onclick="currentPreferitiSort='title'; showPreferitiInFullscreen(${filterCategoryId === 'all' ? "'all'" : filterCategoryId})">A-Z Titolo</div>
                         <div style="padding: 6px 14px; border-radius: 16px; font-size: 14pt; cursor: pointer; border: 2px solid #3498db; white-space: nowrap;
                             ${currentPreferitiSort === 'artist' ? 'background: #3498db; color: white;' : 'background: white; color: #3498db;'}"
-                            data-action="preferiti-sort" data-sort="artist">
-                            A-Z Cantante
-                        </div>
+                            data-action="preferiti-sort" data-sort="artist"
+                            onclick="currentPreferitiSort='artist'; showPreferitiInFullscreen(${filterCategoryId === 'all' ? "'all'" : filterCategoryId})">A-Z Cantante</div>
                     </div>
                 </div>
             `;
