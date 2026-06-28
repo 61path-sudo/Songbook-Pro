@@ -6577,51 +6577,37 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
                         const _setupPrefHandlers = () => {
                             const pageEl = previewContent.querySelector('.page');
                             if (!pageEl) return;
-                            let _sx = 0, _sy = 0, _mv = false;
-                            pageEl.addEventListener('touchstart', (e) => {
-                                _sx = e.touches[0].clientX;
-                                _sy = e.touches[0].clientY;
-                                _mv = false;
-                            }, { passive: true });
-                            pageEl.addEventListener('touchmove', (e) => {
-                                if (Math.abs(e.touches[0].clientX - _sx) > 12 ||
-                                    Math.abs(e.touches[0].clientY - _sy) > 12) _mv = true;
-                            }, { passive: true });
-                            const _handleAction = (target) => {
-                                const actionEl = target.closest('[data-action]');
-                                if (actionEl) {
-                                    const action = actionEl.getAttribute('data-action');
-                                    if (action === 'preferiti-filter') {
-                                        const filterId = actionEl.getAttribute('data-filter');
-                                        showPreferitiInFullscreen(filterId === 'all' ? 'all' : parseInt(filterId));
-                                    } else if (action === 'preferiti-sort') {
-                                        currentPreferitiSort = actionEl.getAttribute('data-sort');
-                                        showPreferitiInFullscreen(filterCategoryId);
-                                    } else if (action === 'index') {
-                                        showBookPage(0);
-                                    }
-                                    return true;
-                                }
-                                const sl = target.closest('.song-link');
-                                if (sl) {
-                                    const sid = parseInt(sl.getAttribute('data-song-id'));
-                                    const idx = allFullscreenPages.findIndex(p => p.type === 'song' && p.songId === sid);
-                                    if (idx >= 0) showBookPage(idx);
-                                    return true;
-                                }
-                                return false;
-                            };
-                            pageEl.addEventListener('touchend', (e) => {
-                                if (_mv) return;
-                                if (_handleAction(e.target)) e.preventDefault();
-                            });
+                            let _sx = 0, _sy = 0;
+                                            pageEl.addEventListener('touchstart', (e) => {
+                                                _sx = e.touches[0].clientX;
+                                                _sy = e.touches[0].clientY;
+                                            }, { passive: true });
+                                            pageEl.addEventListener('touchend', (e) => {
+                                                const endX = e.changedTouches[0].clientX;
+                                                const endY = e.changedTouches[0].clientY;
+                                                if (Math.abs(endX - _sx) > 20 || Math.abs(endY - _sy) > 20) return;
+                                                if (_handleAction(e.target)) e.preventDefault();
+                                            });
                             pageEl.addEventListener('click', (e) => {
                                 _handleAction(e.target);
                             });
                         };
                         _setupPrefHandlers();
-            
-            // Swipe tra pagine preferiti in fullscreen
+                                    
+                                    // Scorri sulla pillola attiva
+                                    setTimeout(() => {
+                                        const scrollContainer = previewContent.querySelector('.hide-scrollbar');
+                                        if (scrollContainer && filterCategoryId !== 'all') {
+                                            const activeEl = scrollContainer.querySelector(`[data-filter="${filterCategoryId}"]`);
+                                            if (activeEl) {
+                                                const cr = scrollContainer.getBoundingClientRect();
+                                                const er = activeEl.getBoundingClientRect();
+                                                scrollContainer.scrollLeft += er.left - cr.left - (cr.width / 2) + (er.width / 2);
+                                            }
+                                        }
+                                    }, 50);
+                                    
+                                    // Swipe tra pagine preferiti in fullscreen
                         // Rimuovi handler precedenti prima di aggiungerne nuovi
                         if (prefSwipeStart) {
                             previewContent.removeEventListener('touchstart', prefSwipeStart);
