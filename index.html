@@ -5397,10 +5397,12 @@ function saveToFirebaseImmediate() {
     
     window.firebaseSetDoc(userDoc, {
             songs: songs,
+            categories: categories,
+            preferiti: preferiti,
             lastModified: timestamp,
             deviceInfo: navigator.userAgent,
             totalSongs: songs.length
-        }, { merge: true })
+        })
     .then(() => {
         console.log('✅ Dati salvati su Firebase (1 scrittura)');
         setSyncStatus('synced');
@@ -7245,16 +7247,30 @@ function handleTouchEnd(e) {
                 .then((docSnap) => {
                     if (docSnap.exists()) {
                         const data = docSnap.data();
-                        if (data.categories) categories = data.categories;
-                        if (data.preferiti) preferiti = data.preferiti;
+                        const cloudCategories = data.categories || [];
+                        const cloudPreferiti = data.preferiti || [];
                         
-                        // Aggiorna UI se siamo nella tab Preferiti
+                        if (cloudCategories.length > 0 || cloudPreferiti.length > 0) {
+                            // Firebase ha dati → usali e salva in localStorage
+                            categories = cloudCategories;
+                            preferiti = cloudPreferiti;
+                            localStorage.setItem('songbookCategories', JSON.stringify(categories));
+                            localStorage.setItem('songbookPreferiti', JSON.stringify(preferiti));
+                            console.log('✅ Preferiti/categorie caricati da Firebase');
+                        } else if (categories.length > 0 || preferiti.length > 0) {
+                            // Firebase vuoto ma locale ha dati → carica su Firebase
+                            console.log('📤 Carico preferiti/categorie locali su Firebase...');
+                            savePreferitiToFirebase();
+                        }
+                        
                         if (document.getElementById('preferiti-tab').classList.contains('active')) {
                             updateCategoriesList();
                             updatePreferitiList();
                         }
-                        
-                        console.log('✅ Preferiti caricati da Firebase');
+                    } else {
+                        if (categories.length > 0 || preferiti.length > 0) {
+                            savePreferitiToFirebase();
+                        }
                     }
                 })
                 .catch((error) => {
