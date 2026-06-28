@@ -5396,11 +5396,11 @@ function saveToFirebaseImmediate() {
     const userDoc = window.firebaseDoc(window.firebaseDb, 'users', currentUser.uid);
     
     window.firebaseSetDoc(userDoc, {
-        songs: songs,  // Tutte le canzoni in un solo campo
-        lastModified: timestamp,
-        deviceInfo: navigator.userAgent,
-        totalSongs: songs.length
-    })
+            songs: songs,
+            lastModified: timestamp,
+            deviceInfo: navigator.userAgent,
+            totalSongs: songs.length
+        }, { merge: true })
     .then(() => {
         console.log('✅ Dati salvati su Firebase (1 scrittura)');
         setSyncStatus('synced');
