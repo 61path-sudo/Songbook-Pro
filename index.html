@@ -6587,53 +6587,59 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
                         };
                         _setupPrefHandlers();
                                     
-                                    // Scorri sulla pillola attiva
-                                    setTimeout(() => {
-                                            const scrollContainer = previewContent.querySelector('.hide-scrollbar');
-                                            if (scrollContainer) {
-                                                scrollContainer.scrollLeft = savedScrollLeft;
-                                            }
-                                        }, 50);
-                                    
-                                    // Swipe tra pagine preferiti in fullscreen
-                        // Rimuovi handler precedenti prima di aggiungerne nuovi
-                        if (prefSwipeStart) {
-                            previewContent.removeEventListener('touchstart', prefSwipeStart);
-                            prefSwipeStart = null;
-                        }
-                        if (prefSwipeEnd) {
-                            previewContent.removeEventListener('touchend', prefSwipeEnd);
-                            prefSwipeEnd = null;
-                        }
-
-                        if (prefPages.length > 1) {
-                            let currentPrefPage = 0;
-                            let swipeStartX = 0;
-                            let prefSwipeOnScrollable = false;
-
-                            prefSwipeStart = (e) => {
-                                swipeStartX = e.touches[0].clientX;
-                                prefSwipeOnScrollable = !!e.target.closest('.hide-scrollbar');
-                            };
-
-                            prefSwipeEnd = (e) => {
-                                if (prefSwipeOnScrollable) { prefSwipeOnScrollable = false; return; }
-                                const diffX = e.changedTouches[0].clientX - swipeStartX;
-                                if (Math.abs(diffX) > 50) {
-                                    if (diffX < 0 && currentPrefPage < prefPages.length - 1) {
-                                        currentPrefPage++;
-                                    } else if (diffX > 0 && currentPrefPage > 0) {
-                                        currentPrefPage--;
-                                    }
-                                    previewContent.innerHTML = `<div class="page active" style="width: 100vw; height: 100vh; height: 100dvh;">${prefPages[currentPrefPage]}</div>`;
-                                                            _setupPrefHandlers();
-                                }
-                                                };
-
-                                                previewContent.addEventListener('touchstart', prefSwipeStart, { passive: true });
-                                                previewContent.addEventListener('touchend', prefSwipeEnd);
-                                            }
+                                    // Ripristina scroll senza flash
+                                        const scrollContainer = previewContent.querySelector('.hide-scrollbar');
+                                        if (scrollContainer) {
+                                            scrollContainer.style.scrollBehavior = 'auto';
+                                            scrollContainer.scrollLeft = savedScrollLeft;
+                                            requestAnimationFrame(() => {
+                                                requestAnimationFrame(() => {
+                                                    if (scrollContainer) {
+                                                        scrollContainer.scrollLeft = savedScrollLeft;
+                                                    }
+                                                });
+                                            });
                                         }
+                                        
+                                        // Swipe tra pagine preferiti in fullscreen
+                                        // Rimuovi handler precedenti prima di aggiungerne nuovi
+                                        if (prefSwipeStart) {
+                                            previewContent.removeEventListener('touchstart', prefSwipeStart);
+                                            prefSwipeStart = null;
+                                        }
+                                        if (prefSwipeEnd) {
+                                            previewContent.removeEventListener('touchend', prefSwipeEnd);
+                                            prefSwipeEnd = null;
+                                        }
+
+                                        if (prefPages.length > 1) {
+                                            let currentPrefPage = 0;
+                                            let swipeStartX = 0;
+                                            let prefSwipeOnScrollable = false;
+
+                                            prefSwipeStart = (e) => {
+                                                swipeStartX = e.touches[0].clientX;
+                                                prefSwipeOnScrollable = !!e.target.closest('.hide-scrollbar');
+                                            };
+
+                                            prefSwipeEnd = (e) => {
+                                                if (prefSwipeOnScrollable) { prefSwipeOnScrollable = false; return; }
+                                                const diffX = e.changedTouches[0].clientX - swipeStartX;
+                                                if (Math.abs(diffX) > 50) {
+                                                    if (diffX < 0 && currentPrefPage < prefPages.length - 1) {
+                                                        currentPrefPage++;
+                                                    } else if (diffX > 0 && currentPrefPage > 0) {
+                                                        currentPrefPage--;
+                                                    }
+                                                    previewContent.innerHTML = `<div class="page active" style="width: 100vw; height: 100vh; height: 100dvh;">${prefPages[currentPrefPage]}</div>`;
+                                                    _setupPrefHandlers();
+                                                }
+                                            };
+
+                                            previewContent.addEventListener('touchstart', prefSwipeStart, { passive: true });
+                                            previewContent.addEventListener('touchend', prefSwipeEnd);
+                                        }
+                                    }
                                         
                                         function showBookPage(index) {
             // Rimuovi handler swipe preferiti se attivi
