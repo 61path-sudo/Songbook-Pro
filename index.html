@@ -6480,16 +6480,16 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
             
             // Funzione rendering singola canzone
             function renderPrefSongItemFS(song) {
-                return `
-                    <div class="song-link" data-song-id="${song.id}"
-                        style="cursor: pointer; padding: 5px 0; border-bottom: 1px solid #eee; height: 49px; box-sizing: border-box; overflow: hidden;">
-                        <div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                            <span style="font-weight: 600; font-size: ${getPrefTitleFontSizeFS(song.title)}pt;">${song.title.toUpperCase()}</span>
-                        </div>
-                        <div style="font-size: 11pt; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${song.artist.toUpperCase()}</div>
-                    </div>
-                `;
-            }
+                            return `
+                                <div class="song-link" data-song-id="${song.id}"
+                                    style="cursor: pointer; padding: 5px 0; border-bottom: 1px solid #eee; display: block; width: 100%; box-sizing: border-box; min-height: 49px;">
+                                    <div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                        <span style="font-weight: 600; font-size: ${getPrefTitleFontSizeFS(song.title)}pt;">${song.title.toUpperCase()}</span>
+                                    </div>
+                                    <div style="font-size: 11pt; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${song.artist.toUpperCase()}</div>
+                                </div>
+                            `;
+                        }
             
             // Calcola righe per pagina
             const dims = getPageDimensions();
