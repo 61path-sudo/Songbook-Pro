@@ -6564,6 +6564,10 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
             // Mostra prima pagina
             previewContent.innerHTML = `<div class="page active" style="width: 100vw; height: 100vh; height: 100dvh;">${prefPages[0]}</div>`;
             
+            setTimeout(() => {
+                addFullscreenLinkHandlers();
+            }, 50);
+            
             // Handlers - event delegation
             const _setupPrefHandlers = () => {
                             const pageEl = previewContent.querySelector('.page');
@@ -6634,6 +6638,9 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
                                                     }
                                                     previewContent.innerHTML = `<div class="page active" style="width: 100vw; height: 100vh; height: 100dvh;">${prefPages[currentPrefPage]}</div>`;
                                                     _setupPrefHandlers();
+                                                    setTimeout(() => {
+                                                        addFullscreenLinkHandlers();
+                                                    }, 50);
                                                     const newScrollContainer = previewContent.querySelector('.hide-scrollbar');
                                                     if (newScrollContainer) {
                                                         newScrollContainer.scrollLeft = savedScrollLeft;
