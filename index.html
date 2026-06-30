@@ -6406,6 +6406,7 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
         }
         
         function showPreferitiInFullscreen(filterCategoryId = 'all') {
+            inPreferitiFullscreen = true;
             if (filterCategoryId !== 'all') filterCategoryId = parseInt(filterCategoryId);
             const previewContent = document.getElementById('preview-content');
             
@@ -6633,6 +6634,10 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
                                                     }
                                                     previewContent.innerHTML = `<div class="page active" style="width: 100vw; height: 100vh; height: 100dvh;">${prefPages[currentPrefPage]}</div>`;
                                                     _setupPrefHandlers();
+                                                    const newScrollContainer = previewContent.querySelector('.hide-scrollbar');
+                                                    if (newScrollContainer) {
+                                                        newScrollContainer.scrollLeft = savedScrollLeft;
+                                                    }
                                                 }
                                             };
 
@@ -6642,6 +6647,7 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
                                     }
                                         
                                         function showBookPage(index) {
+            inPreferitiFullscreen = false;
             // Rimuovi handler swipe preferiti se attivi
             const previewContent2 = document.getElementById('preview-content');
             if (prefSwipeStart) {
@@ -6880,6 +6886,7 @@ let bookIsSwiping = false;
 let touchStartedOnScrollable = false;
 let prefSwipeStart = null;
 let prefSwipeEnd = null;
+let inPreferitiFullscreen = false;
 
 function exitFullscreenAndGoToIndex() {
     exitFullscreen();
@@ -6897,6 +6904,7 @@ function exitFullscreenAndGoToArtist(artist) {
 
         function handleBookTouchStart(e) {
             if (!isFullscreen) return;
+            if (inPreferitiFullscreen) return;
             
             const target = e.target;
             touchStartedOnScrollable = !!target.closest('.hide-scrollbar');
@@ -6918,6 +6926,7 @@ function exitFullscreenAndGoToArtist(artist) {
 
         function handleBookTouchMove(e) {
             if (!isFullscreen) return;
+            if (inPreferitiFullscreen) return;
             if (touchStartedOnScrollable) return; // lascia scorrere il container
             
             bookTouchCurrentX = e.touches[0].clientX;
@@ -6933,6 +6942,7 @@ function exitFullscreenAndGoToArtist(artist) {
 }
 
         function handleBookTouchEnd(e) {
+            if (inPreferitiFullscreen) return;
             if (touchStartedOnScrollable) {
                 touchStartedOnScrollable = false;
                 bookIsSwiping = false;
@@ -6964,6 +6974,7 @@ function exitFullscreenAndGoToArtist(artist) {
 }
 
 function enterFullscreen() {
+    inPreferitiFullscreen = false;
     
     // NON usare requestFullscreen() nativo - simula fullscreen
     
