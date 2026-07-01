@@ -6456,17 +6456,18 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
                         </div>
                     </div>
                 </div>
-                <div style="margin-bottom: 15px;">
+                <div style="margin-bottom: 15px; display: flex; align-items: center; gap: 12px;">
+                    <span style="font-size: 13pt; color: #666;">Ordina per</span>
                     <div style="display: inline-flex; background: #f0f0f0; border: 1px solid #ddd; border-radius: 8px; padding: 3px; position: relative;">
                         <div style="position: absolute; top: 3px; ${currentPreferitiSort === 'title' ? 'left: 3px;' : 'left: calc(50% + 0px);'} width: calc(50% - 3px); height: calc(100% - 6px); background: #3498db; border-radius: 5px;"></div>
                         <div style="position: relative; padding: 6px 20px; font-size: 14pt; cursor: pointer; z-index: 1; white-space: nowrap;
                             ${currentPreferitiSort === 'title' ? 'color: white; font-weight: 600;' : 'color: #666;'}"
                             data-action="preferiti-sort" data-sort="title"
-                            ontouchstart="void(0)" onclick="currentPreferitiSort='title'; showPreferitiInFullscreen(${filterCategoryId === 'all' ? "'all'" : filterCategoryId})">A-Z Titolo</div>
+                            ontouchstart="void(0)" onclick="currentPreferitiSort='title'; showPreferitiInFullscreen(${filterCategoryId === 'all' ? "'all'" : filterCategoryId})">Titolo</div>
                         <div style="position: relative; padding: 6px 20px; font-size: 14pt; cursor: pointer; z-index: 1; white-space: nowrap;
                             ${currentPreferitiSort === 'artist' ? 'color: white; font-weight: 600;' : 'color: #666;'}"
                             data-action="preferiti-sort" data-sort="artist"
-                            ontouchstart="void(0)" onclick="currentPreferitiSort='artist'; showPreferitiInFullscreen(${filterCategoryId === 'all' ? "'all'" : filterCategoryId})">A-Z Cantante</div>
+                            ontouchstart="void(0)" onclick="currentPreferitiSort='artist'; showPreferitiInFullscreen(${filterCategoryId === 'all' ? "'all'" : filterCategoryId})">Cantante</div>
                     </div>
                 </div>
             `;
