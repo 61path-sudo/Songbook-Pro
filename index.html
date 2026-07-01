@@ -6440,16 +6440,16 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
             const filterButtons = `
                 <div style="margin-bottom: 8px;">
                     <div style="overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch; scrollbar-width: none; -ms-overflow-style: none;" class="hide-scrollbar">
-                        <div style="display: inline-flex; gap: 8px; padding-bottom: 4px;">
-                            <div style="display: inline-block; padding: 6px 14px; border-radius: 16px; font-size: 14pt; cursor: pointer; border: 2px solid #f39c12;
-                                ${filterCategoryId === 'all' ? 'background: #f39c12; color: white;' : 'background: white; color: #e67e22;'}"
+                        <div style="display: inline-flex; background: #f0f0f0; border: 1px solid #ddd; border-radius: 8px; padding: 3px; gap: 0;">
+                            <div style="padding: 6px 18px; font-size: 14pt; cursor: pointer; white-space: nowrap; border-radius: 5px;
+                                ${filterCategoryId === 'all' ? 'background: #f39c12; color: white; font-weight: 600;' : 'color: #666;'}"
                                 data-action="preferiti-filter" data-filter="all"
                                 ontouchstart="void(0)" onclick="showPreferitiInFullscreen('all')">Tutti</div>
                             ${categories.map(cat => {
                                 const color = cat.color || '#f39c12';
                                 const isActive = filterCategoryId === cat.id;
-                                return `<div style="display: inline-block; padding: 6px 14px; border-radius: 16px; font-size: 14pt; cursor: pointer; border: 2px solid ${color};
-                                    ${isActive ? `background: ${color}; color: white;` : `background: white; color: ${color};`}"
+                                return `<div style="padding: 6px 18px; font-size: 14pt; cursor: pointer; white-space: nowrap; border-radius: 5px;
+                                    ${isActive ? `background: ${color}; color: white; font-weight: 600;` : 'color: #666;'}"
                                     data-action="preferiti-filter" data-filter="${cat.id}"
                                     ontouchstart="void(0)" onclick="showPreferitiInFullscreen(${cat.id})">${cat.name}</div>`;
                             }).join('')}
