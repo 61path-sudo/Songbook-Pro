@@ -6486,7 +6486,7 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
             function renderPrefSongItemFS(song) {
                             return `
                                 <div class="song-link" data-song-id="${song.id}"
-                                    style="cursor: pointer; padding: 6px 0; border-bottom: 1px solid #eee; display: block; width: 100%; box-sizing: border-box; min-height: 62px;">
+                                    style="cursor: pointer; padding: 6px 0; border-bottom: 1px solid #eee; display: block; width: 100%; box-sizing: border-box; height: 62px; overflow: hidden;">
                                     <div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                                         <span style="font-weight: normal; font-size: ${getPrefTitleFontSizeFS(song.title)}pt;">${song.title.toUpperCase()}</span>
                                     </div>
