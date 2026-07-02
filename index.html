@@ -6475,11 +6475,11 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
             // Funzione font dinamico
             function getPrefTitleFontSizeFS(title) {
                 const len = title.length;
-                if (len > 35) return 14;
-                if (len > 28) return 15;
-                if (len > 22) return 16;
-                if (len > 16) return 17;
-                return 18;
+                if (len > 35) return 15;
+                if (len > 28) return 16;
+                if (len > 22) return 17;
+                if (len > 16) return 18;
+                return 19;
             }
             
             // Funzione rendering singola canzone
@@ -6488,7 +6488,7 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
                                 <div class="song-link" data-song-id="${song.id}"
                                     style="cursor: pointer; padding: 6px 0; border-bottom: 1px solid #eee; display: block; width: 100%; box-sizing: border-box; min-height: 62px;">
                                     <div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                                        <span style="font-weight: 700; font-size: ${getPrefTitleFontSizeFS(song.title)}pt;">${song.title.toUpperCase()}</span>
+                                        <span style="font-weight: normal; font-size: ${getPrefTitleFontSizeFS(song.title)}pt;">${song.title.toUpperCase()}</span>
                                     </div>
                                     <div style="font-size: 13pt; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${song.artist.toUpperCase()}</div>
                                 </div>
