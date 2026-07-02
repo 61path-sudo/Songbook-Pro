@@ -7089,10 +7089,11 @@ function exitFullscreen() {
 
 // Long press per uscire
 function handleLongPressStart(e) {
-    // NON attivare long press se si clicca su un link/elemento cliccabile
     const target = e.target;
-    if (target.classList.contains('artist-item') || 
-        target.hasAttribute('data-action') || 
+    if (target.classList.contains('artist-item') ||
+        target.classList.contains('song-link') ||
+        target.closest('.song-link') ||
+        target.hasAttribute('data-action') ||
         target.closest('[data-action]') ||
         target.closest('.artist-item')) {
         return;
