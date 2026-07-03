@@ -6407,8 +6407,6 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
         
         function showPreferitiInFullscreen(filterCategoryId = 'all') {
             inPreferitiFullscreen = true;
-            alert('dims.height: ' + getPageDimensions().height + ' prefItemHeight: ' + 62 + ' maxFirst: ' + Math.floor((getPageDimensions().height - 280) / 62));
-            alert('window.innerHeight: ' + window.innerHeight);
             if (filterCategoryId !== 'all') filterCategoryId = parseInt(filterCategoryId);
             const previewContent = document.getElementById('preview-content');
             
@@ -6500,8 +6498,9 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
             // Calcola righe per pagina
             const dims = getPageDimensions();
             const prefItemHeight = 62;
-            const prefMaxPerColFirst = Math.max(1, Math.floor((dims.height - 280) / prefItemHeight));
-            const prefMaxPerColOther = Math.max(1, Math.floor((dims.height - 120) / prefItemHeight));
+            const screenHeight = window.innerHeight;
+            const prefMaxPerColFirst = Math.max(1, Math.floor((screenHeight - 280) / prefItemHeight));
+            const prefMaxPerColOther = Math.max(1, Math.floor((screenHeight - 160) / prefItemHeight));
             
             // Genera pagine
             const prefPages = [];
