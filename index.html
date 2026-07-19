@@ -6438,7 +6438,7 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
             
             // Crea pulsanti filtro categorie + ordinamento (2 righe separate)
             const filterButtons = `
-                <div style="margin-bottom: 8px;">
+                <div style="margin-bottom: 5px;">
                     <div style="overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch; scrollbar-width: none; -ms-overflow-style: none;" class="hide-scrollbar">
                         <div style="display: inline-flex; background: #f0f0f0; border: 1px solid #ddd; border-radius: 8px; padding: 3px; gap: 0;">
                             <div style="padding: 6px 18px; font-size: 14pt; cursor: pointer; white-space: nowrap; border-radius: 5px;
@@ -6472,7 +6472,7 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
                 </div>
             `;
             
-            // Funzione font dinamico
+            // Font dinamico per titoli
             function getPrefTitleFontSizeFS(title) {
                 const len = title.length;
                 if (len > 35) return 15;
@@ -6482,33 +6482,157 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
                 return 19;
             }
             
-            // Funzione rendering singola canzone
+            // ITEM: modalità A-Z Titolo (titolo + cantante sotto)
             function renderPrefSongItemFS(song) {
-                            return `
-                                <div class="song-link" data-song-id="${song.id}"
-                                    style="cursor: pointer; padding: 6px 0; border-bottom: 1px solid #eee; display: block; width: 100%; box-sizing: border-box; height: 62px; overflow: hidden;">
-                                    <div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                                        <span style="font-weight: normal; font-size: ${getPrefTitleFontSizeFS(song.title)}pt;">${song.title.toUpperCase()}</span>
-                                    </div>
-                                    <div style="font-size: 13pt; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${song.artist.toUpperCase()}</div>
-                                </div>
-                            `;
-                        }
+                return `
+                    <div class="song-link" data-song-id="${song.id}"
+                        style="cursor: pointer; padding-left: 8px; border-left: 2px solid #cccccc; display: block; width: 100%; box-sizing: border-box; height: 62px; overflow: hidden;">
+                        <div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                            <span style="font-weight: normal; font-size: ${getPrefTitleFontSizeFS(song.title)}pt;">${song.title.toUpperCase()}</span>
+                        </div>
+                        <div style="font-size: 13pt; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${song.artist.toUpperCase()}</div>
+                    </div>
+                `;
+            }
             
-            // Calcola righe per pagina
-            const dims = getPageDimensions();
-            const prefItemHeight = 62;
+            // SEPARATORE lettera alfabetica
+            function renderLetterSeparator(letter) {
+                return `<div style="background: #cccccc; padding: 2px 0 2px 8px; font-weight: bold; font-size: 16pt; height: 36px; line-height: 36px; display: flex; align-items: center; margin-left: 0; box-sizing: border-box;">${letter}</div>`;
+            }
+            
+            // Calcola righe per pagina usando altezza reale schermo
             const screenHeight = window.innerHeight;
-            const prefMaxPerColFirst = Math.max(1, Math.floor((screenHeight - 280) / prefItemHeight));
-            const prefMaxPerColOther = Math.max(1, Math.floor((screenHeight - 140) / prefItemHeight));
+            const prefItemHeight = 62;
+            const prefLetterHeight = 36;
+            const prefHeaderFirst = 280;  // spazio header prima pagina
+            const prefHeaderOther = 120;  // spazio header pagine successive
+            const prefMaxHeightFirst = screenHeight - prefHeaderFirst;
+            const prefMaxHeightOther = screenHeight - prefHeaderOther;
             
-            // Genera pagine
+            // =============================================
+            // COSTRUISCE LISTA "ITEMS" con separatori lettera
+            // Ogni item ha: type ('letter'|'song'), altezza, dati
+            // =============================================
+            function buildItemList(songList, sortMode) {
+                const items = [];
+                let lastLetter = '';
+                
+                if (sortMode === 'title') {
+                    // A-Z Titolo: lettera del titolo + canzone (titolo + cantante)
+                    songList.forEach(song => {
+                        const firstLetter = song.title.charAt(0).toUpperCase();
+                        if (firstLetter !== lastLetter) {
+                            items.push({ type: 'letter', letter: firstLetter, height: prefLetterHeight });
+                            lastLetter = firstLetter;
+                        }
+                        items.push({ type: 'song', song: song, height: prefItemHeight });
+                    });
+                } else {
+                    // A-Z Cantante: lettera cantante, nome cantante, canzoni indentate
+                    let lastArtist = '';
+                    songList.forEach(song => {
+                        const artistSort = song.artistSort || song.artist;
+                        const firstLetter = artistSort.charAt(0).toUpperCase();
+                        if (firstLetter !== lastLetter) {
+                            items.push({ type: 'letter', letter: firstLetter, height: prefLetterHeight });
+                            lastLetter = firstLetter;
+                        }
+                        if (artistSort !== lastArtist) {
+                            items.push({ type: 'artist', artist: song.artist, artistSort: artistSort, height: prefItemHeight });
+                            lastArtist = artistSort;
+                        }
+                        items.push({ type: 'song-indented', song: song, height: prefItemHeight });
+                    });
+                }
+                return items;
+            }
+            
+            // =============================================
+            // DISTRIBUZIONE ITEMS IN COLONNE E PAGINE
+            // =============================================
+            function distributeItems(items, maxHeightFirst, maxHeightOther) {
+                const pages = [];
+                let itemIndex = 0;
+                let isFirstPage = true;
+                
+                while (itemIndex < items.length) {
+                    const maxH = isFirstPage ? maxHeightFirst : maxHeightOther;
+                    const cols = [[], []];
+                    let colHeights = [0, 0];
+                    let currentCol = 0;
+                    
+                    while (itemIndex < items.length) {
+                        const item = items[itemIndex];
+                        const h = item.height;
+                        
+                        if (colHeights[currentCol] + h > maxH) {
+                            if (currentCol === 0) {
+                                currentCol = 1;
+                            } else {
+                                break; // pagina piena
+                            }
+                        }
+                        
+                        // Evita lettera a fine colonna senza canzoni dopo
+                        if (item.type === 'letter' && itemIndex + 1 < items.length) {
+                            const nextItem = items[itemIndex + 1];
+                            if (colHeights[currentCol] + h + nextItem.height > maxH) {
+                                if (currentCol === 0) {
+                                    currentCol = 1;
+                                } else {
+                                    break;
+                                }
+                            }
+                        }
+                        
+                        if (colHeights[currentCol] + h <= maxH) {
+                            cols[currentCol].push(item);
+                            colHeights[currentCol] += h;
+                            itemIndex++;
+                        } else {
+                            break;
+                        }
+                    }
+                    
+                    pages.push({ cols, isFirst: isFirstPage });
+                    isFirstPage = false;
+                }
+                
+                return pages;
+            }
+            
+            // =============================================
+            // RENDER HTML DI UN SINGOLO ITEM
+            // =============================================
+            function renderItem(item) {
+                if (item.type === 'letter') {
+                    return renderLetterSeparator(item.letter);
+                }
+                if (item.type === 'song') {
+                    return renderPrefSongItemFS(item.song);
+                }
+                if (item.type === 'artist') {
+                    return `<div style="padding-left: 8px; border-left: 2px solid #cccccc; height: 62px; display: flex; align-items: center; box-sizing: border-box;">
+                        <span style="font-size: 17pt; font-weight: 600;">${item.artistSort.toUpperCase()}</span>
+                    </div>`;
+                }
+                if (item.type === 'song-indented') {
+                    return `<div class="song-link" data-song-id="${item.song.id}"
+                        style="cursor: pointer; padding-left: 24px; border-left: 2px solid #cccccc; display: block; width: 100%; box-sizing: border-box; height: 62px; overflow: hidden; display: flex; align-items: center;">
+                        <span style="font-size: ${getPrefTitleFontSizeFS(item.song.title)}pt; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.song.title.toUpperCase()}</span>
+                    </div>`;
+                }
+                return '';
+            }
+            
+            // =============================================
+            // GENERA LE PAGINE HTML
+            // =============================================
             const prefPages = [];
-            let processed = 0;
             
             if (preferitiSongs.length === 0) {
                 prefPages.push(`
-                    <div style="text-align: center; font-size: 26pt; font-weight: bold; border-top: 2px solid black; border-bottom: 2px solid black; padding: 15px 0; margin-bottom: 5px;">PREFERITI</div>
+                    <div style="text-align: center; font-size: 26pt; font-weight: bold; border-top: 2px solid black; border-bottom: 2px solid black; padding: 10px 0; margin-bottom: 5px;">PREFERITI</div>
                     ${filterButtons}
                     <div style="text-align: center; color: #999; font-size: 16pt; margin-top: 30px;">Nessuna canzone trovata</div>
                     <div style="position: absolute; bottom: 20px; left: 0; right: 0; border-top: 1px solid black; padding-top: 15px; text-align: center;">
@@ -6516,53 +6640,29 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
                     </div>
                 `);
             } else {
-                // Prima pagina (con header e filtri)
-                const firstPageSongs = preferitiSongs.slice(0, prefMaxPerColFirst * 2);
-                const fCol1 = firstPageSongs.slice(0, prefMaxPerColFirst);
-                const fCol2 = firstPageSongs.slice(prefMaxPerColFirst, prefMaxPerColFirst * 2);
+                const items = buildItemList(preferitiSongs, currentPreferitiSort);
+                const pages = distributeItems(items, prefMaxHeightFirst, prefMaxHeightOther);
                 
-                prefPages.push(`
-                    <div style="text-align: center; font-size: 26pt; font-weight: bold; border-top: 2px solid black; border-bottom: 2px solid black; padding: 15px 0; margin-bottom: 20px;">
-                        PREFERITI
-                    </div>
-                    ${filterButtons}
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; column-gap: 30px; width: 100%; box-sizing: border-box;">
-                        <div style="border-right: 1px solid #ddd; padding-right: 15px;">
-                            ${fCol1.map(renderPrefSongItemFS).join('')}
-                        </div>
-                        <div style="padding-left: 15px;">
-                            ${fCol2.map(renderPrefSongItemFS).join('')}
-                        </div>
-                    </div>
-                    <div style="position: absolute; bottom: 20px; left: 0; right: 0; border-top: 1px solid black; padding-top: 15px; text-align: center;">
-                        <span style="cursor: pointer; font-size: 18pt;" data-action="index">Torna ad Elenco cantanti</span>
-                    </div>
-                `);
-                
-                processed = firstPageSongs.length;
-                
-                // Pagine successive
-                while (processed < preferitiSongs.length) {
-                    const pageSongs = preferitiSongs.slice(processed, processed + prefMaxPerColOther * 2);
-                    const oCol1 = pageSongs.slice(0, prefMaxPerColOther);
-                    const oCol2 = pageSongs.slice(prefMaxPerColOther, prefMaxPerColOther * 2);
+                pages.forEach((page, pageIdx) => {
+                    const col0Html = page.cols[0].map(renderItem).join('');
+                    const col1Html = page.cols[1].map(renderItem).join('');
+                    
+                    const headerHtml = page.isFirst ? `
+                        <div style="text-align: center; font-size: 26pt; font-weight: bold; border-top: 2px solid black; border-bottom: 2px solid black; padding: 10px 0; margin-bottom: 5px;">PREFERITI</div>
+                        ${filterButtons}
+                    ` : '';
                     
                     prefPages.push(`
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; column-gap: 30px; margin-top: 10px;">
-                            <div style="border-right: 1px solid #ddd; padding-right: 15px;">
-                                ${oCol1.map(renderPrefSongItemFS).join('')}
-                            </div>
-                            <div style="padding-left: 15px;">
-                                ${oCol2.map(renderPrefSongItemFS).join('')}
-                            </div>
+                        ${headerHtml}
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; column-gap: 30px; width: 100%; box-sizing: border-box;">
+                            <div>${col0Html}</div>
+                            <div>${col1Html}</div>
                         </div>
                         <div style="position: absolute; bottom: 20px; left: 0; right: 0; border-top: 1px solid black; padding-top: 15px; text-align: center;">
                             <span style="cursor: pointer; font-size: 18pt;" data-action="index">Torna ad Elenco cantanti</span>
                         </div>
                     `);
-                    
-                    processed += pageSongs.length;
-                }
+                });
             }
             
             // Mostra prima pagina
@@ -6572,90 +6672,84 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
                 addFullscreenLinkHandlers();
             }, 50);
             
-            // Handlers - event delegation
+            // Handlers song-link
             const _setupPrefHandlers = () => {
-                            const pageEl = previewContent.querySelector('.page');
-                            if (!pageEl) return;
-                            let _sx = 0, _sy = 0;
-                            pageEl.addEventListener('touchstart', (e) => {
-                                _sx = e.touches[0].clientX;
-                                _sy = e.touches[0].clientY;
-                            }, { passive: true });
-                            pageEl.addEventListener('touchend', (e) => {
-                                const endX = e.changedTouches[0].clientX;
-                                const endY = e.changedTouches[0].clientY;
-                                if (Math.abs(endX - _sx) > 20 || Math.abs(endY - _sy) > 20) return;
-                                const sl = e.target.closest('.song-link');
-                                if (sl) {
-                                    e.preventDefault();
-                                    const sid = parseInt(sl.getAttribute('data-song-id'));
-                                    const idx = allFullscreenPages.findIndex(p => p.type === 'song' && p.songId === sid);
-                                    if (idx >= 0) showBookPage(idx);
-                                }
-                            });
-                        };
+                const pageEl = previewContent.querySelector('.page');
+                if (!pageEl) return;
+                let _sx = 0, _sy = 0;
+                pageEl.addEventListener('touchstart', (e) => {
+                    _sx = e.touches[0].clientX;
+                    _sy = e.touches[0].clientY;
+                }, { passive: true });
+                pageEl.addEventListener('touchend', (e) => {
+                    const endX = e.changedTouches[0].clientX;
+                    const endY = e.changedTouches[0].clientY;
+                    if (Math.abs(endX - _sx) > 20 || Math.abs(endY - _sy) > 20) return;
+                    const sl = e.target.closest('.song-link');
+                    if (sl) {
+                        e.preventDefault();
+                        const sid = parseInt(sl.getAttribute('data-song-id'));
+                        const idx = allFullscreenPages.findIndex(p => p.type === 'song' && p.songId === sid);
+                        if (idx >= 0) showBookPage(idx);
+                    }
+                });
+            };
+            _setupPrefHandlers();
+            
+            // Ripristina scroll pillole senza flash
+            const scrollContainer = previewContent.querySelector('.hide-scrollbar');
+            if (scrollContainer) {
+                scrollContainer.style.scrollBehavior = 'auto';
+                scrollContainer.scrollLeft = savedScrollLeft;
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => {
+                        if (scrollContainer) scrollContainer.scrollLeft = savedScrollLeft;
+                    });
+                });
+            }
+            
+            // Swipe tra pagine preferiti
+            if (prefSwipeStart) {
+                previewContent.removeEventListener('touchstart', prefSwipeStart);
+                prefSwipeStart = null;
+            }
+            if (prefSwipeEnd) {
+                previewContent.removeEventListener('touchend', prefSwipeEnd);
+                prefSwipeEnd = null;
+            }
+            
+            if (prefPages.length > 1) {
+                let currentPrefPage = 0;
+                let swipeStartX = 0;
+                let prefSwipeOnScrollable = false;
+                
+                prefSwipeStart = (e) => {
+                    swipeStartX = e.touches[0].clientX;
+                    prefSwipeOnScrollable = !!e.target.closest('.hide-scrollbar');
+                };
+                
+                prefSwipeEnd = (e) => {
+                    if (prefSwipeOnScrollable) { prefSwipeOnScrollable = false; return; }
+                    const diffX = e.changedTouches[0].clientX - swipeStartX;
+                    if (Math.abs(diffX) > 50) {
+                        if (diffX < 0 && currentPrefPage < prefPages.length - 1) {
+                            currentPrefPage++;
+                        } else if (diffX > 0 && currentPrefPage > 0) {
+                            currentPrefPage--;
+                        }
+                        previewContent.innerHTML = `<div class="page active" style="width: 100vw; height: 100vh; height: 100dvh;">${prefPages[currentPrefPage]}</div>`;
                         _setupPrefHandlers();
-                                    
-                                    // Ripristina scroll senza flash
-                                        const scrollContainer = previewContent.querySelector('.hide-scrollbar');
-                                        if (scrollContainer) {
-                                            scrollContainer.style.scrollBehavior = 'auto';
-                                            scrollContainer.scrollLeft = savedScrollLeft;
-                                            requestAnimationFrame(() => {
-                                                requestAnimationFrame(() => {
-                                                    if (scrollContainer) {
-                                                        scrollContainer.scrollLeft = savedScrollLeft;
-                                                    }
-                                                });
-                                            });
-                                        }
-                                        
-                                        // Swipe tra pagine preferiti in fullscreen
-                                        // Rimuovi handler precedenti prima di aggiungerne nuovi
-                                        if (prefSwipeStart) {
-                                            previewContent.removeEventListener('touchstart', prefSwipeStart);
-                                            prefSwipeStart = null;
-                                        }
-                                        if (prefSwipeEnd) {
-                                            previewContent.removeEventListener('touchend', prefSwipeEnd);
-                                            prefSwipeEnd = null;
-                                        }
-
-                                        if (prefPages.length > 1) {
-                                            let currentPrefPage = 0;
-                                            let swipeStartX = 0;
-                                            let prefSwipeOnScrollable = false;
-
-                                            prefSwipeStart = (e) => {
-                                                swipeStartX = e.touches[0].clientX;
-                                                prefSwipeOnScrollable = !!e.target.closest('.hide-scrollbar');
-                                            };
-
-                                            prefSwipeEnd = (e) => {
-                                                if (prefSwipeOnScrollable) { prefSwipeOnScrollable = false; return; }
-                                                const diffX = e.changedTouches[0].clientX - swipeStartX;
-                                                if (Math.abs(diffX) > 50) {
-                                                    if (diffX < 0 && currentPrefPage < prefPages.length - 1) {
-                                                        currentPrefPage++;
-                                                    } else if (diffX > 0 && currentPrefPage > 0) {
-                                                        currentPrefPage--;
-                                                    }
-                                                    previewContent.innerHTML = `<div class="page active" style="width: 100vw; height: 100vh; height: 100dvh;">${prefPages[currentPrefPage]}</div>`;
-                                                    _setupPrefHandlers();
-                                                    setTimeout(() => {
-                                                        addFullscreenLinkHandlers();
-                                                    }, 50);
-                                                    const newScrollContainer = previewContent.querySelector('.hide-scrollbar');
-                                                    if (newScrollContainer) {
-                                                        newScrollContainer.scrollLeft = savedScrollLeft;
-                                                    }
-                                                }
-                                            };
-
-                                            previewContent.addEventListener('touchstart', prefSwipeStart, { passive: true });
-                                            previewContent.addEventListener('touchend', prefSwipeEnd);
-                                        }
-                                    }
+                        setTimeout(() => { addFullscreenLinkHandlers(); }, 50);
+                        const newScrollContainer = previewContent.querySelector('.hide-scrollbar');
+                        if (newScrollContainer) newScrollContainer.scrollLeft = savedScrollLeft;
+                    }
+                };
+                
+                previewContent.addEventListener('touchstart', prefSwipeStart, { passive: true });
+                previewContent.addEventListener('touchend', prefSwipeEnd);
+            }
+        }
+                                            }
                                         
                                         function showBookPage(index) {
             inPreferitiFullscreen = false;
@@ -7120,7 +7214,6 @@ function handleLongPressEnd(e) {
 }
 
 function handleLongPressCancel(e) {
-    // Se si sta muovendo su un link, cancella il timer
     const target = e.target;
     if (target.classList.contains('artist-item') ||
         target.classList.contains('song-link') ||
