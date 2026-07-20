@@ -6425,20 +6425,12 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
                 });
             }
             
-            // Ordina in base alla scelta
-            if (currentPreferitiSort === 'title') {
-                preferitiSongs.sort((a, b) => a.title.localeCompare(b.title));
-            } else {
-                preferitiSongs.sort((a, b) => {
-                    const artistCompare = (a.artistSort || a.artist).localeCompare(b.artistSort || b.artist);
-                    if (artistCompare !== 0) return artistCompare;
-                    return a.title.localeCompare(b.title);
-                });
-            }
+            // Ordina sempre per titolo
+            preferitiSongs.sort((a, b) => a.title.localeCompare(b.title));
             
-            // Crea pulsanti filtro categorie + ordinamento (2 righe separate)
+            // Crea pulsanti filtro categorie (solo una riga)
             const filterButtons = `
-                <div style="margin-bottom: 5px;">
+                <div style="margin-bottom: 10px;">
                     <div style="overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch; scrollbar-width: none; -ms-overflow-style: none;" class="hide-scrollbar">
                         <div style="display: inline-flex; background: #f0f0f0; border: 1px solid #ddd; border-radius: 8px; padding: 3px; gap: 0;">
                             <div style="padding: 6px 18px; font-size: 14pt; cursor: pointer; white-space: nowrap; border-radius: 5px;
@@ -6454,20 +6446,6 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
                                     ontouchstart="void(0)" onclick="showPreferitiInFullscreen(${cat.id})">${cat.name}</div>`;
                             }).join('')}
                         </div>
-                    </div>
-                </div>
-                <div style="margin-bottom: 15px; display: flex; align-items: center; gap: 12px; justify-content: flex-end;">
-                    <span style="font-size: 13pt; color: #666;">Ordina per</span>
-                    <div style="display: inline-flex; background: #f0f0f0; border: 1px solid #ddd; border-radius: 8px; padding: 3px; position: relative;">
-                        <div style="position: absolute; top: 3px; ${currentPreferitiSort === 'title' ? 'left: 3px;' : 'left: calc(50% + 0px);'} width: calc(50% - 3px); height: calc(100% - 6px); background: #3498db; border-radius: 5px;"></div>
-                        <div style="position: relative; padding: 6px 20px; font-size: 14pt; cursor: pointer; z-index: 1; white-space: nowrap;
-                            ${currentPreferitiSort === 'title' ? 'color: white; font-weight: 600;' : 'color: #666;'}"
-                            data-action="preferiti-sort" data-sort="title"
-                            ontouchstart="void(0)" onclick="currentPreferitiSort='title'; showPreferitiInFullscreen(${filterCategoryId === 'all' ? "'all'" : filterCategoryId})">Titolo</div>
-                        <div style="position: relative; padding: 6px 20px; font-size: 14pt; cursor: pointer; z-index: 1; white-space: nowrap;
-                            ${currentPreferitiSort === 'artist' ? 'color: white; font-weight: 600;' : 'color: #666;'}"
-                            data-action="preferiti-sort" data-sort="artist"
-                            ontouchstart="void(0)" onclick="currentPreferitiSort='artist'; showPreferitiInFullscreen(${filterCategoryId === 'all' ? "'all'" : filterCategoryId})">Cantante</div>
                     </div>
                 </div>
             `;
@@ -6504,7 +6482,7 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
             const screenHeight = window.innerHeight;
             const prefItemHeight = 62;
             const prefLetterHeight = 36;
-            const prefHeaderFirst = 280;  // spazio header prima pagina
+            const prefHeaderFirst = 240;  // spazio header prima pagina (senza toggle ordina per)
             const prefHeaderOther = 120;  // spazio header pagine successive
             const prefMaxHeightFirst = screenHeight - prefHeaderFirst;
             const prefMaxHeightOther = screenHeight - prefHeaderOther;
@@ -6513,37 +6491,20 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
             // COSTRUISCE LISTA "ITEMS" con separatori lettera
             // Ogni item ha: type ('letter'|'song'), altezza, dati
             // =============================================
-            function buildItemList(songList, sortMode) {
+            function buildItemList(songList) {
                 const items = [];
                 let lastLetter = '';
                 
-                if (sortMode === 'title') {
-                    // A-Z Titolo: lettera del titolo + canzone (titolo + cantante)
-                    songList.forEach(song => {
-                        const firstLetter = song.title.charAt(0).toUpperCase();
-                        if (firstLetter !== lastLetter) {
-                            items.push({ type: 'letter', letter: firstLetter, height: prefLetterHeight });
-                            lastLetter = firstLetter;
-                        }
-                        items.push({ type: 'song', song: song, height: prefItemHeight });
-                    });
-                } else {
-                    // A-Z Cantante: lettera cantante, nome cantante, canzoni indentate
-                    let lastArtist = '';
-                    songList.forEach(song => {
-                        const artistSort = song.artistSort || song.artist;
-                        const firstLetter = artistSort.charAt(0).toUpperCase();
-                        if (firstLetter !== lastLetter) {
-                            items.push({ type: 'letter', letter: firstLetter, height: prefLetterHeight });
-                            lastLetter = firstLetter;
-                        }
-                        if (artistSort !== lastArtist) {
-                            items.push({ type: 'artist', artist: song.artist, artistSort: artistSort, height: prefItemHeight });
-                            lastArtist = artistSort;
-                        }
-                        items.push({ type: 'song-indented', song: song, height: prefItemHeight });
-                    });
-                }
+                // A-Z Titolo: lettera del titolo + canzone (titolo + cantante)
+                songList.forEach(song => {
+                    const firstLetter = song.title.charAt(0).toUpperCase();
+                    if (firstLetter !== lastLetter) {
+                        items.push({ type: 'letter', letter: firstLetter, height: prefLetterHeight });
+                        lastLetter = firstLetter;
+                    }
+                    items.push({ type: 'song', song: song, height: prefItemHeight });
+                });
+                
                 return items;
             }
             
@@ -6640,7 +6601,7 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
                     </div>
                 `);
             } else {
-                const items = buildItemList(preferitiSongs, currentPreferitiSort);
+                const items = buildItemList(preferitiSongs);
                 const pages = distributeItems(items, prefMaxHeightFirst, prefMaxHeightOther);
                 
                 pages.forEach((page, pageIdx) => {
