@@ -6425,8 +6425,12 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
                 });
             }
             
-            // Ordina sempre per titolo
-            preferitiSongs.sort((a, b) => a.title.localeCompare(b.title));
+            // Ordina sempre per titolo ignorando simboli iniziali
+            preferitiSongs.sort((a, b) => {
+                const titleA = a.title.replace(/^[^a-zA-ZÀ-ÿ0-9]+/, '');
+                const titleB = b.title.replace(/^[^a-zA-ZÀ-ÿ0-9]+/, '');
+                return titleA.localeCompare(titleB);
+            });
             
             // Crea pulsanti filtro categorie (solo una riga)
             const filterButtons = `
@@ -6475,29 +6479,33 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
             
             // SEPARATORE lettera alfabetica
             function renderLetterSeparator(letter) {
-                return `<div style="background: #cccccc; padding: 2px 0 2px 8px; font-weight: bold; font-size: 16pt; height: 36px; line-height: 36px; display: flex; align-items: center; margin-left: 0; box-sizing: border-box;">${letter}</div>`;
+                return `<div style="background: #cccccc; padding: 2px 0 2px 8px; font-weight: bold; font-size: 16pt; height: 62px; line-height: 62px; display: flex; align-items: center; box-sizing: border-box;">${letter}</div>`;
             }
             
             // Calcola righe per pagina usando altezza reale schermo
             const screenHeight = window.innerHeight;
             const prefItemHeight = 62;
-            const prefLetterHeight = 36;
-            const prefHeaderFirst = 240;  // spazio header prima pagina (senza toggle ordina per)
+            const prefLetterHeight = 62;  // uguale a prefItemHeight per allineamento perfetto
+            const prefHeaderFirst = 240;  // spazio header prima pagina
             const prefHeaderOther = 120;  // spazio header pagine successive
             const prefMaxHeightFirst = screenHeight - prefHeaderFirst;
             const prefMaxHeightOther = screenHeight - prefHeaderOther;
             
+            // Estrae la prima lettera ignorando simboli non alfabetici ('O → O)
+            function getFirstLetter(title) {
+                const cleaned = title.replace(/^[^a-zA-ZÀ-ÿ0-9]+/, '');
+                return cleaned.charAt(0).toUpperCase() || title.charAt(0).toUpperCase();
+            }
+            
             // =============================================
             // COSTRUISCE LISTA "ITEMS" con separatori lettera
-            // Ogni item ha: type ('letter'|'song'), altezza, dati
             // =============================================
             function buildItemList(songList) {
                 const items = [];
                 let lastLetter = '';
                 
-                // A-Z Titolo: lettera del titolo + canzone (titolo + cantante)
                 songList.forEach(song => {
-                    const firstLetter = song.title.charAt(0).toUpperCase();
+                    const firstLetter = getFirstLetter(song.title);
                     if (firstLetter !== lastLetter) {
                         items.push({ type: 'letter', letter: firstLetter, height: prefLetterHeight });
                         lastLetter = firstLetter;
