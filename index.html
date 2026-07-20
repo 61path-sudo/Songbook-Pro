@@ -6445,7 +6445,7 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
                                 const color = cat.color || '#f39c12';
                                 const isActive = filterCategoryId === cat.id;
                                 return `<div style="padding: 6px 18px; font-size: 14pt; cursor: pointer; white-space: nowrap; border-radius: 5px;
-                                ${isActive ? `background: ${color}; color: white; font-weight: 600;` : `color: ${color}; font-weight: 500;`}"
+                                ${isActive ? `background: ${color}; color: white; font-weight: 600;` : `color: ${color}; font-weight: 600;`}"
                                     data-action="preferiti-filter" data-filter="${cat.id}"
                                     ontouchstart="void(0)" onclick="showPreferitiInFullscreen(${cat.id})">${cat.name}</div>`;
                             }).join('')}
