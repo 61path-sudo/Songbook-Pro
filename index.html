@@ -6573,14 +6573,14 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
                     <div style="overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch; scrollbar-width: none; -ms-overflow-style: none;" class="hide-scrollbar">
                         <div style="display: inline-flex; background: #f0f0f0; border: 1px solid #ddd; border-radius: 8px; padding: 3px; gap: 0;">
                             <div style="padding: 6px 18px; font-size: 14pt; cursor: pointer; white-space: nowrap; border-radius: 5px;
-                                ${filterCategoryId === 'all' ? 'background: #f39c12; color: white; font-weight: 600;' : 'color: #666;'}"
+                                ${filterCategoryId === 'all' ? 'background: #e0e0e0; color: #333; font-weight: 600;' : 'color: #666; font-weight: 600;'}"
                                 data-action="preferiti-filter" data-filter="all"
                                 ontouchstart="void(0)" onclick="showPreferitiInFullscreen('all')">Tutti</div>
                             ${categories.map(cat => {
                                 const color = cat.color || '#f39c12';
                                 const isActive = filterCategoryId === cat.id;
                                 return `<div style="padding: 6px 18px; font-size: 14pt; cursor: pointer; white-space: nowrap; border-radius: 5px;
-                                    ${isActive ? `background: ${color}; color: white; font-weight: 600;` : 'color: #666;'}"
+                                    ${isActive ? `background: ${color}; color: white; font-weight: 600;` : `color: ${color}; font-weight: 600;`}"
                                     data-action="preferiti-filter" data-filter="${cat.id}"
                                     ontouchstart="void(0)" onclick="showPreferitiInFullscreen(${cat.id})">${cat.name}</div>`;
                             }).join('')}
@@ -6614,15 +6614,15 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
             
             // SEPARATORE lettera alfabetica
             function renderLetterSeparator(letter) {
-                return `<div style="background: #cccccc; padding: 2px 0 2px 8px; font-weight: bold; font-size: 16pt; height: 62px; line-height: 62px; display: flex; align-items: center; box-sizing: border-box;">${letter}</div>`;
+                return `<div style="background: #cccccc; padding: 2px 0 2px 8px; font-weight: bold; font-size: 20pt; height: 62px; line-height: 62px; display: flex; align-items: center; box-sizing: border-box;">${letter}</div>`;
             }
             
             // Calcola righe per pagina usando altezza reale schermo
             const screenHeight = window.innerHeight;
             const prefItemHeight = 62;
             const prefLetterHeight = 62;  // uguale a prefItemHeight per allineamento perfetto
-            const prefHeaderFirst = 240;  // spazio header prima pagina
-            const prefHeaderOther = 120;  // spazio header pagine successive
+            const prefHeaderFirst = 178;  // spazio header prima pagina
+            const prefHeaderOther = 58;   // spazio header pagine successive
             const prefMaxHeightFirst = screenHeight - prefHeaderFirst;
             const prefMaxHeightOther = screenHeight - prefHeaderOther;
             
