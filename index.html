@@ -6245,10 +6245,12 @@ function addFavouriteFromFullscreen(songId) {
         selectedCats.push(parseInt(el.getAttribute('data-cat-id')));
     });
     
-    // Se nessuna categoria selezionata e già preferito → rimuovi
+    // Se nessuna categoria selezionata e già preferito → chiedi conferma rimozione
     const isPref = isPreferito(songId);
     if (selectedCats.length === 0 && isPref) {
-        removeFavouriteFromFullscreen(songId);
+        if (confirm('Nessuna categoria selezionata. Rimuovere dai preferiti?')) {
+            removeFavouriteFromFullscreen(songId);
+        }
         return;
     }
     
@@ -6266,10 +6268,14 @@ function addFavouriteFromFullscreen(songId) {
 }
 
 function removeFavouriteFromFullscreen(songId) {
-    preferiti = preferiti.filter(p => p.songId !== songId);
-    savePreferitiData();
-    document.getElementById('star-popup').remove();
-    updateStarOnly(songId, false);
+    const popup = document.getElementById('star-popup');
+    if (popup) popup.remove();
+    
+    showModal('', 'Rimuovere questa canzone dai preferiti?', () => {
+        preferiti = preferiti.filter(p => p.songId !== songId);
+        savePreferitiData();
+        updateStarOnly(songId, false);
+    }, true);
 }
 
 function updateStarOnly(songId, isPref) {
