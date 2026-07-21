@@ -6245,7 +6245,14 @@ function addFavouriteFromFullscreen(songId) {
         selectedCats.push(parseInt(el.getAttribute('data-cat-id')));
     });
     
-    // Aggiungi ai preferiti
+    // Se nessuna categoria selezionata e già preferito → rimuovi
+    const isPref = isPreferito(songId);
+    if (selectedCats.length === 0 && isPref) {
+        removeFavouriteFromFullscreen(songId);
+        return;
+    }
+    
+    // Aggiungi/aggiorna preferiti
     const existing = preferiti.findIndex(p => p.songId === songId);
     if (existing >= 0) {
         preferiti[existing].categories = selectedCats;
@@ -6863,9 +6870,19 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
     const pageHtml = `<div class="page active" style="width: 100vw; height: 100vh;">${page.content}</div>`;
     previewContent.innerHTML = pageHtml;
     
+    // Aggiorna stellina in tempo reale se è la prima pagina di una canzone
+    if (page.type === 'song' && page.pageNum === 1) {
+        const isPref = isPreferito(page.songId);
+        const starBtn = document.getElementById(`star-btn-${page.songId}`);
+        if (starBtn) {
+            starBtn.textContent = isPref ? '⭐' : '☆';
+            starBtn.style.color = isPref ? '#f39c12' : '#aaa';
+        }
+    }
+    
     setTimeout(() => {
-    addFullscreenLinkHandlers();
-}, 200);
+        addFullscreenLinkHandlers();
+    }, 200);
     
     console.log(`Pagina ${currentFullscreenIndex + 1}/${allFullscreenPages.length} - Tipo: ${page.type}`);
 }
