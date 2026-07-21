@@ -6166,6 +6166,127 @@ artists.forEach(artist => {
 });
 }
 
+function showFavouritePopup(songId) {
+    const song = songs.find(s => s.id === parseInt(songId));
+    if (!song) return;
+    
+    const isPref = isPreferito(song.id);
+    
+    // Rimuovi popup esistente
+    const existing = document.getElementById('star-popup');
+    if (existing) existing.remove();
+    
+    if (isPref) {
+        // Già preferito → chiedi se rimuovere
+        const popup = document.createElement('div');
+        popup.id = 'star-popup';
+        popup.style.cssText = `
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); z-index: 99999;
+            display: flex; align-items: center; justify-content: center;
+        `;
+        popup.innerHTML = `
+            <div style="background: white; border-radius: 12px; padding: 30px; max-width: 400px; width: 85%; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.3);">
+                <div style="font-size: 18pt; font-weight: 600; margin-bottom: 10px;">"${song.title}"</div>
+                <div style="font-size: 14pt; color: #666; margin-bottom: 25px;">Rimuovere dai preferiti?</div>
+                <div style="display: flex; gap: 15px; justify-content: center;">
+                    <button onclick="document.getElementById('star-popup').remove()" 
+                        style="padding: 12px 28px; border: 1px solid #ddd; border-radius: 8px; font-size: 14pt; cursor: pointer; background: white;">Annulla</button>
+                    <button onclick="removeFavouriteFromFullscreen(${song.id})"
+                        style="padding: 12px 28px; border: none; border-radius: 8px; font-size: 14pt; cursor: pointer; background: #e74c3c; color: white; font-weight: 600;">Rimuovi</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(popup);
+    } else {
+        // Non preferito → mostra categorie
+        const popup = document.createElement('div');
+        popup.id = 'star-popup';
+        popup.style.cssText = `
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); z-index: 99999;
+            display: flex; align-items: center; justify-content: center;
+        `;
+        
+        const catsHtml = categories.length > 0 ? `
+            <div style="margin: 15px 0; text-align: left;">
+                <div style="font-size: 13pt; color: #666; margin-bottom: 10px;">Scegli categoria/e:</div>
+                <div style="display: flex; flex-wrap: wrap; gap: 8px;" id="star-popup-cats">
+                    ${categories.map(cat => {
+                        const color = cat.color || '#f39c12';
+                        return `<div data-cat-id="${cat.id}" onclick="toggleStarCategory(this, '${color}')"
+                            style="padding: 6px 16px; border-radius: 8px; font-size: 13pt; cursor: pointer; border: 2px solid ${color}; color: ${color}; font-weight: 600;">
+                            ${cat.name}
+                        </div>`;
+                    }).join('')}
+                </div>
+            </div>
+        ` : '<div style="color: #999; font-size: 13pt; margin: 15px 0;">Nessuna categoria disponibile</div>';
+        
+        popup.innerHTML = `
+            <div style="background: white; border-radius: 12px; padding: 30px; max-width: 450px; width: 85%; box-shadow: 0 10px 40px rgba(0,0,0,0.3);">
+                <div style="font-size: 18pt; font-weight: 600; margin-bottom: 5px; text-align: center;">"${song.title}"</div>
+                <div style="font-size: 13pt; color: #666; text-align: center; margin-bottom: 10px;">${song.artist}</div>
+                ${catsHtml}
+                <div style="display: flex; gap: 15px; justify-content: center; margin-top: 20px;">
+                    <button onclick="document.getElementById('star-popup').remove()"
+                        style="padding: 12px 28px; border: 1px solid #ddd; border-radius: 8px; font-size: 14pt; cursor: pointer; background: white;">Annulla</button>
+                    <button onclick="addFavouriteFromFullscreen(${song.id})"
+                        style="padding: 12px 28px; border: none; border-radius: 8px; font-size: 14pt; cursor: pointer; background: #27ae60; color: white; font-weight: 600;">OK ⭐</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(popup);
+    }
+}
+
+function toggleStarCategory(el, color) {
+    const isSelected = el.style.background === color || el.getAttribute('data-selected') === '1';
+    if (isSelected) {
+        el.style.background = 'white';
+        el.style.color = color;
+        el.removeAttribute('data-selected');
+    } else {
+        el.style.background = color;
+        el.style.color = 'white';
+        el.setAttribute('data-selected', '1');
+    }
+}
+
+function addFavouriteFromFullscreen(songId) {
+    // Raccogli categorie selezionate
+    const selectedCats = [];
+    document.querySelectorAll('#star-popup-cats [data-selected="1"]').forEach(el => {
+        selectedCats.push(parseInt(el.getAttribute('data-cat-id')));
+    });
+    
+    // Aggiungi ai preferiti
+    const existing = preferiti.findIndex(p => p.songId === songId);
+    if (existing >= 0) {
+        preferiti[existing].categories = selectedCats;
+    } else {
+        preferiti.push({ songId: songId, categories: selectedCats });
+    }
+    
+    savePreferitiData();
+    document.getElementById('star-popup').remove();
+    updateStarOnly(songId, true);
+}
+
+function removeFavouriteFromFullscreen(songId) {
+    preferiti = preferiti.filter(p => p.songId !== songId);
+    savePreferitiData();
+    document.getElementById('star-popup').remove();
+    updateStarOnly(songId, false);
+}
+
+function updateStarOnly(songId, isPref) {
+    const starBtn = document.getElementById(`star-btn-${songId}`);
+    if (!starBtn) return;
+    starBtn.textContent = isPref ? '⭐' : '☆';
+    starBtn.style.color = isPref ? '#f39c12' : '#aaa';
+}
+
 function generateSongPagesForBook(song) {
     const pages = [];
     
@@ -6190,9 +6311,23 @@ function generateSongPagesForBook(song) {
         if (key) parts.push(`<span style="color: #c0392b;">${key}</span>`);
         if (tempo) parts.push(`<span style="color: #2980b9;">${tempo}</span>`);
         
-        notesHtml = `<div style="font-size: 22pt; margin-top: 2px; margin-bottom: 2px; font-weight: 600;">${parts.join(' <span style="color: black;">|</span> ')}</div>`;
+        const isPref = isPreferito(song.id);
+        const starIcon = isPref ? '⭐' : '☆';
+        const starStyle = isPref ? 'color: #f39c12;' : 'color: #aaa;';
+        
+        notesHtml = `<div style="font-size: 22pt; margin-top: 2px; margin-bottom: 2px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 16px;">
+            <span>${parts.join(' <span style="color: black;">|</span> ')}</span>
+            <span id="star-btn-${song.id}" data-action="star" data-song-id="${song.id}" style="cursor: pointer; font-size: 26pt; ${starStyle} line-height: 1;">${starIcon}</span>
+        </div>`;
     } else {
-        notesHtml = `<div style="font-size: 22pt; margin-top: 2px; margin-bottom: 2px; font-weight: 600; color: #999;">[ Dettagli da aggiungere ]</div>`;
+        const isPref = isPreferito(song.id);
+        const starIcon = isPref ? '⭐' : '☆';
+        const starStyle = isPref ? 'color: #f39c12;' : 'color: #aaa;';
+        
+        notesHtml = `<div style="font-size: 22pt; margin-top: 2px; margin-bottom: 2px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 16px;">
+            <span style="color: #999;">[ Dettagli da aggiungere ]</span>
+            <span id="star-btn-${song.id}" data-action="star" data-song-id="${song.id}" style="cursor: pointer; font-size: 26pt; ${starStyle} line-height: 1;">${starIcon}</span>
+        </div>`;
     }
     
     // Calcola paginazione
@@ -6438,14 +6573,14 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
                     <div style="overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch; scrollbar-width: none; -ms-overflow-style: none;" class="hide-scrollbar">
                         <div style="display: inline-flex; background: #f0f0f0; border: 1px solid #ddd; border-radius: 8px; padding: 3px; gap: 0;">
                             <div style="padding: 6px 18px; font-size: 14pt; cursor: pointer; white-space: nowrap; border-radius: 5px;
-                                ${filterCategoryId === 'all' ? 'background: #e0e0e0; color: #333; font-weight: 600;' : 'color: #666; font-weight: 600;'}"
+                                ${filterCategoryId === 'all' ? 'background: #f39c12; color: white; font-weight: 600;' : 'color: #666;'}"
                                 data-action="preferiti-filter" data-filter="all"
                                 ontouchstart="void(0)" onclick="showPreferitiInFullscreen('all')">Tutti</div>
                             ${categories.map(cat => {
                                 const color = cat.color || '#f39c12';
                                 const isActive = filterCategoryId === cat.id;
                                 return `<div style="padding: 6px 18px; font-size: 14pt; cursor: pointer; white-space: nowrap; border-radius: 5px;
-                                ${isActive ? `background: ${color}; color: white; font-weight: 600;` : `color: ${color}; font-weight: 600;`}"
+                                    ${isActive ? `background: ${color}; color: white; font-weight: 600;` : 'color: #666;'}"
                                     data-action="preferiti-filter" data-filter="${cat.id}"
                                     ontouchstart="void(0)" onclick="showPreferitiInFullscreen(${cat.id})">${cat.name}</div>`;
                             }).join('')}
@@ -6479,15 +6614,15 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
             
             // SEPARATORE lettera alfabetica
             function renderLetterSeparator(letter) {
-                return `<div style="background: #cccccc; padding: 2px 0 2px 8px; font-weight: bold; font-size: 20pt; height: 62px; line-height: 62px; display: flex; align-items: center; box-sizing: border-box;">${letter}</div>`;
+                return `<div style="background: #cccccc; padding: 2px 0 2px 8px; font-weight: bold; font-size: 16pt; height: 62px; line-height: 62px; display: flex; align-items: center; box-sizing: border-box;">${letter}</div>`;
             }
             
             // Calcola righe per pagina usando altezza reale schermo
             const screenHeight = window.innerHeight;
             const prefItemHeight = 62;
             const prefLetterHeight = 62;  // uguale a prefItemHeight per allineamento perfetto
-            const prefHeaderFirst = 178;  // spazio header prima pagina
-            const prefHeaderOther = 58;  // spazio header pagine successive
+            const prefHeaderFirst = 240;  // spazio header prima pagina
+            const prefHeaderOther = 120;  // spazio header pagine successive
             const prefMaxHeightFirst = screenHeight - prefHeaderFirst;
             const prefMaxHeightOther = screenHeight - prefHeaderOther;
             
@@ -6835,6 +6970,36 @@ function addFullscreenLinkHandlers() {
                     }
                 }
             }
+        });
+    });
+    
+    // Handler per stellina preferiti
+    document.querySelectorAll('[data-action="star"]').forEach(star => {
+        let touchStartTime = 0;
+        let touchStartPos = { x: 0, y: 0 };
+        
+        star.addEventListener('touchstart', (e) => {
+            touchStartTime = Date.now();
+            touchStartPos = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        }, { passive: true });
+        
+        star.addEventListener('touchend', (e) => {
+            const duration = Date.now() - touchStartTime;
+            const diffX = Math.abs(e.changedTouches[0].clientX - touchStartPos.x);
+            const diffY = Math.abs(e.changedTouches[0].clientY - touchStartPos.y);
+            if (duration < 400 && diffX < 15 && diffY < 15) {
+                e.preventDefault();
+                e.stopPropagation();
+                const songId = parseInt(star.getAttribute('data-song-id'));
+                showFavouritePopup(songId);
+            }
+        });
+        
+        // Click per desktop
+        star.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const songId = parseInt(star.getAttribute('data-song-id'));
+            showFavouritePopup(songId);
         });
     });
     
