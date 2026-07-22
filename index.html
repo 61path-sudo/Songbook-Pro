@@ -1426,9 +1426,13 @@ body.dark-mode .piano-key.black {
             <div class="form-row" style="align-items: flex-start; margin: 10px 0;">
     <label style="padding-top: 41px;">Testo:</label>
 <div style="flex: 1;">
-    <div style="display: flex; gap: 5px; margin-bottom: 5px; justify-content: flex-end;">
+    <div style="display: flex; gap: 5px; margin-bottom: 5px; justify-content: flex-end; align-items: center;">
+        <button type="button" class="btn btn-primary" onclick="searchLyricsWithAI()" id="search-lyrics-btn" style="padding: 5px 15px; font-size: 12px; background: #9b59b6;">🔍 Cerca testo</button>
         <button type="button" class="btn btn-secondary" onclick="changeLyricsFontSize(-1)" style="padding: 5px 10px; font-size: 12px;">A-</button>
         <button type="button" class="btn btn-secondary" onclick="changeLyricsFontSize(1)" style="padding: 5px 10px; font-size: 12px;">A+</button>
+    </div>
+    <div id="search-lyrics-status" style="display: none; padding: 8px 12px; background: #f0e6ff; border-radius: 5px; font-size: 13px; color: #7d3c98; margin-bottom: 8px;">
+        ⏳ Ricerca in corso...
     </div>
     <textarea id="lyrics" placeholder="Inserisci il testo della canzone..." style="min-height: 400px; width: 100%;"></textarea>
 </div>
@@ -6254,8 +6258,8 @@ function updateSearchResults(query) {
             const idx = song.lyrics.toLowerCase().indexOf(q);
             const start = Math.max(0, idx - 30);
             const end = Math.min(song.lyrics.length, idx + q.length + 30);
-            const raw = song.lyrics.substring(start, end).replace(/\n/g, ' ').toUpperCase();
-            const highlighted = raw.replace(new RegExp(q.toUpperCase(), 'gi'), m => `<span style="background: #fff3cd; font-weight: 600;">${m}</span>`);
+            const raw = song.lyrics.substring(start, end).replace(/\n/g, ' ');
+            const highlighted = raw.replace(new RegExp(q, 'gi'), m => `<span style="background: #fff3cd; font-weight: 600;">${m}</span>`);
             snippet = `<div style="font-size: 11pt; color: #888; margin-top: 3px; font-style: italic;">...${highlighted}...</div>`;
         }
         
@@ -7937,6 +7941,77 @@ function handleTouchEnd(e) {
         
 // Font-size textarea lyrics
 let currentLyricsFontSize = 14; // dimensione iniziale in px
+
+async function searchLyricsWithAI() {
+    const title = document.getElementById('title').value.trim();
+    const artist = document.getElementById('artist').value.trim();
+    
+    if (!title || !artist) {
+        showModal('', 'Inserisci prima il Titolo e il Cantante!', null, false);
+        return;
+    }
+    
+    const btn = document.getElementById('search-lyrics-btn');
+    const status = document.getElementById('search-lyrics-status');
+    
+    btn.disabled = true;
+    btn.textContent = '⏳ Ricerca...';
+    status.style.display = 'block';
+    status.textContent = `⏳ Cerco il testo di "${title}" - ${artist}...`;
+    
+    try {
+        const response = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                model: 'claude-sonnet-4-6',
+                max_tokens: 2000,
+                messages: [{
+                    role: 'user',
+                    content: `Scrivi il testo completo della canzone "${title}" di ${artist}. 
+Rispondi SOLO con il testo della canzone, senza titolo, senza nome artista, senza introduzione, senza note finali, senza virgolette, senza numerazione strofe.
+Solo il testo, con righe vuote tra le strofe.`
+                }]
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.content && data.content[0] && data.content[0].text) {
+            const lyrics = data.content[0].text.trim();
+            
+            // Controlla se Claude ha risposto con un rifiuto
+            const refusalKeywords = ['non posso', 'non sono in grado', 'copyright', 'non ho accesso', 'non conosco'];
+            const isRefusal = refusalKeywords.some(kw => lyrics.toLowerCase().includes(kw));
+            
+            if (isRefusal) {
+                status.style.background = '#fdecea';
+                status.style.color = '#c0392b';
+                status.textContent = '❌ Testo non trovato. Inseriscilo manualmente.';
+            } else {
+                document.getElementById('lyrics').value = lyrics;
+                status.style.background = '#e8f8f5';
+                status.style.color = '#1e8449';
+                status.textContent = `✅ Testo trovato! Controlla e modifica se necessario.`;
+            }
+        } else {
+            throw new Error('Risposta non valida');
+        }
+    } catch (error) {
+        console.error('Errore ricerca testo:', error);
+        status.style.background = '#fdecea';
+        status.style.color = '#c0392b';
+        status.textContent = '❌ Errore durante la ricerca. Riprova o inserisci manualmente.';
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '🔍 Cerca testo';
+        setTimeout(() => {
+            status.style.display = 'none';
+            status.style.background = '#f0e6ff';
+            status.style.color = '#7d3c98';
+        }, 5000);
+    }
+}
 
 function changeLyricsFontSize(change) {
     currentLyricsFontSize = Math.max(10, Math.min(24, currentLyricsFontSize + change));
