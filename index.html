@@ -6068,7 +6068,10 @@ while (processedArtists < artists.length) {
     
     // FASE 2: RENDERING HTML con font-size CORRETTO
     const indexContent = `
-    ${isFirstPage ? '<div style="text-align: center; font-size: 32pt; font-weight: bold; margin-bottom: 30px;">ELENCO CANTANTI</div>' : ''}
+    ${isFirstPage ? `<div style="display: flex; align-items: center; justify-content: center; margin-bottom: 30px; position: relative;">
+        <div style="text-align: center; font-size: 32pt; font-weight: bold;">ELENCO CANTANTI</div>
+        <div data-action="search" style="position: absolute; right: 0; font-size: 28pt; cursor: pointer; padding: 5px 10px; color: #555;">🔍</div>
+    </div>` : ''}
     <div class="artist-columns">
         ${columnData.map((colData, colIndex) => {
             if (colData.length === 0) {
@@ -6164,6 +6167,115 @@ artists.forEach(artist => {
         allFullscreenPages.push(...songPages);
     });
 });
+}
+
+function showSearchPopup() {
+    const existing = document.getElementById('search-popup');
+    if (existing) existing.remove();
+    
+    const popup = document.createElement('div');
+    popup.id = 'search-popup';
+    popup.style.cssText = `
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.7); z-index: 99999;
+        display: flex; align-items: flex-start; justify-content: center;
+        padding-top: 60px;
+    `;
+    
+    popup.innerHTML = `
+        <div style="background: white; border-radius: 12px; padding: 25px; width: 90%; max-width: 600px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); max-height: 80vh; display: flex; flex-direction: column;">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">
+                <span style="font-size: 22pt;">🔍</span>
+                <input type="text" id="search-popup-input" placeholder="Cerca titolo o frase del testo..."
+                    style="flex: 1; padding: 12px; font-size: 16pt; border: 2px solid #3498db; border-radius: 8px; outline: none;"
+                    oninput="updateSearchResults(this.value)">
+                <button onclick="document.getElementById('search-popup').remove()"
+                    style="font-size: 20pt; background: none; border: none; cursor: pointer; color: #999; padding: 5px;">✕</button>
+            </div>
+            <div id="search-popup-results" style="overflow-y: auto; flex: 1;">
+                <div style="text-align: center; color: #999; font-size: 14pt; padding: 30px;">Digita per cercare...</div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(popup);
+    
+    // Focus automatico sul campo
+    setTimeout(() => {
+        const input = document.getElementById('search-popup-input');
+        if (input) input.focus();
+    }, 100);
+    
+    // Chiudi cliccando fuori
+    popup.addEventListener('touchend', (e) => {
+        if (e.target === popup) popup.remove();
+    });
+    popup.addEventListener('click', (e) => {
+        if (e.target === popup) popup.remove();
+    });
+}
+
+function updateSearchResults(query) {
+    const resultsDiv = document.getElementById('search-popup-results');
+    if (!resultsDiv) return;
+    
+    const q = query.trim().toLowerCase();
+    
+    if (q.length < 2) {
+        resultsDiv.innerHTML = '<div style="text-align: center; color: #999; font-size: 14pt; padding: 30px;">Digita almeno 2 caratteri...</div>';
+        return;
+    }
+    
+    // Cerca in titolo e testo
+    const results = songs.filter(song => 
+        song.title.toLowerCase().includes(q) ||
+        song.lyrics.toLowerCase().includes(q)
+    ).sort((a, b) => {
+        // Priorità: titolo prima, poi testo
+        const aTitle = a.title.toLowerCase().includes(q);
+        const bTitle = b.title.toLowerCase().includes(q);
+        if (aTitle && !bTitle) return -1;
+        if (!aTitle && bTitle) return 1;
+        return a.title.localeCompare(b.title);
+    });
+    
+    if (results.length === 0) {
+        resultsDiv.innerHTML = '<div style="text-align: center; color: #999; font-size: 14pt; padding: 30px;">Nessun risultato trovato</div>';
+        return;
+    }
+    
+    resultsDiv.innerHTML = results.map(song => {
+        const inTitle = song.title.toLowerCase().includes(q);
+        const inLyrics = !inTitle && song.lyrics.toLowerCase().includes(q);
+        
+        // Mostra snippet del testo se trovato nel lyrics
+        let snippet = '';
+        if (inLyrics) {
+            const idx = song.lyrics.toLowerCase().indexOf(q);
+            const start = Math.max(0, idx - 30);
+            const end = Math.min(song.lyrics.length, idx + q.length + 30);
+            const raw = song.lyrics.substring(start, end).replace(/\n/g, ' ');
+            const highlighted = raw.replace(new RegExp(q, 'gi'), m => `<span style="background: #fff3cd; font-weight: 600;">${m}</span>`);
+            snippet = `<div style="font-size: 11pt; color: #888; margin-top: 3px; font-style: italic;">...${highlighted}...</div>`;
+        }
+        
+        return `
+            <div onclick="goToSongFromSearch(${song.id})"
+                style="padding: 12px 15px; border-bottom: 1px solid #eee; cursor: pointer; active:background:#f0f0f0;">
+                <div style="font-size: 15pt; font-weight: 600;">${song.title.toUpperCase()}</div>
+                <div style="font-size: 12pt; color: #666;">${song.artist.toUpperCase()}</div>
+                ${snippet}
+            </div>
+        `;
+    }).join('');
+}
+
+function goToSongFromSearch(songId) {
+    document.getElementById('search-popup').remove();
+    const songPageIndex = allFullscreenPages.findIndex(p => p.type === 'song' && p.songId === songId);
+    if (songPageIndex >= 0) {
+        showBookPage(songPageIndex);
+    }
 }
 
 function showFavouritePopup(songId) {
@@ -6978,6 +7090,19 @@ function addFullscreenLinkHandlers() {
                     }
                 }
             }
+        });
+    });
+    
+    // Handler per icona ricerca
+    document.querySelectorAll('[data-action="search"]').forEach(btn => {
+        btn.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            showSearchPopup();
+        });
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            showSearchPopup();
         });
     });
     
