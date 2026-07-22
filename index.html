@@ -6254,8 +6254,8 @@ function updateSearchResults(query) {
             const idx = song.lyrics.toLowerCase().indexOf(q);
             const start = Math.max(0, idx - 30);
             const end = Math.min(song.lyrics.length, idx + q.length + 30);
-            const raw = song.lyrics.substring(start, end).replace(/\n/g, ' ');
-            const highlighted = raw.replace(new RegExp(q, 'gi'), m => `<span style="background: #fff3cd; font-weight: 600;">${m}</span>`);
+            const raw = song.lyrics.substring(start, end).replace(/\n/g, ' ').toUpperCase();
+            const highlighted = raw.replace(new RegExp(q.toUpperCase(), 'gi'), m => `<span style="background: #fff3cd; font-weight: 600;">${m}</span>`);
             snippet = `<div style="font-size: 11pt; color: #888; margin-top: 3px; font-style: italic;">...${highlighted}...</div>`;
         }
         
