@@ -7492,8 +7492,16 @@ function toggleAudioPanel() {
     const panel = document.getElementById('audio-panel');
     if (!panel) return;
     const isVisible = panel.style.display !== 'none';
-    panel.style.display = isVisible ? 'none' : 'block';
-    if (!isVisible) updatePlayerUI();
+    if (isVisible) {
+        panel.style.display = 'none';
+    } else {
+        // Rigenera HTML con lista aggiornata
+        const newPanel = document.createElement('div');
+        newPanel.innerHTML = getAudioPanelHtml();
+        const newPanelEl = newPanel.firstElementChild;
+        newPanelEl.style.display = 'block';
+        panel.parentNode.replaceChild(newPanelEl, panel);
+    }
 }
 
 function updatePlayerUI() {
@@ -7509,7 +7517,7 @@ function updatePlayerUI() {
     
     nameEl.textContent = audioFiles.length ? (audioFiles[currentAudioIndex]?.name || '') : 'Nessun brano caricato';
     if (counterEl) counterEl.textContent = audioFiles.length ? `${currentAudioIndex + 1} / ${audioFiles.length}` : '';
-    if (playBtn && audioPlayer) playBtn.textContent = audioPlayer.paused ? '▶' : '⏸';
+    if (playBtn && audioPlayer) playBtn.textContent = audioPlayer.paused ? '▶️' : '⏸️';
     if (muteBtn) muteBtn.style.opacity = audioMuted ? '0.4' : '1';
     if (loopBtn) {
         loopBtn.textContent = audioLoopMode === 'one' ? '🔂' : '🔁';
@@ -7606,26 +7614,26 @@ function getAudioPanelHtml() {
         nextName = nextIdx >= 0 ? audioFiles[nextIdx]?.name : '';
     }
     
-    // Lista brani (ordine corrente: shuffle o sequenziale)
+    // Lista brani (sempre visibile)
     const orderedIndices = audioShuffleMode && audioShuffleQueue.length 
         ? audioShuffleQueue 
         : Array.from({length: audioFiles.length}, (_, i) => i);
     
-    const trackListHtml = audioFiles.length ? `
+    const trackListHtml = `
         <div style="margin-bottom: 12px;">
             <div style="font-size: 10pt; color: #999; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.5px;">Playlist</div>
-            <div style="max-height: 120px; overflow-y: auto; border: 1px solid #eee; border-radius: 6px;" class="audio-track-list">
-                ${orderedIndices.map((idx, pos) => {
+            <div style="max-height: 150px; overflow-y: auto; border: 1px solid #eee; border-radius: 6px;" class="audio-track-list">
+                ${audioFiles.length ? orderedIndices.map((idx) => {
                     const isCurrent = idx === currentAudioIndex;
-                    return `<div onclick="jumpToAudio(${idx})" style="padding: 6px 10px; font-size: 11pt; cursor: pointer; 
+                    return `<div onclick="jumpToAudio(${idx})" style="padding: 8px 10px; font-size: 11pt; cursor: pointer; 
                         ${isCurrent ? 'background: #e3f2fd; font-weight: 600; color: #1565c0;' : 'color: #333;'}
                         border-bottom: 1px solid #f0f0f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                         ${isCurrent ? '▶ ' : ''}${audioFiles[idx]?.name || ''}
                     </div>`;
-                }).join('')}
+                }).join('') : '<div style="padding: 15px; text-align: center; color: #999; font-size: 11pt;">Nessun brano caricato</div>'}
             </div>
         </div>
-    ` : '';
+    `;
     
     return `
         <div id="audio-panel" style="display: none; position: fixed; bottom: 70px; right: 20px; background: white; border-radius: 12px; padding: 18px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); z-index: 99998; width: 320px;">
@@ -7644,7 +7652,7 @@ function getAudioPanelHtml() {
             <!-- Controlli principali -->
             <div style="display: flex; justify-content: center; align-items: center; gap: 18px; margin-bottom: 14px;">
                 <span onclick="audioPrev()" style="font-size: 24pt; cursor: pointer;">⏮</span>
-                <span id="audio-play-btn" onclick="audioPlay()" style="font-size: 32pt; cursor: pointer;">${isPlaying ? '⏸' : '▶'}</span>
+                <span id="audio-play-btn" onclick="audioPlay()" style="font-size: 32pt; cursor: pointer;">${isPlaying ? '⏸️' : '▶️'}</span>
                 <span onclick="audioNext()" style="font-size: 24pt; cursor: pointer;">⏭</span>
             </div>
             
