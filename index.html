@@ -1427,7 +1427,6 @@ body.dark-mode .piano-key.black {
     <label style="padding-top: 41px;">Testo:</label>
 <div style="flex: 1;">
     <div style="display: flex; gap: 5px; margin-bottom: 5px; justify-content: flex-end;">
-        <button type="button" class="btn btn-secondary" onclick="cleanLyricsText()" style="padding: 5px 15px; font-size: 12px;">🧹 Pulisci testo</button>
         <button type="button" class="btn btn-secondary" onclick="changeLyricsFontSize(-1)" style="padding: 5px 10px; font-size: 12px;">A-</button>
         <button type="button" class="btn btn-secondary" onclick="changeLyricsFontSize(1)" style="padding: 5px 10px; font-size: 12px;">A+</button>
     </div>
@@ -7938,44 +7937,6 @@ function handleTouchEnd(e) {
         
 // Font-size textarea lyrics
 let currentLyricsFontSize = 14; // dimensione iniziale in px
-
-function cleanLyricsText() {
-    const textarea = document.getElementById('lyrics');
-    let text = textarea.value;
-    
-    if (!text.trim()) return;
-    
-    // Rimuovi righe con metadati
-    const metaPatterns = [
-        /^fonte:.*$/im,
-        /^compositori?:.*$/im,
-        /^testo di.*©.*$/im,
-        /^©.*$/im,
-        /^parole e musica.*$/im,
-        /^lyrics?.*©.*$/im,
-    ];
-    metaPatterns.forEach(pattern => {
-        text = text.replace(pattern, '');
-    });
-    
-    // Normalizza fine riga
-    text = text.replace(/\r\n/g, '\n');
-    text = text.replace(/\r/g, '\n');
-    
-    // Converti righe con solo spazi/tab in righe vuote
-    text = text.replace(/^[ \t]+$/gm, '');
-    
-    // Riduci 3+ righe vuote consecutive a 2
-    text = text.replace(/\n{3,}/g, '\n\n');
-    
-    // Rimuovi spazi iniziali e finali da ogni riga
-    text = text.split('\n').map(line => line.trim()).join('\n');
-    
-    // Rimuovi righe vuote all'inizio e alla fine
-    text = text.trim();
-    
-    textarea.value = text;
-}
 
 function changeLyricsFontSize(change) {
     currentLyricsFontSize = Math.max(10, Math.min(24, currentLyricsFontSize + change));
