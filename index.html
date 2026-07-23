@@ -7608,14 +7608,17 @@ function updatePlayerUI() {
             ? audioShuffleQueue 
             : Array.from({length: audioFiles.length}, (_, i) => i);
         
-        listEl.innerHTML = orderedIndices.map(idx => {
+        listEl.innerHTML = audioFiles.length ? orderedIndices.map((idx) => {
             const isCurrent = idx === currentAudioIndex;
-            return `<div onclick="jumpToAudio(${idx})" style="padding: 6px 10px; font-size: 11pt; cursor: pointer; 
+            return `<div style="display: flex; align-items: center; padding: 8px 10px; font-size: 11pt; cursor: pointer; 
                 ${isCurrent ? 'background: #e3f2fd; font-weight: 600; color: #1565c0;' : 'color: #333;'}
-                border-bottom: 1px solid #f0f0f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                ${isCurrent ? '▶ ' : ''}${audioFiles[idx]?.name || ''}
+                border-bottom: 1px solid #f0f0f0;">
+                <span onclick="jumpToAudio(${idx})" style="flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                    ${isCurrent ? '▶ ' : ''}${audioFiles[idx]?.name || ''}
+                </span>
+                <span onclick="removeAudioTrack(${idx})" style="color: #e74c3c; font-size: 13pt; padding-left: 8px; flex-shrink: 0;">✕</span>
             </div>`;
-        }).join('');
+        }).join('') : '<div style="padding: 12px; text-align: center; color: #999; font-size: 11pt;">Nessun brano caricato</div>';
     }
 }
 
