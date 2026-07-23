@@ -7478,8 +7478,63 @@ function togglePlaylist() {
     const toggle = document.getElementById('audio-playlist-toggle');
     if (!list) return;
     const isVisible = list.style.display !== 'none';
-    list.style.display = isVisible ? 'none' : 'block';
-    toggle.textContent = isVisible ? '▼ Playlist' : '▲ Playlist';
+    if (isVisible) {
+        list.style.display = 'none';
+        toggle.textContent = '▼ Playlist';
+    } else {
+        // Ricalcola contenuto lista
+        const orderedIndices = audioShuffleMode && audioShuffleQueue.length 
+            ? audioShuffleQueue 
+            : Array.from({length: audioFiles.length}, (_, i) => i);
+        
+        list.innerHTML = audioFiles.length ? orderedIndices.map((idx) => {
+            const isCurrent = idx === currentAudioIndex;
+            return `<div style="display: flex; align-items: center; padding: 8px 10px; font-size: 11pt; cursor: pointer; 
+                ${isCurrent ? 'background: #e3f2fd; font-weight: 600; color: #1565c0;' : 'color: #333;'}
+                border-bottom: 1px solid #f0f0f0;">
+                <span onclick="jumpToAudio(${idx})" style="flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                    ${isCurrent ? '▶ ' : ''}${audioFiles[idx]?.name || ''}
+                </span>
+                <span onclick="removeAudioTrack(${idx})" style="color: #e74c3c; font-size: 13pt; padding-left: 8px; flex-shrink: 0;">✕</span>
+            </div>`;
+        }).join('') : '<div style="padding: 12px; text-align: center; color: #999; font-size: 11pt;">Nessun brano caricato</div>';
+        
+        list.style.display = 'block';
+        toggle.textContent = '▲ Playlist';
+    }
+}
+
+function removeAudioTrack(idx) {
+    if (!audioFiles.length) return;
+    
+    const wasPlaying = audioPlayer && !audioPlayer.paused;
+    const wasCurrent = idx === currentAudioIndex;
+    
+    // Rimuovi dalla lista
+    audioFiles.splice(idx, 1);
+    
+    // Aggiusta indice corrente
+    if (wasCurrent) {
+        if (audioFiles.length === 0) {
+            audioPlayer.pause();
+            audioPlayer.src = '';
+        } else {
+            currentAudioIndex = Math.min(idx, audioFiles.length - 1);
+            audioPlayer.src = audioFiles[currentAudioIndex].url;
+            if (wasPlaying) audioPlayer.play();
+        }
+    } else if (idx < currentAudioIndex) {
+        currentAudioIndex--;
+    }
+    
+    // Rigenera shuffle queue
+    if (audioShuffleMode) buildShuffleQueue();
+    
+    // Aggiorna la lista aperta
+    togglePlaylist(); // chiudi
+    togglePlaylist(); // riapri con dati aggiornati
+    
+    updatePlayerUI();
 }
 
 function jumpToAudio(idx) {
