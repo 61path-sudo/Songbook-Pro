@@ -1531,7 +1531,7 @@ body.dark-mode .piano-key.black {
 <div style="text-align: center; padding: 20px 0; background: #f8f9fa; display: flex; justify-content: center; align-items: center; gap: 20px;">
     <button class="fullscreen-mode-btn" onclick="enterFullscreen()">Fullscreen Mode</button>
     <button class="fullscreen-mode-btn" onclick="document.getElementById('audio-file-input').click()" style="background: #8e44ad; min-width: 180px;">📂 Carica brani</button>
-    <input type="file" id="audio-file-input" accept="audio/*" multiple style="display: none;" onchange="loadAudioFiles(event)">
+    <input type="file" id="audio-file-input" accept="audio/*,.mp3,.m4a,.aac,.wav,.flac" multiple style="display: none;" onchange="loadAudioFiles(event)">
 </div>
 <div id="audio-loaded-info" style="display: none; text-align: center; padding: 5px; background: #e8f5e9; font-size: 13px; color: #2e7d32;"></div>
 
@@ -7602,7 +7602,7 @@ function getAudioPanelHtml() {
             <!-- Aggiungi brani e chiudi -->
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <span onclick="document.getElementById('audio-add-input').click()" style="font-size: 12pt; color: #3498db; cursor: pointer;">+ Aggiungi brani</span>
-                <input type="file" id="audio-add-input" accept="audio/*" multiple style="display: none;" onchange="loadMoreAudioFiles(event)">
+                <input type="file" id="audio-add-input" accept="audio/*,.mp3,.m4a,.aac,.wav,.flac" multiple style="display: none;" onchange="loadMoreAudioFiles(event)">
                 <span onclick="toggleAudioPanel()" style="font-size: 11pt; color: #999; cursor: pointer;">✕ Chiudi</span>
             </div>
         </div>
