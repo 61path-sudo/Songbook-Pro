@@ -7490,7 +7490,7 @@ function togglePlaylist() {
         list.innerHTML = audioFiles.length ? orderedIndices.map((idx) => {
             const isCurrent = idx === currentAudioIndex;
             return `<div style="display: flex; align-items: center; padding: 8px 10px; font-size: 11pt; cursor: pointer; 
-                ${isCurrent ? 'background: #e3f2fd; font-weight: 600; color: #1565c0;' : 'color: #333;'}
+                ${isCurrent ? 'background: #e3f2fd; font-weight: 600; color: #1565c0;' : (idx % 2 === 0 ? 'background: white; color: #333;' : 'background: #f5f5f5; color: #333;')}
                 border-bottom: 1px solid #f0f0f0;">
                 <span onclick="jumpToAudio(${idx})" style="flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                     ${isCurrent ? '▶ ' : ''}${audioFiles[idx]?.name || ''}
@@ -7611,7 +7611,7 @@ function updatePlayerUI() {
         listEl.innerHTML = audioFiles.length ? orderedIndices.map((idx) => {
             const isCurrent = idx === currentAudioIndex;
             return `<div style="display: flex; align-items: center; padding: 8px 10px; font-size: 11pt; cursor: pointer; 
-                ${isCurrent ? 'background: #e3f2fd; font-weight: 600; color: #1565c0;' : 'color: #333;'}
+                ${isCurrent ? 'background: #e3f2fd; font-weight: 600; color: #1565c0;' : (idx % 2 === 0 ? 'background: white; color: #333;' : 'background: #f5f5f5; color: #333;')}
                 border-bottom: 1px solid #f0f0f0;">
                 <span onclick="jumpToAudio(${idx})" style="flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                     ${isCurrent ? '▶ ' : ''}${audioFiles[idx]?.name || ''}
