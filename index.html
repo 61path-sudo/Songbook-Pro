@@ -7515,7 +7515,7 @@ function togglePlaylist() {
         list.innerHTML = audioFiles.length ? orderedIndices.map((idx, pos) => {
             const isCurrent = idx === currentAudioIndex;
             return `<div style="display: flex; align-items: center; padding: 8px 10px; font-size: 11pt; cursor: pointer; 
-                ${isCurrent ? 'color: #1565c0; font-weight: 600;' : 'color: #333;'} background: ${isCurrent ? 'transparent' : (pos % 2 === 0 ? 'white' : '#f5f5f5')};
+                ${isCurrent ? 'color: #1565c0; font-weight: 600;' : 'color: #333;'} background: ${pos % 2 === 0 ? 'white' : '#f5f5f5'};
                 border-bottom: 1px solid #f0f0f0;">
                 <span onclick="jumpToAudio(${idx})" style="flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                     ${isCurrent ? '▶ ' : ''}${audioFiles[idx]?.name || ''}
@@ -7638,7 +7638,7 @@ function updatePlayerUI() {
         listEl.innerHTML = audioFiles.length ? orderedIndices.map((idx, pos) => {
             const isCurrent = idx === currentAudioIndex;
             return `<div style="display: flex; align-items: center; padding: 8px 10px; font-size: 11pt; cursor: pointer; 
-                ${isCurrent ? 'color: #1565c0; font-weight: 600;' : 'color: #333;'} background: ${isCurrent ? 'transparent' : (pos % 2 === 0 ? 'white' : '#f5f5f5')};
+                ${isCurrent ? 'color: #1565c0; font-weight: 600;' : 'color: #333;'} background: ${pos % 2 === 0 ? 'white' : '#f5f5f5'};
                 border-bottom: 1px solid #f0f0f0;">
                 <span onclick="jumpToAudio(${idx})" style="flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                     ${isCurrent ? '▶ ' : ''}${audioFiles[idx]?.name || ''}
@@ -7717,7 +7717,7 @@ function getAudioPanelHtml() {
     const trackListHtml = audioFiles.length ? orderedIndices.map((idx, pos) => {
         const isCurrent = idx === currentAudioIndex;
         return `<div onclick="jumpToAudio(${idx})" style="padding: 8px 10px; font-size: 11pt; cursor: pointer; 
-            ${isCurrent ? 'color: #1565c0; font-weight: 600;' : 'color: #333;'} background: ${isCurrent ? 'transparent' : (pos % 2 === 0 ? 'white' : '#f5f5f5')};
+            ${isCurrent ? 'color: #1565c0; font-weight: 600;' : 'color: #333;'} background: ${pos % 2 === 0 ? 'white' : '#f5f5f5'};
             border-bottom: 1px solid #f0f0f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
             ${isCurrent ? '▶ ' : ''}${audioFiles[idx]?.name || ''}
         </div>`;
