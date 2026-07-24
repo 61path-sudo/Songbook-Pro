@@ -7275,6 +7275,7 @@ let audioLoopMode = 'all'; // 'none', 'one', 'all'
 let audioMuted = false;
 let audioShuffleQueue = [];
 let audioShuffleIndex = 0;
+let audioReady = false; // false = solo selezione, true = parte subito
 let longPressTimer = null;
 let touchStartX = 0;
 let touchStartY = 0;
@@ -7380,10 +7381,10 @@ function loadAudioFiles(event) {
     const files = Array.from(event.target.files);
     if (files.length === 0) return;
     
-    const newFiles = files.map(file => ({
-        name: file.name.replace(/\.[^/.]+$/, ''),
-        url: URL.createObjectURL(file)
-    }));
+    const existingNames = new Set(audioFiles.map(f => f.name));
+    const newFiles = files
+        .map(file => ({ name: file.name.replace(/\.[^/.]+$/, ''), url: URL.createObjectURL(file) }))
+        .filter(f => !existingNames.has(f.name));
     
     audioFiles = [...audioFiles, ...newFiles];
     
@@ -7396,6 +7397,7 @@ function loadAudioFiles(event) {
     if (audioFiles.length === newFiles.length) {
         currentAudioIndex = 0;
         audioPlayer.src = audioFiles[0].url;
+        audioReady = false; // reset: prima del play si può solo selezionare
     }
     
     if (audioShuffleMode) buildShuffleQueue();
@@ -7473,6 +7475,29 @@ function playPrevAudio() {
     updatePlayerUI();
 }
 
+function clearPlaylist() {
+    if (!audioFiles.length) return;
+    showModal('', `Svuotare la playlist? (${audioFiles.length} brani)`, () => {
+        if (audioPlayer) {
+            audioPlayer.pause();
+            audioPlayer.src = '';
+        }
+        audioFiles = [];
+        currentAudioIndex = 0;
+        audioReady = false;
+        audioShuffleQueue = [];
+        audioShuffleIndex = 0;
+        
+        // Chiudi playlist se aperta e aggiorna UI
+        const list = document.getElementById('audio-playlist');
+        const toggle = document.getElementById('audio-playlist-toggle');
+        if (list) { list.innerHTML = '<div style="padding: 12px; text-align: center; color: #999; font-size: 11pt;">Nessun brano caricato</div>'; }
+        if (toggle) toggle.textContent = '▼ Playlist';
+        
+        updatePlayerUI();
+    }, true);
+}
+
 function togglePlaylist() {
     const list = document.getElementById('audio-playlist');
     const toggle = document.getElementById('audio-playlist-toggle');
@@ -7490,7 +7515,7 @@ function togglePlaylist() {
         list.innerHTML = audioFiles.length ? orderedIndices.map((idx) => {
             const isCurrent = idx === currentAudioIndex;
             return `<div style="display: flex; align-items: center; padding: 8px 10px; font-size: 11pt; cursor: pointer; 
-                ${isCurrent ? 'background: #e3f2fd; font-weight: 600; color: #1565c0;' : (idx % 2 === 0 ? 'background: white; color: #333;' : 'background: #f5f5f5; color: #333;')}
+                ${isCurrent ? 'color: #1565c0; font-weight: 600;' : 'color: #333;'}
                 border-bottom: 1px solid #f0f0f0;">
                 <span onclick="jumpToAudio(${idx})" style="flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                     ${isCurrent ? '▶ ' : ''}${audioFiles[idx]?.name || ''}
@@ -7541,14 +7566,16 @@ function jumpToAudio(idx) {
     if (!audioFiles.length || idx < 0 || idx >= audioFiles.length) return;
     currentAudioIndex = idx;
     
-    // Aggiorna shuffle index se in modalità casuale
     if (audioShuffleMode) {
         audioShuffleIndex = audioShuffleQueue.indexOf(idx);
         if (audioShuffleIndex < 0) audioShuffleIndex = 0;
     }
     
     audioPlayer.src = audioFiles[currentAudioIndex].url;
-    audioPlayer.play();
+    
+    // Parte subito solo se audioReady (dopo il primo play)
+    if (audioReady) audioPlayer.play();
+    
     updatePlayerUI();
 }
 
@@ -7611,7 +7638,7 @@ function updatePlayerUI() {
         listEl.innerHTML = audioFiles.length ? orderedIndices.map((idx) => {
             const isCurrent = idx === currentAudioIndex;
             return `<div style="display: flex; align-items: center; padding: 8px 10px; font-size: 11pt; cursor: pointer; 
-                ${isCurrent ? 'background: #e3f2fd; font-weight: 600; color: #1565c0;' : (idx % 2 === 0 ? 'background: white; color: #333;' : 'background: #f5f5f5; color: #333;')}
+                ${isCurrent ? 'color: #1565c0; font-weight: 600;' : 'color: #333;'}
                 border-bottom: 1px solid #f0f0f0;">
                 <span onclick="jumpToAudio(${idx})" style="flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                     ${isCurrent ? '▶ ' : ''}${audioFiles[idx]?.name || ''}
@@ -7625,6 +7652,7 @@ function updatePlayerUI() {
 function audioPlay() {
     if (!audioPlayer || !audioFiles.length) return;
     if (audioPlayer.paused) {
+        audioReady = true;
         audioPlayer.play();
     } else {
         audioPlayer.pause();
@@ -7689,7 +7717,7 @@ function getAudioPanelHtml() {
     const trackListHtml = audioFiles.length ? orderedIndices.map((idx) => {
         const isCurrent = idx === currentAudioIndex;
         return `<div onclick="jumpToAudio(${idx})" style="padding: 8px 10px; font-size: 11pt; cursor: pointer; 
-            ${isCurrent ? 'background: #e3f2fd; font-weight: 600; color: #1565c0;' : 'color: #333;'}
+            ${isCurrent ? 'color: #1565c0; font-weight: 600;' : 'color: #333;'}
             border-bottom: 1px solid #f0f0f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
             ${isCurrent ? '▶ ' : ''}${audioFiles[idx]?.name || ''}
         </div>`;
@@ -7709,9 +7737,12 @@ function getAudioPanelHtml() {
                 ${nextName ? `▶ ${nextName}` : ''}
             </div>
             
-            <!-- Playlist toggle -->
-            <div onclick="togglePlaylist()" id="audio-playlist-toggle" style="font-size: 10pt; color: #3498db; cursor: pointer; margin-bottom: 10px; font-weight: 600;">
-                ▼ Playlist
+            <!-- Playlist toggle + Svuota -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <div onclick="togglePlaylist()" id="audio-playlist-toggle" style="font-size: 10pt; color: #3498db; cursor: pointer; font-weight: 600;">
+                    ▼ Playlist
+                </div>
+                <div onclick="clearPlaylist()" style="font-size: 10pt; color: #e74c3c; cursor: pointer; font-weight: 600;">Svuota</div>
             </div>
             
             <!-- Lista brani (nascosta di default) -->
