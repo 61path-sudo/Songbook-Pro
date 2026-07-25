@@ -6071,8 +6071,7 @@ while (processedArtists < artists.length) {
     const indexContent = `
     ${isFirstPage ? `<div style="display: flex; align-items: center; justify-content: center; margin-bottom: 30px; position: relative;">
         <div style="text-align: center; font-size: 32pt; font-weight: bold;">ELENCO CANTANTI</div>
-        <div style="position: absolute; right: 0; display: flex; gap: 15px; align-items: center;">
-            <div data-action="preferiti" style="font-size: 28pt; cursor: pointer; padding: 5px 10px;">⭐</div>
+        <div style="position: absolute; right: 0; display: flex; gap: 5px; align-items: center;">
             <div data-action="search" style="font-size: 28pt; cursor: pointer; padding: 5px 10px; color: #555;">🔍</div>
             <div data-action="audio" style="font-size: 28pt; cursor: pointer; padding: 5px 10px; color: #555;">🎵</div>
         </div>
@@ -6893,6 +6892,19 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
             
             setTimeout(() => {
                 addFullscreenLinkHandlers();
+                
+                // Handler diretto per "Torna ad Elenco cantanti" in Preferiti
+                document.querySelectorAll('[data-action="index"]').forEach(link => {
+                    link.addEventListener('touchend', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        showBookPage(0);
+                    });
+                    link.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        showBookPage(0);
+                    });
+                });
             }, 50);
             
             // Handlers song-link
@@ -6962,7 +6974,13 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
                         }
                         previewContent.innerHTML = `<div class="page active" style="width: 100vw; height: 100vh; height: 100dvh;">${prefPages[currentPrefPage]}</div>`;
                         _setupPrefHandlers();
-                        setTimeout(() => { addFullscreenLinkHandlers(); }, 50);
+                        setTimeout(() => { 
+                            addFullscreenLinkHandlers();
+                            document.querySelectorAll('[data-action="index"]').forEach(link => {
+                                link.addEventListener('touchend', (e) => { e.preventDefault(); e.stopPropagation(); showBookPage(0); });
+                                link.addEventListener('click', (e) => { e.stopPropagation(); showBookPage(0); });
+                            });
+                        }, 50);
                         const newScrollContainer = previewContent.querySelector('.hide-scrollbar');
                         if (newScrollContainer) newScrollContainer.scrollLeft = savedScrollLeft;
                     }
@@ -7513,10 +7531,10 @@ function togglePlaylist() {
             ? audioShuffleQueue 
             : Array.from({length: audioFiles.length}, (_, i) => i);
         
-        list.innerHTML = audioFiles.length ? orderedIndices.map((idx, pos) => {
+        list.innerHTML = audioFiles.length ? orderedIndices.map((idx) => {
             const isCurrent = idx === currentAudioIndex;
             return `<div style="display: flex; align-items: center; padding: 8px 10px; font-size: 11pt; cursor: pointer; 
-                ${isCurrent ? 'color: #1565c0; font-weight: 600;' : 'color: #333;'} background: ${pos % 2 === 0 ? 'white' : '#f5f5f5'};
+                ${isCurrent ? 'color: #1565c0; font-weight: 600;' : 'color: #333;'}
                 border-bottom: 1px solid #f0f0f0;">
                 <span onclick="jumpToAudio(${idx})" style="flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                     ${isCurrent ? '▶ ' : ''}${audioFiles[idx]?.name || ''}
@@ -7636,10 +7654,10 @@ function updatePlayerUI() {
             ? audioShuffleQueue 
             : Array.from({length: audioFiles.length}, (_, i) => i);
         
-        listEl.innerHTML = audioFiles.length ? orderedIndices.map((idx, pos) => {
+        listEl.innerHTML = audioFiles.length ? orderedIndices.map((idx) => {
             const isCurrent = idx === currentAudioIndex;
             return `<div style="display: flex; align-items: center; padding: 8px 10px; font-size: 11pt; cursor: pointer; 
-                ${isCurrent ? 'color: #1565c0; font-weight: 600;' : 'color: #333;'} background: ${pos % 2 === 0 ? 'white' : '#f5f5f5'};
+                ${isCurrent ? 'color: #1565c0; font-weight: 600;' : 'color: #333;'}
                 border-bottom: 1px solid #f0f0f0;">
                 <span onclick="jumpToAudio(${idx})" style="flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                     ${isCurrent ? '▶ ' : ''}${audioFiles[idx]?.name || ''}
@@ -7715,17 +7733,17 @@ function getAudioPanelHtml() {
         ? audioShuffleQueue 
         : Array.from({length: audioFiles.length}, (_, i) => i);
     
-    const trackListHtml = audioFiles.length ? orderedIndices.map((idx, pos) => {
+    const trackListHtml = audioFiles.length ? orderedIndices.map((idx) => {
         const isCurrent = idx === currentAudioIndex;
         return `<div onclick="jumpToAudio(${idx})" style="padding: 8px 10px; font-size: 11pt; cursor: pointer; 
-            ${isCurrent ? 'color: #1565c0; font-weight: 600;' : 'color: #333;'} background: ${pos % 2 === 0 ? 'white' : '#f5f5f5'};
+            ${isCurrent ? 'color: #1565c0; font-weight: 600;' : 'color: #333;'}
             border-bottom: 1px solid #f0f0f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
             ${isCurrent ? '▶ ' : ''}${audioFiles[idx]?.name || ''}
         </div>`;
     }).join('') : '<div style="padding: 12px; text-align: center; color: #999; font-size: 11pt;">Nessun brano caricato</div>';
     
     return `
-        <div id="audio-panel" style="display: none; position: fixed; bottom: 70px; right: 20px; background: #e8e8e8; border-radius: 12px; padding: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); z-index: 99998; width: 300px;">
+        <div id="audio-panel" style="display: none; position: fixed; bottom: 70px; right: 20px; background: white; border-radius: 12px; padding: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); z-index: 99998; width: 300px;">
             
             <!-- Titolo + contatore -->
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px;">
@@ -7747,7 +7765,7 @@ function getAudioPanelHtml() {
             </div>
             
             <!-- Lista brani (nascosta di default) -->
-            <div id="audio-playlist" style="display: none; max-height: 180px; overflow-y: auto; border: 1px solid #bbb; border-radius: 6px; margin-bottom: 10px;" class="audio-track-list">
+            <div id="audio-playlist" style="display: none; max-height: 180px; overflow-y: auto; border: 1px solid #eee; border-radius: 6px; margin-bottom: 10px;" class="audio-track-list">
                 ${trackListHtml}
             </div>
             
