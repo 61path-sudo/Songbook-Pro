@@ -6993,6 +6993,7 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
         }
                                         
                                         function showBookPage(index) {
+            const wasInPreferiti = inPreferitiFullscreen;
             inPreferitiFullscreen = false;
             // Rimuovi handler swipe preferiti se attivi
             const previewContent2 = document.getElementById('preview-content');
@@ -7007,7 +7008,7 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
             
     const targetIndex = Math.max(0, Math.min(index, allFullscreenPages.length - 1));
     
-    if (targetIndex === currentFullscreenIndex) return;
+    if (targetIndex === currentFullscreenIndex && !wasInPreferiti) return;
     
     currentFullscreenIndex = targetIndex;
     const previewContent = document.getElementById('preview-content');
