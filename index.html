@@ -6893,6 +6893,19 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
             
             setTimeout(() => {
                 addFullscreenLinkHandlers();
+                
+                // Fix: handler diretto per "Torna ad Elenco cantanti" in Preferiti
+                document.querySelectorAll('[data-action="index"]').forEach(link => {
+                    link.addEventListener('touchend', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        showBookPage(0);
+                    });
+                    link.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        showBookPage(0);
+                    });
+                });
             }, 50);
             
             // Handlers song-link
@@ -6962,7 +6975,13 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
                         }
                         previewContent.innerHTML = `<div class="page active" style="width: 100vw; height: 100vh; height: 100dvh;">${prefPages[currentPrefPage]}</div>`;
                         _setupPrefHandlers();
-                        setTimeout(() => { addFullscreenLinkHandlers(); }, 50);
+                        setTimeout(() => { 
+                            addFullscreenLinkHandlers();
+                            document.querySelectorAll('[data-action="index"]').forEach(link => {
+                                link.addEventListener('touchend', (e) => { e.preventDefault(); e.stopPropagation(); showBookPage(0); });
+                                link.addEventListener('click', (e) => { e.stopPropagation(); showBookPage(0); });
+                            });
+                        }, 50);
                         const newScrollContainer = previewContent.querySelector('.hide-scrollbar');
                         if (newScrollContainer) newScrollContainer.scrollLeft = savedScrollLeft;
                     }
