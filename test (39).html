@@ -1416,7 +1416,8 @@ body.dark-mode .piano-key.black {
                     <div id="artist-suggestions" style="position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ddd; border-top: none; border-radius: 0 0 5px 5px; max-height: 200px; overflow-y: auto; z-index: 1000; display: none;"></div>
                 </div>
             </div>
-            <div class="form-row">
+            <!-- Riga Dettagli (visibile solo senza accordi) -->
+            <div class="form-row" id="row-dettagli">
                 <label>Dettagli:</label>
                 <div style="flex: 1; display: flex; gap: 10px;">
                     <input type="text" id="rhythmic" placeholder="Ritmica: es. 4/4, swing, shuffle..." style="flex: 8; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
@@ -1424,14 +1425,99 @@ body.dark-mode .piano-key.black {
                     <input type="number" id="tempo" placeholder="BPM" min="40" max="240" style="flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
                 </div>
             </div>
+            <!-- Riga Info extra (visibile solo con accordi) -->
+            <div class="form-row" id="row-info-extra" style="display: none;">
+                <label>Info extra:</label>
+                <textarea id="info-extra" placeholder="Informazioni aggiuntive (storia del brano, autori, note...)" 
+                    style="flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 5px; min-height: 60px; resize: vertical; font-family: inherit; font-size: 13px;"></textarea>
+            </div>
             <div class="form-row" style="align-items: flex-start; margin: 10px 0;">
     <label style="padding-top: 41px;">Testo:</label>
 <div style="flex: 1;">
-    <div style="display: flex; gap: 5px; margin-bottom: 5px; justify-content: flex-end;">
+    <div style="display: flex; gap: 5px; margin-bottom: 5px; justify-content: flex-end; align-items: center;">
+        <label style="font-size: 12px; color: #666; display: flex; align-items: center; gap: 5px; margin-right: 10px;">
+            <input type="checkbox" id="has-chords-toggle" onchange="toggleChordsEditor(this.checked)" style="width: 16px; height: 16px;">
+            Testo con accordi
+        </label>
         <button type="button" class="btn btn-secondary" onclick="changeLyricsFontSize(-1)" style="padding: 5px 10px; font-size: 12px;">A-</button>
         <button type="button" class="btn btn-secondary" onclick="changeLyricsFontSize(1)" style="padding: 5px 10px; font-size: 12px;">A+</button>
     </div>
-    <textarea id="lyrics" placeholder="Inserisci il testo della canzone..." style="min-height: 400px; width: 100%;"></textarea>
+    
+    <!-- Editor normale (default) -->
+    <div id="lyrics-normal-editor">
+        <textarea id="lyrics" placeholder="Inserisci il testo della canzone..." style="min-height: 400px; width: 100%;"></textarea>
+    </div>
+    
+    <!-- Editor con accordi (contenteditable) -->
+    <div id="lyrics-chords-editor" style="display: none;">
+        <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 4px; align-items: center; padding: 8px; background: #f8f8f8; border: 1px solid #ddd; border-radius: 6px 6px 0 0;">
+            
+            <!-- Sfondo -->
+            <div style="display: flex; align-items: center; gap: 4px;">
+                <span style="font-size: 11px; color: #666; font-weight: 600;">Sfondo:</span>
+                <button type="button" onclick="applyBgColor('#FFFF00')" title="Giallo"
+                    style="width: 26px; height: 26px; background: #FFFF00; border: 1px solid #ccc; border-radius: 4px; cursor: pointer;"></button>
+                <button type="button" onclick="applyBgColor('#FFCCCC')" title="Rosso chiaro"
+                    style="width: 26px; height: 26px; background: #FFCCCC; border: 1px solid #ccc; border-radius: 4px; cursor: pointer;"></button>
+                <button type="button" onclick="applyBgColor('#CCFFCC')" title="Verde chiaro"
+                    style="width: 26px; height: 26px; background: #CCFFCC; border: 1px solid #ccc; border-radius: 4px; cursor: pointer;"></button>
+            </div>
+            
+            <div style="width: 1px; height: 24px; background: #ddd;"></div>
+            
+            <!-- Colore carattere -->
+            <div style="display: flex; align-items: center; gap: 4px;">
+                <span style="font-size: 11px; color: #666; font-weight: 600;">Carattere:</span>
+                <button type="button" onclick="applyTextColor('#993300')" title="Marrone"
+                    style="width: 26px; height: 26px; background: #993300; border: 1px solid #ccc; border-radius: 4px; cursor: pointer;"></button>
+                <button type="button" onclick="applyTextColor('#6600CC')" title="Viola"
+                    style="width: 26px; height: 26px; background: #6600CC; border: 1px solid #ccc; border-radius: 4px; cursor: pointer;"></button>
+                <button type="button" onclick="applyTextColor('#FF6600')" title="Arancione"
+                    style="width: 26px; height: 26px; background: #FF6600; border: 1px solid #ccc; border-radius: 4px; cursor: pointer;"></button>
+                <button type="button" onclick="applyTextColor('#006600')" title="Verde"
+                    style="width: 26px; height: 26px; background: #006600; border: 1px solid #ccc; border-radius: 4px; cursor: pointer;"></button>
+            </div>
+            
+            <div style="width: 1px; height: 24px; background: #ddd;"></div>
+            
+            <!-- Sottolineatura -->
+            <button type="button" onclick="applyUnderline()" title="Sottolineato"
+                style="padding: 4px 10px; font-size: 13px; background: white; border: 1px solid #ccc; border-radius: 4px; cursor: pointer; text-decoration: underline; font-weight: 600;">
+                U
+            </button>
+            
+            <div style="width: 1px; height: 24px; background: #ddd;"></div>
+            
+            <!-- Rimuovi tutto -->
+            <button type="button" onclick="removeAllFormatting()" 
+                style="padding: 4px 10px; font-size: 11px; background: white; border: 1px solid #ccc; border-radius: 4px; cursor: pointer; color: #e74c3c;">
+                ✕ Rimuovi formattazione
+            </button>
+        </div>
+        
+        <!-- Seconda riga: Converti -->
+        <div style="display: flex; gap: 8px; margin-bottom: 8px; align-items: center; padding: 6px 8px; background: #f0f0f0; border: 1px solid #ddd; border-top: none; border-radius: 0 0 6px 6px;">
+            <span style="font-size: 11px; color: #666; font-weight: 600;">Riga selezionata:</span>
+            <button type="button" onclick="convertLineToChords()" 
+                style="padding: 4px 14px; font-size: 11px; background: #0000FF; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">
+                Converti in accordi
+            </button>
+            <button type="button" onclick="convertLineToText()" 
+                style="padding: 4px 14px; font-size: 11px; background: #333; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">
+                Converti in testo
+            </button>
+            <span style="font-size: 10px; color: #999; margin-left: auto;">I colori vengono aggiornati automaticamente a ogni invio</span>
+        </div>
+        
+        <div id="lyrics-chords-content" contenteditable="true" autocorrect="off" autocapitalize="off" spellcheck="false"
+            style="min-height: 400px; width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 5px; 
+                   font-family: 'Verdana', sans-serif; font-weight: bold; font-size: 20pt; 
+                   line-height: 1.2; white-space: pre-wrap; overflow-y: auto; box-sizing: border-box;
+                   outline: none; background: white;"
+                   onkeydown="handleEditorKeydown(event)"
+                   onpaste="handleEditorPaste(event)">
+        </div>
+    </div>
 </div>
 </div>
             
@@ -1612,16 +1698,11 @@ body.dark-mode .piano-key.black {
             <div id="accordi-review-list" style="max-height: 400px; overflow-y: auto; border: 1px solid #ddd; border-radius: 5px; background: white;"></div>
             <div style="text-align: right; margin-top: 15px;">
                 <button class="btn btn-secondary" onclick="clearAccordi()">Cancella</button>
-                <button class="btn btn-primary" id="accordi-import-btn" onclick="importAllAccordi()">Importa tutti</button>
+                <button class="btn btn-primary" id="accordi-import-btn" onclick="importAllAccordi()">Importa selezionati</button>
             </div>
         </div>
     </div>
     
-    <!-- Lista canzoni con accordi -->
-    <div style="background: #fff3e0; padding: 20px; border-radius: 8px; margin: 20px 0;">
-        <h3 style="margin-top: 0;">Canzoni con Accordi (<span id="accordi-count">0</span>)</h3>
-        <div id="accordi-list" style="max-height: 400px; overflow-y: auto; border: 1px solid #ddd; border-radius: 5px; background: white;"></div>
-    </div>
 </div>
 
 <!-- Export/Import -->
@@ -1785,6 +1866,7 @@ body.dark-mode .piano-key.black {
 </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script>
         let songs = [];
         let selectedArtist = null;
@@ -1854,15 +1936,30 @@ function calculateSongPagination(song, format, isPDF = false, isFullscreen = fal
         middlePageHeight = 740;
         lastPageHeight = 700;
     } else {
-        firstPageHeight = 780;
-        middlePageHeight = 870;
-        lastPageHeight = 825;
+        if (song.hasChords) {
+            firstPageHeight = 980;
+            middlePageHeight = 820;
+            lastPageHeight = 780;
+        } else {
+            firstPageHeight = 780;
+            middlePageHeight = 870;
+            lastPageHeight = 825;
+        }
     }
 }
     
     // Crea un div di test CON GLI STESSI STILI della classe .song-text
     const testDiv = document.createElement('div');
-    testDiv.className = 'song-text';  // USA LA STESSA CLASSE
+    if (song.hasChords) {
+        // Font Verdana 20pt per testi con accordi
+        testDiv.style.fontFamily = 'Verdana, sans-serif';
+        testDiv.style.fontWeight = 'bold';
+        testDiv.style.fontSize = '20pt';
+        testDiv.style.lineHeight = '1.2';
+        testDiv.style.whiteSpace = 'pre-wrap';
+    } else {
+        testDiv.className = 'song-text';  // USA LA STESSA CLASSE
+    }
     testDiv.style.position = 'absolute';
     testDiv.style.visibility = 'hidden';
     testDiv.style.width = (dims.width - 40) + 'px';  // Stessa larghezza della pagina reale
@@ -1873,15 +1970,40 @@ function calculateSongPagination(song, format, isPDF = false, isFullscreen = fal
 function getLineHeight(text) {
     const trimmed = text.trim();
     if (trimmed === '') {
-        // Riga vuota: altezza fissa per separazione strofe
-        return 22;  // Stessa altezza di una riga normale
+        return song.hasChords ? 30 : 22;
     }
-    testDiv.textContent = text;
+    // Rimuovi marcatori interni per misurare il testo reale
+    let cleanText = trimmed;
+    while (cleanText.startsWith('§')) {
+        if (cleanText.startsWith('§FORCED§')) cleanText = cleanText.substring(8);
+        else if (cleanText.startsWith('§TEXT§')) cleanText = cleanText.substring(6);
+        else if (cleanText.startsWith('§INTRO:')) { cleanText = cleanText.substring(7).trim(); break; }
+        else { cleanText = cleanText.substring(1); break; }
+    }
+    cleanText = cleanText.replace(/«[^»]*»/g, '');
+    testDiv.textContent = cleanText;
     const height = testDiv.offsetHeight;
     return height;
 }
     
     const pages = [];
+    // Funzione helper: evita di spezzare coppie testo/accordi
+    function adjustPageBreak(endIndex, allLines) {
+        if (!song.hasChords || endIndex <= 0 || endIndex >= allLines.length) return endIndex;
+        
+        const lastLine = allLines[endIndex - 1];
+        const nextLine = allLines[endIndex];
+        
+        // Se l'ultima riga inclusa è testo e la prima esclusa è accordi → retrocedi
+        if (!isChordLine(lastLine) && lastLine.trim() !== '' && 
+            nextLine && (nextLine.startsWith('§') || isChordLine(nextLine))) {
+            return endIndex - 1;
+        }
+        
+        // Se l'ultima riga inclusa è accordi e la prima esclusa è testo → ok (non retrocedere)
+        return endIndex;
+    }
+    
     let currentLineIndex = 0;
     
     // PRIMA PAGINA
@@ -1899,6 +2021,9 @@ function getLineHeight(text) {
             }
         }
         
+        // Non spezzare coppie testo/accordi
+        firstPageEndIndex = adjustPageBreak(firstPageEndIndex, lines);
+        
         pages.push({
             lines: lines.slice(0, firstPageEndIndex),
             isFirst: true,
@@ -1910,7 +2035,6 @@ function getLineHeight(text) {
     
     // PAGINE SUCCESSIVE
 while (currentLineIndex < lines.length) {
-    // Prima riempi con middlePageHeight
     let heightUsed = 0;
     let pageEndIndex = currentLineIndex;
     
@@ -1926,7 +2050,6 @@ while (currentLineIndex < lines.length) {
     
     // Se siamo arrivati alla fine, prova a riempire di più con lastPageHeight
     if (pageEndIndex >= lines.length) {
-        // È l'ultima pagina, riprova con lastPageHeight per recuperare più spazio
         heightUsed = 0;
         pageEndIndex = currentLineIndex;
         
@@ -1941,8 +2064,11 @@ while (currentLineIndex < lines.length) {
         }
     }
     
+    // Non spezzare coppie testo/accordi
+    pageEndIndex = adjustPageBreak(pageEndIndex, lines);
+    
     // Forza almeno una riga se non è riuscito ad aggiungerne
-    if (pageEndIndex === currentLineIndex) {
+    if (pageEndIndex <= currentLineIndex) {
         pageEndIndex = currentLineIndex + 1;
     }
     
@@ -2431,7 +2557,16 @@ function saveData() {
     const rhythmic = document.getElementById('rhythmic').value.trim();
     const key = document.getElementById('key').value.trim();
     const tempo = document.getElementById('tempo').value.trim();
-    const lyrics = document.getElementById('lyrics').value.trim();
+    // Leggi testo dall'editor giusto
+    let lyrics, hasChords;
+    if (editorHasChords) {
+        const rawText = getChordsEditorText();
+        lyrics = processLyricsWithChords(rawText);
+        hasChords = true;
+    } else {
+        lyrics = document.getElementById('lyrics').value.trim();
+        hasChords = false;
+    }
 
     if (!title || !artist || !lyrics) {
         showModal('', 'Compila almeno Titolo, Cantante e Testo!', null, false);
@@ -2441,11 +2576,17 @@ function saveData() {
     // ✅ SALVA LO STATO PRIMA DI MODIFICARE
     saveUndoState();
     
-    let notes = [];
-    if (rhythmic) notes.push(rhythmic);
-    if (key) notes.push(key);
-    if (tempo) notes.push(tempo + ' BPM');
-    const notesString = notes.join(' | ');
+    let notesString;
+    if (editorHasChords) {
+        // Per testi con accordi: usa campo Info extra
+        notesString = document.getElementById('info-extra')?.value.trim() || '';
+    } else {
+        let notes = [];
+        if (rhythmic) notes.push(rhythmic);
+        if (key) notes.push(key);
+        if (tempo) notes.push(tempo + ' BPM');
+        notesString = notes.join(' | ');
+    }
 
     const artistSort = convertToSortName(artist);
 
@@ -2459,7 +2600,8 @@ function saveData() {
             artist: artist,
             artistSort: artistSort,
             notes: notesString,
-            lyrics: lyrics
+            lyrics: lyrics,
+            hasChords: hasChords
         });
         
         saveData();
@@ -2485,6 +2627,11 @@ function saveData() {
         document.getElementById('key').value = '';
         document.getElementById('tempo').value = '';
         document.getElementById('lyrics').value = '';
+        document.getElementById('lyrics-chords-content').innerHTML = '';
+        const infoExtraEl = document.getElementById('info-extra'); if (infoExtraEl) infoExtraEl.value = '';
+        document.getElementById('has-chords-toggle').checked = false;
+        toggleChordsEditor(false);
+        editorHasChords = false;
         stopMetronome();
         
         showModal('', 'Canzone modificata con successo!', null, false);
@@ -2497,7 +2644,8 @@ function saveData() {
             artist: artist,
             artistSort: artistSort,
             notes: notesString,
-            lyrics: lyrics
+            lyrics: lyrics,
+            hasChords: hasChords
         });
         
         saveData();
@@ -2514,6 +2662,11 @@ function saveData() {
         document.getElementById('key').value = '';
         document.getElementById('tempo').value = '';
         document.getElementById('lyrics').value = '';
+        document.getElementById('lyrics-chords-content').innerHTML = '';
+        const infoExtraEl = document.getElementById('info-extra'); if (infoExtraEl) infoExtraEl.value = '';
+        document.getElementById('has-chords-toggle').checked = false;
+        toggleChordsEditor(false);
+        editorHasChords = false;
         stopMetronome();
         
         showModal('', 'Canzone aggiunta con successo!', null, false);
@@ -2563,6 +2716,11 @@ function saveData() {
         document.getElementById('key').value = '';
         document.getElementById('tempo').value = '';
         document.getElementById('lyrics').value = '';
+        document.getElementById('lyrics-chords-content').innerHTML = '';
+        const infoExtraEl = document.getElementById('info-extra'); if (infoExtraEl) infoExtraEl.value = '';
+        document.getElementById('has-chords-toggle').checked = false;
+        toggleChordsEditor(false);
+        editorHasChords = false;
         stopMetronome();
     }
 }
@@ -2855,11 +3013,28 @@ function clearSearch() {
     }
 });
 
-                document.getElementById('rhythmic').value = rhythmic;
-                document.getElementById('key').value = key;
-                document.getElementById('tempo').value = tempo;
-                
-                document.getElementById('lyrics').value = selectedSong.lyrics;
+                if (selectedSong.hasChords) {
+                    // Per testi con accordi: mostra le info extra nel campo Info extra senza marcatori
+                    const cleanNotes = (selectedSong.notes || '').replace(/«[^»]*»/g, '');
+                    const infoExtraEl = document.getElementById('info-extra');
+                    if (infoExtraEl) infoExtraEl.value = cleanNotes;
+                    document.getElementById('rhythmic').value = '';
+                    document.getElementById('key').value = '';
+                    document.getElementById('tempo').value = '';
+                    document.getElementById('has-chords-toggle').checked = true;
+                    toggleChordsEditor(true);
+                    document.getElementById('lyrics-chords-content').innerHTML = markersToHtml(selectedSong.lyrics);
+                    setTimeout(() => colorCurrentLine(), 100);
+                } else {
+                    document.getElementById('rhythmic').value = rhythmic;
+                    document.getElementById('key').value = key;
+                    document.getElementById('tempo').value = tempo;
+                    const infoExtraEl = document.getElementById('info-extra');
+                    if (infoExtraEl) infoExtraEl.value = '';
+                    document.getElementById('lyrics').value = selectedSong.lyrics;
+                    document.getElementById('has-chords-toggle').checked = false;
+                    toggleChordsEditor(false);
+                }
                 
                 // Cambia titolo e pulsanti per modalità "modifica"
                 document.getElementById('add-tab-title').textContent = 'Modifica Canzone';
@@ -3282,28 +3457,154 @@ console.log('Artisti processati:', processedArtists, '/', artists.length);
     showPage(0);
 }
 
+        const CHORD_WORD_PATTERN = /^\/?(Do|Re|Mi|Fa|Sol|La|Si|[A-G])[#mb°]?(dim|maj|m|7|9|11|13|sus|aug|add|°|\+|b|\d+)*(\/[\dA-Gb#]*)?[\(\)øΦ\[\]°\/]*\]?$/i;
+        
+        function isChordWord(w) {
+            if (CHORD_WORD_PATTERN.test(w)) return true;
+            if (/^[\/\%\|]/.test(w)) return true;
+            if (/^\(.*\)$/.test(w)) return true;
+            // Gestisce sequenze di accordi separati da / (es. Dm/Dm7+/Dm7/)
+            if (w.includes('/')) {
+                const parts = w.split('/').filter(p => p.length > 0);
+                return parts.length > 0 && parts.every(p => CHORD_WORD_PATTERN.test(p));
+            }
+            return false;
+        }
+
+        function isChordLine(line) {
+            const trimmed = line.trim();
+            if (trimmed === '') return false;
+            if (trimmed.length > 100) return false;
+            
+            // Rimuovi marcatori di formattazione prima di analizzare
+            const cleaned = trimmed.replace(/«[^»]*»/g, '').trim();
+            if (cleaned === '') return false;
+            
+            const words = cleaned.split(/[\s\t]+/).filter(w => w.length > 0);
+            if (words.length === 0) return false;
+            
+            // Rimuovi parole chiave musicali iniziali (Strum:, Intro:, ecc.)
+            const MUSICAL_KEYWORDS = /^(Strum|Intro|Capo|Coda|Chorus|Verse|Bridge|Fine|Dal|Segno|Riff|Arpeggio)[:.]?$/i;
+            const filteredWords = words.filter(w => !MUSICAL_KEYWORDS.test(w));
+            const wordsToCheck = filteredWords.length > 0 ? filteredWords : words;
+            
+            // Conta accordi (incluse sequenze con /)
+            const chordWords = wordsToCheck.filter(w => isChordWord(w));
+            
+            if (chordWords.length === 0) return false;
+            
+            // Controlla accordi uguali consecutivi (es. "la la" → testo)
+            for (let i = 1; i < wordsToCheck.length; i++) {
+                if (wordsToCheck[i].toLowerCase() === wordsToCheck[i-1].toLowerCase() &&
+                    isChordWord(wordsToCheck[i])) {
+                    return false;
+                }
+            }
+            
+            // Se la riga contiene SOLO accordi (anche 1 solo) → blu
+            const nonChordWords = wordsToCheck.filter(w => !isChordWord(w));
+            if (nonChordWords.length === 0) return true;
+            
+            // Riga mista (testo + accordi) → servono 3+ accordi
+            return chordWords.length >= 3;
+        }
+        
+        function isSigleLine(line) {
+            const trimmed = line.trim();
+            if (trimmed === '') return false;
+            // Contiene prevalentemente caratteri musicali: / | % lettere accordi numeri
+            return /^[A-Za-z0-9\/\|%\s\+\-\(\)#°b\.]*$/.test(trimmed) && 
+                   /[\/\|%]/.test(trimmed);
+        }
+        
+        function isLikelyText(line) {
+            const trimmed = line.trim();
+            if (trimmed === '') return false;
+            // Ha parole lunghe (>3 char) che non sono accordi
+            const words = trimmed.split(/\s+/).filter(w => w.length > 3);
+            const nonChordWords = words.filter(w => !CHORD_WORD_PATTERN.test(w));
+            return nonChordWords.length >= 2;
+        }
+        
+
+        function renderInfoExtra(text) {
+            if (!text) return '';
+            // Rimuovi marcatori colore ma preserva grassetto e corsivo
+            return text
+                .replace(/«Y»(.*?)«\/Y»/gs, '$1')
+                .replace(/«R»(.*?)«\/R»/gs, '$1')
+                .replace(/«G»(.*?)«\/G»/gs, '$1')
+                .replace(/«B»(.*?)«\/B»/gs, '$1')
+                .replace(/«V»(.*?)«\/V»/gs, '$1')
+                .replace(/«O»(.*?)«\/O»/gs, '$1')
+                .replace(/«GR»(.*?)«\/GR»/gs, '$1')
+                .replace(/«U»(.*?)«\/U»/gs, '$1')
+                .replace(/«BOLD»(.*?)«\/BOLD»/gs, '<strong>$1</strong>')
+                .replace(/«I»(.*?)«\/I»/gs, '<em>$1</em>');
+        }
+
         // Renderizza le righe di una canzone (con o senza accordi)
         function renderSongLines(song, lines, isFullscreen) {
             if (song.hasChords) {
-                const fontSize = '13pt';
+                const fontSize = '20pt';
                 
-                function renderWithHighlight(text, color) {
-                    return text.replace(/«([^»]*)»/g, 
-                        `<span style="background: #FFFF00; color: ${color};">$1</span>`
-                    );
+                function renderWithHighlight(text, defaultColor) {
+                    return text
+                        // Sfondi
+                        .replace(/«Y»(.*?)«\/Y»/gs, '<span style="background:#FFFF00;">$1</span>')
+                        .replace(/«R»(.*?)«\/R»/gs, '<span style="background:#FFCCCC;">$1</span>')
+                        .replace(/«G»(.*?)«\/G»/gs, '<span style="background:#CCFFCC;">$1</span>')
+                        // Colori carattere
+                        .replace(/«B»(.*?)«\/B»/gs, '<span style="color:#993300;">$1</span>')
+                        .replace(/«V»(.*?)«\/V»/gs, '<span style="color:#6600CC;">$1</span>')
+                        .replace(/«O»(.*?)«\/O»/gs, '<span style="color:#FF6600;">$1</span>')
+                        .replace(/«GR»(.*?)«\/GR»/gs, '<span style="color:#006600;">$1</span>')
+                        // Sottolineatura
+                        .replace(/«U»(.*?)«\/U»/gs, '<span style="text-decoration:underline;">$1</span>')
+                        // Rimuovi BOLD, I e SZ (per compatibilità con testi già importati)
+                        .replace(/«BOLD»(.*?)«\/BOLD»/gs, '$1')
+                        .replace(/«I»(.*?)«\/I»/gs, '$1')
+                        .replace(/«SZ:\d+»(.*?)«\/SZ»/gs, '$1')
+                        // Vecchio formato «testo» per compatibilità
+                        .replace(/«([^»/][^»]*)»/g, '<span style="background:#FFFF00;">$1</span>');
                 }
                 
                 const renderedLines = lines.map(line => {
-                    if (line.startsWith('§')) {
-                        const chordText = line.substring(1);
-                        return `<span style="color: #0000FF; font-weight: 600;">${renderWithHighlight(chordText, '#0000FF')}</span>`;
-                    } else if (line.trim() === '') {
+                    let rawLine = line;
+                    let forceChord = false;
+                    let forceText = false;
+                    
+                    // Rimuovi tutti i prefissi § in modo robusto
+                    while (rawLine.startsWith('§')) {
+                        if (rawLine.startsWith('§FORCED§')) {
+                            forceChord = true;
+                            rawLine = rawLine.substring(8);
+                            break;
+                        } else if (rawLine.startsWith('§TEXT§')) {
+                            forceText = true;
+                            rawLine = rawLine.substring(6);
+                            break;
+                        } else if (rawLine.startsWith('§INTRO:')) {
+                            rawLine = rawLine.substring(7).trim();
+                            break;
+                        } else {
+                            rawLine = rawLine.substring(1);
+                        }
+                    }
+                    
+                    if (rawLine.trim() === '') {
                         return '';
+                    }
+                    
+                    const isChord = forceChord || (!forceText && isChordLine(rawLine));
+                    
+                    if (isChord) {
+                        return `<span style="color: #0000FF; font-weight: 600;">${renderWithHighlight(rawLine, '#0000FF')}</span>`;
                     } else {
-                        return `<span style="color: black;">${renderWithHighlight(line, 'black')}</span>`;
+                        return `<span style="color: black;">${renderWithHighlight(rawLine, 'black')}</span>`;
                     }
                 });
-                return `<div style="font-family: 'Verdana', sans-serif !important; font-weight: bold !important; font-size: ${fontSize} !important; white-space: pre !important; line-height: 1.6 !important;">${renderedLines.join('\n')}</div>`;
+                return `<div style="font-family: 'Verdana', sans-serif !important; font-weight: bold !important; font-size: ${fontSize} !important; white-space: pre-wrap !important; line-height: 1.2 !important; padding-bottom: ${isFullscreen ? '80px' : '40px'} !important;">${renderedLines.join('\n')}</div>`;
             } else {
                 const fontSize = isFullscreen ? '19pt' : '';
                 return `<div class="song-text"${fontSize ? ` style="font-size: ${fontSize};"` : ''}>${lines.join('\n')}</div>`;
@@ -3343,7 +3644,28 @@ console.log('Artisti processati:', processedArtists, '/', artists.length);
     });
     
     let notesHtml = '';
-if (rhythmic || key || tempo) {
+    
+    if (song.hasChords) {
+        // Per testi con accordi: titolo rosso, cantante, info extra
+        const infoExtra = song.notes ? song.notes.trim() : '';
+        const infoExtraHtml = infoExtra
+            .replace(/«BOLD»(.*?)«\/BOLD»/gs, '<strong>$1</strong>')
+            .replace(/«I»(.*?)«\/I»/gs, '<em>$1</em>')
+            .replace(/«SZ:\d+»(.*?)«\/SZ»/gs, '$1')
+            .replace(/«[^»]*»/g, '');
+        let infoFontSize = 14;
+        if (infoExtra.length > 120) infoFontSize = 10;
+        else if (infoExtra.length > 80) infoFontSize = 12;
+        else if (infoExtra.length > 50) infoFontSize = 13;
+        const infoHtml = infoExtraHtml ?
+            `<div style="font-size: ${infoFontSize}pt; color: #333; margin-bottom: 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-family: Verdana, sans-serif; font-style: italic; font-weight: normal; text-align: left;">${infoExtraHtml}</div>` : '';
+
+        notesHtml = `<div style="margin-bottom: 15px; font-family: Verdana, sans-serif;">
+            <div style="font-size: 18pt; font-weight: bold; color: #cc0000; margin-bottom: 2px; text-align: center;">${song.title.toUpperCase()}</div>
+            <div style="font-size: 11pt; margin-bottom: 4px; font-weight: normal; text-align: center;">(${song.artist.toUpperCase()})</div>
+            ${infoHtml}
+        </div>`;
+    } else if (rhythmic || key || tempo) {
     const parts = [];
     if (rhythmic) parts.push(`<span style="color: #27ae60;">${rhythmic}</span>`);
     if (key) parts.push(`<span style="color: #c0392b;">${key}</span>`);
@@ -3372,15 +3694,21 @@ if (rhythmic || key || tempo) {
         let content = '';
         
         if (page.isFirst) {
-    // Header completo solo prima pagina
-    content = `
-        <div style="text-align: center; margin-bottom: 25px;">
-            <div style="font-size: 18pt; font-weight: bold; margin-bottom: 2px;">"${song.title.toUpperCase()}"</div>
-            <div style="font-size: 10pt; margin-bottom: 2px;">(${song.artist.toUpperCase()})</div>
-            ${notesHtml}
-        </div>
-        ${renderSongLines(song, page.lines)}
-    `;
+            if (song.hasChords) {
+                content = `
+                    ${notesHtml}
+                    ${renderSongLines(song, page.lines)}
+                `;
+            } else {
+                content = `
+                    <div style="text-align: center; margin-bottom: 25px;">
+                        <div style="font-size: 18pt; font-weight: bold; margin-bottom: 2px;">"${song.title.toUpperCase()}"</div>
+                        <div style="font-size: 10pt; margin-bottom: 2px;">(${song.artist.toUpperCase()})</div>
+                        ${notesHtml}
+                    </div>
+                    ${renderSongLines(song, page.lines)}
+                `;
+            }
         } else {
             content = `<div style="margin-top: 20px;">${renderSongLines(song, page.lines)}</div>`;
         }
@@ -6485,7 +6813,37 @@ function generateSongPagesForBook(song) {
     });
     
     let notesHtml = '';
-    if (rhythmic || key || tempo) {
+    
+    if (song.hasChords) {
+        // Per testi con accordi: titolo rosso, cantante, info extra auto-adattive
+        const isPref = isPreferito(song.id);
+        const starIcon = isPref ? '⭐' : '☆';
+        const starStyle = isPref ? 'color: #f39c12;' : 'color: #aaa;';
+        
+        // Info extra (campo notes) — corsivo, grassetto preservato, max 2 righe
+        const infoExtra = song.notes ? song.notes.trim() : '';
+        const infoExtraHtml = infoExtra
+            .replace(/«BOLD»(.*?)«\/BOLD»/gs, '<strong>$1</strong>')
+            .replace(/«I»(.*?)«\/I»/gs, '<em>$1</em>')
+            .replace(/«SZ:\d+»(.*?)«\/SZ»/gs, '$1')
+            .replace(/«[^»]*»/g, '');
+        let infoFontSize = 16;
+        if (infoExtra.length > 120) infoFontSize = 11;
+        else if (infoExtra.length > 80) infoFontSize = 13;
+        else if (infoExtra.length > 50) infoFontSize = 14;
+        const infoHtml = infoExtraHtml ? 
+            `<div style="font-size: ${infoFontSize}pt; color: #333; margin-bottom: 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-family: Verdana, sans-serif; font-style: italic; font-weight: normal; text-align: left;">${infoExtraHtml}</div>` : '';
+        
+        notesHtml = `<div style="text-align: center; margin-bottom: 20px;">
+            <div style="font-size: 26pt; font-weight: bold; color: #cc0000; margin-bottom: 4px;">${song.title.toUpperCase()}</div>
+            <div style="font-size: 15pt; margin-bottom: 4px;">(${song.artist.toUpperCase()})</div>
+            ${infoHtml}
+            <div style="display: flex; align-items: center; justify-content: center; gap: 16px; margin-top: 4px;">
+                <span id="star-btn-${song.id}" data-action="star" data-song-id="${song.id}" style="cursor: pointer; font-size: 26pt; ${starStyle} line-height: 1;">${starIcon}</span>
+                <span data-action="audio" style="cursor: pointer; font-size: 26pt; line-height: 1;">🎵</span>
+            </div>
+        </div>`;
+    } else if (rhythmic || key || tempo) {
         const parts = [];
         if (rhythmic) parts.push(`<span style="color: #27ae60;">${rhythmic}</span>`);
         if (key) parts.push(`<span style="color: #c0392b;">${key}</span>`);
@@ -6535,14 +6893,21 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
         }
         
         if (page.isFirst) {
-            content = `
-                <div style="text-align: center; margin-bottom: 25px;">
-                    <div style="font-size: 28pt; font-weight: bold; margin-bottom: 2px;">"${song.title.toUpperCase()}"</div>
-                    <div style="font-size: 13pt; margin-bottom: 2px;">(${song.artist.toUpperCase()})</div>
+            if (song.hasChords) {
+                content = `
                     ${notesHtml}
-                </div>
-                ${renderLines(page.lines)}
-            `;
+                    ${renderLines(page.lines)}
+                `;
+            } else {
+                content = `
+                    <div style="text-align: center; margin-bottom: 25px;">
+                        <div style="font-size: 28pt; font-weight: bold; margin-bottom: 2px;">"${song.title.toUpperCase()}"</div>
+                        <div style="font-size: 13pt; margin-bottom: 2px;">(${song.artist.toUpperCase()})</div>
+                        ${notesHtml}
+                    </div>
+                    ${renderLines(page.lines)}
+                `;
+            }
         } else {
             content = `<div style="margin-top: 20px;">${renderLines(page.lines)}</div>`;
         }
@@ -8124,40 +8489,13 @@ function handleTouchEnd(e) {
         // ===== TAB ACCORDI =====
         let pendingAccordiFiles = []; // Lista file analizzati in attesa di import
         
-        // Pattern riconoscimento accordi
-        const CHORD_WORD_PATTERN = /^(Do|Re|Mi|Fa|Sol|La|Si|[A-G])[#mb°]?(dim|maj|m|7|9|11|13|sus|aug|add|°|\+|\d)*([\.\(\)°\/]\w*)*$/i;
-        
-        function isChordLine(line) {
-            const trimmed = line.trim();
-            if (trimmed === '') return false;
-            if (trimmed.length > 100) return false;
-            const words = trimmed.split(/[\s\t]+/).filter(w => w.length > 0);
-            if (words.length === 0) return false;
-            const chordWords = words.filter(w => 
-                CHORD_WORD_PATTERN.test(w) || /^[\/\%\|]/.test(w) || /^\(.*\)$/.test(w)
-            );
-            return chordWords.length / words.length >= 0.6;
-        }
-        
-        function isSigleLine(line) {
-            const trimmed = line.trim();
-            if (trimmed === '') return false;
-            // Contiene prevalentemente caratteri musicali: / | % lettere accordi numeri
-            return /^[A-Za-z0-9\/\|%\s\+\-\(\)#°b\.]*$/.test(trimmed) && 
-                   /[\/\|%]/.test(trimmed);
-        }
-        
-        function isLikelyText(line) {
-            const trimmed = line.trim();
-            if (trimmed === '') return false;
-            // Ha parole lunghe (>3 char) che non sono accordi
-            const words = trimmed.split(/\s+/).filter(w => w.length > 3);
-            const nonChordWords = words.filter(w => !CHORD_WORD_PATTERN.test(w));
-            return nonChordWords.length >= 2;
-        }
-        
+        // Pattern riconoscimento accordi (supporta C#m7/5b(ø), F#9b, Am/G/, B7], Dm6/F, /Am7, ecc.)
+
         // Estrae titolo, cantante, dettagli dalla prima riga
         function parseFirstLine(line) {
+            // Rimuovi tutti i marcatori prima di analizzare
+            line = line.replace(/«[^»]*»/g, '');
+            
             let titolo = '';
             let cantante = '';
             let dettagli = '';
@@ -8168,17 +8506,22 @@ function handleTouchEnd(e) {
                 cantante = parenMatch[1].trim();
             }
             
-            // Titolo = tutto prima della prima ( oppure prima parola non maiuscola
+            // Titolo = tutto prima della prima ( oppure la prima riga intera
             const beforeParen = parenMatch ? line.substring(0, line.indexOf('(')).trim() : line;
             
-            // Cerca dove finisce la parte maiuscola
+            // Considera titolo tutta la parte prima del cantante (tra parentesi)
+            // Cerca dove finisce la parte maiuscola — almeno 60% maiuscolo
             const words = beforeParen.split(/\s+/);
             const titleWords = [];
             const restWords = [];
             let foundLower = false;
             
             for (const word of words) {
-                if (!foundLower && (word === word.toUpperCase() || word.match(/^[A-Z0-9\-\']+$/))) {
+                const upperCount = (word.match(/[A-ZÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞŸ]/g) || []).length;
+                const letterCount = (word.match(/[a-zA-ZÀ-ÿ]/g) || []).length;
+                const isMostlyUpper = letterCount === 0 || upperCount / letterCount >= 0.6;
+                
+                if (!foundLower && (isMostlyUpper || word.match(/^[0-9\-\']+$/))) {
                     titleWords.push(word);
                 } else {
                     foundLower = true;
@@ -8210,36 +8553,70 @@ function handleTouchEnd(e) {
             const firstLine = lines[startIdx];
             const { titolo, cantante, dettagli } = parseFirstLine(firstLine);
             
-            // Seconda riga: eventuali info aggiuntive (ritmica, batte, ecc.)
-            let dettagliExtra = '';
             let contentStart = startIdx + 1;
             
             // Salta righe vuote dopo la prima
             while (contentStart < lines.length && lines[contentStart].trim() === '') contentStart++;
             
-            // Controlla se la seconda riga non-vuota è un'indicazione musicale
-            if (contentStart < lines.length) {
-                const secondLine = lines[contentStart];
-                const isMusicalNote = /^(Batte|Tempo|Ritmo|Beat|Intro|Strum|Capo|Tonalità)/i.test(secondLine.trim()) ||
-                                     (/^\d+\/\d+/.test(secondLine.trim()) && secondLine.length < 50);
-                if (isMusicalNote) {
-                    dettagliExtra = secondLine.trim();
-                    contentStart++;
-                }
+            // =============================================
+            // FASE 1: Raccogli info extra (testo descrittivo prima dell'intro/accordi)
+            // Le info extra sono righe di testo che compaiono prima di qualsiasi accordo
+            // =============================================
+            const infoExtraLines = [];
+            
+            // Funzione: restituisce la dimensione font esplicita di una riga (0 = nessuna)
+            function getLineMaxFontSize(line) {
+                const matches = line.match(/«SZ:(\d+)»/g) || [];
+                if (matches.length === 0) return 0; // nessuna dimensione esplicita
+                return Math.max(...matches.map(m => parseInt(m.match(/\d+/)[0])));
             }
             
-            // Costruisci dettagli completi
-            const dettagliCompleti = [dettagli, dettagliExtra].filter(s => s).join(' | ');
+            // Trova la dimensione font principale del documento (testo cantato)
+            const fontSizeCounts = {};
+            for (let k = contentStart; k < lines.length; k++) {
+                const sz = getLineMaxFontSize(lines[k]);
+                if (sz > 0) fontSizeCounts[sz] = (fontSizeCounts[sz] || 0) + 1;
+            }
+            const mainFontSize = Object.entries(fontSizeCounts).sort((a,b) => b[1]-a[1])[0]?.[0] || 14;
             
-            // Ora scorri le righe per trovare intro e testo
+            // Info extra = righe SENZA dimensione font esplicita (usano stile default documento)
+            // Testo cantato = righe CON dimensione font esplicita >= mainFontSize
+            let i = contentStart;
+            for (let k = contentStart; k < lines.length; k++) {
+                const line = lines[k];
+                const t = line.trim().replace(/«[^»]*»/g, '');
+                if (t === '') continue;
+                
+                const sz = getLineMaxFontSize(line);
+                
+                // Se ha dimensione esplicita → è testo cantato o accordi → fine info extra
+                if (sz > 0) break;
+                // Se è "Intro:" → fine info extra
+                if (/^intro/i.test(t)) break;
+                // Se è una riga di accordi → fine info extra
+                if (isChordLine(line)) break;
+                
+                infoExtraLines.push(line);
+                i = k + 1;
+            }
+            contentStart = i;
+            let contentStart2 = contentStart;
+            
+            // Costruisci notes: info extra CON marcatori BOLD/I per rendering
+            const infoExtraText = infoExtraLines.join(' ').trim();
+            // Aggiungi dettagli dalla prima riga (senza marcatori)
+            const notesValue = [dettagli, infoExtraText].filter(s => s).join(' | ');
+            
+            // =============================================
+            // FASE 2: Trova intro e testo cantato
+            // =============================================
             let introLines = [];
             let contentLines = [];
-            let inIntro = true;
             let firstTextFound = false;
             let prevWasText = false;
             
-            for (let i = contentStart; i < lines.length; i++) {
-                const line = lines[i];
+            for (let k = contentStart2; k < lines.length; k++) {
+                const line = lines[k];
                 const trimmed = line.trim();
                 
                 if (trimmed === '') {
@@ -8253,54 +8630,189 @@ function handleTouchEnd(e) {
                 }
                 
                 if (!firstTextFound) {
-                    // Siamo ancora in area intro
                     if (isLikelyText(line) && !isChordLine(line) && !isSigleLine(line)) {
-                        // Trovato il primo testo cantato!
                         firstTextFound = true;
-                        inIntro = false;
-                        contentLines.push(line);
+                        // Strip BOLD e I dal testo cantato (tutto è già bold)
+                        contentLines.push(line.replace(/«BOLD»|«\/BOLD»|«I»|«\/I»|«SZ:\d+»|«\/SZ»/g, ''));
                         prevWasText = true;
                     } else {
                         introLines.push(line);
                     }
                 } else {
-                    // Siamo in area testo
-                    // Alternanza: dopo testo → accordi, dopo accordi → testo
-                    if (prevWasText) {
-                        // Questa riga è accordi (anche se è "La" o "Re")
-                        contentLines.push('§' + line);
+                    if (prevWasText && isChordLine(line)) {
+                        contentLines.push('§' + line.replace(/«BOLD»|«\/BOLD»|«I»|«\/I»/g, ''));
                         prevWasText = false;
                     } else {
-                        // Questa riga è testo
-                        contentLines.push(line);
+                        contentLines.push(line.replace(/«BOLD»|«\/BOLD»|«I»|«\/I»|«SZ:\d+»|«\/SZ»/g, ''));
                         prevWasText = true;
                     }
                 }
             }
             
-            // Pulisci intro: rimuovi righe vuote iniziali e finali
+            // Pulisci intro
             while (introLines.length > 0 && introLines[0].trim() === '') introLines.shift();
             while (introLines.length > 0 && introLines[introLines.length-1].trim() === '') introLines.pop();
+            const cleanedIntroLines = [];
+            for (let m = 0; m < introLines.length; m++) {
+                if (introLines[m].trim() === '' && cleanedIntroLines[cleanedIntroLines.length-1]?.trim() === '') continue;
+                cleanedIntroLines.push(introLines[m]);
+            }
+            const introText = cleanedIntroLines.join('\n').trim();
             
-            const introText = introLines.map(l => l.trim() === '' ? '' : l).join('\n').trim();
-            
-            // Aggiungi intro al testo con separatore visivo
+            // Aggiungi intro al testo
             let finalContent = '';
             if (introText) {
-                finalContent = '§INTRO: ' + introText + '\n\n';
+                const introFirstLine = introText.trim().split('\n')[0].replace(/«[^»]*»/g, '').toLowerCase();
+                const hasIntroLabel = /^intro/.test(introFirstLine);
+                finalContent = (hasIntroLabel ? '' : '§INTRO: ') + introText + '\n\n';
             }
             finalContent += contentLines.join('\n');
             
             return {
                 titolo,
                 cantante,
-                dettagli: dettagliCompleti,
+                dettagli: notesValue,
                 lyrics: finalContent,
                 hasChords: true
             };
         }
         
         // Analizza più file docx
+        // Estrae righe dal .docx leggendo l'XML direttamente
+        async function extractDocxLines(arrayBuffer) {
+            const zip = await JSZip.loadAsync(arrayBuffer);
+            const xmlContent = await zip.file('word/document.xml').async('string');
+            
+            const parser = new DOMParser();
+            const xmlDoc = parser.parseFromString(xmlContent, 'application/xml');
+            const ns = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
+            
+            const paragraphs = xmlDoc.getElementsByTagNameNS(ns, 'p');
+            const allLines = [];
+            
+            function getRunFormatting(runNode) {
+                const rPr = runNode.getElementsByTagNameNS(ns, 'rPr')[0];
+                const result = { bg: null, color: null, underline: false, bold: false, italic: false, fontSize: null };
+                if (!rPr) return result;
+                
+                // Grassetto
+                const bEl = rPr.getElementsByTagNameNS(ns, 'b')[0];
+                if (bEl) result.bold = true;
+                
+                // Corsivo
+                const iEl = rPr.getElementsByTagNameNS(ns, 'i')[0];
+                if (iEl) result.italic = true;
+                
+                // Font size (w:sz = half-points)
+                const szEl = rPr.getElementsByTagNameNS(ns, 'sz')[0];
+                if (szEl) {
+                    const val = szEl.getAttributeNS(ns, 'val') || szEl.getAttribute('w:val');
+                    if (val) result.fontSize = Math.round(parseInt(val) / 2);
+                }
+                
+                // Sfondo (highlight)
+                const highlight = rPr.getElementsByTagNameNS(ns, 'highlight')[0];
+                if (highlight) {
+                    const val = highlight.getAttributeNS(ns, 'val') || highlight.getAttribute('w:val');
+                    if (val === 'yellow') result.bg = 'Y';
+                }
+                
+                // Sfondo (shd)
+                const shd = rPr.getElementsByTagNameNS(ns, 'shd')[0];
+                if (shd) {
+                    const fill = (shd.getAttributeNS(ns, 'fill') || shd.getAttribute('w:fill') || '').toUpperCase();
+                    if (fill === 'FFFF66' || fill === 'FFFF00') result.bg = 'Y';
+                    else if (fill === 'FFCCCC') result.bg = 'R';
+                    else if (fill === 'CCFFCC') result.bg = 'G';
+                }
+                
+                // Colore carattere
+                const colorEl = rPr.getElementsByTagNameNS(ns, 'color')[0];
+                if (colorEl) {
+                    const val = (colorEl.getAttributeNS(ns, 'val') || colorEl.getAttribute('w:val') || '').toUpperCase();
+                    if (val === '993300') result.color = 'B';
+                    else if (val === '6600CC') result.color = 'V';
+                    else if (val === 'FF6600') result.color = 'O';
+                    else if (val === '006600') result.color = 'GR';
+                }
+                
+                // Sottolineatura
+                const uEl = rPr.getElementsByTagNameNS(ns, 'u')[0];
+                if (uEl) {
+                    const val = uEl.getAttributeNS(ns, 'val') || uEl.getAttribute('w:val');
+                    if (val && val !== 'none') result.underline = true;
+                }
+                
+                return result;
+            }
+            
+            for (const p of paragraphs) {
+                const lines = [''];
+                
+                function processNode(node) {
+                    const localName = node.localName || '';
+                    if (localName === 'br') {
+                        lines.push('');
+                    } else if (localName === 'r') {
+                        const fmt = getRunFormatting(node);
+                        let runText = '';
+                        for (const child of node.childNodes) {
+                            const cn = child.localName || '';
+                            if (cn === 'br') {
+                                if (runText) {
+                                    let marked = runText;
+                                    if (fmt.underline) marked = '«U»' + marked + '«/U»';
+                                    if (fmt.color) marked = `«${fmt.color}»` + marked + `«/${fmt.color}»`;
+                                    if (fmt.bg) marked = `«${fmt.bg}»` + marked + `«/${fmt.bg}»`;
+                                    lines[lines.length - 1] += marked;
+                                }
+                                runText = '';
+                                lines.push('');
+                            } else if (cn === 't' && child.textContent) {
+                                runText += child.textContent;
+                            } else if (cn === 'tab') {
+                                const currentLen = lines[lines.length - 1].length + runText.length;
+                                const spacesToAdd = 4 - (currentLen % 4);
+                                runText += ' '.repeat(Math.max(1, spacesToAdd));
+                            }
+                        }
+                        if (runText) {
+                            let marked = runText;
+                            if (fmt.underline) marked = '«U»' + marked + '«/U»';
+                            if (fmt.italic) marked = '«I»' + marked + '«/I»';
+                            if (fmt.bold) marked = '«BOLD»' + marked + '«/BOLD»';
+                            if (fmt.fontSize) marked = `«SZ:${fmt.fontSize}»` + marked + `«/SZ»`;
+                            if (fmt.color) marked = `«${fmt.color}»` + marked + `«/${fmt.color}»`;
+                            if (fmt.bg) marked = `«${fmt.bg}»` + marked + `«/${fmt.bg}»`;
+                            lines[lines.length - 1] += marked;
+                        }
+                    } else if (localName !== 'rPr' && localName !== 'pPr') {
+                        for (const child of node.childNodes) {
+                            processNode(child);
+                        }
+                    }
+                }
+                
+                for (const child of p.childNodes) {
+                    processNode(child);
+                }
+                
+                // Rimuovi riga vuota iniziale del paragrafo (da w:br prima del testo)
+                const trimmedLines = [...lines];
+                while (trimmedLines.length > 0 && trimmedLines[0].trim() === '') trimmedLines.shift();
+                
+                trimmedLines.forEach(line => allLines.push(line));
+                // Aggiungi separatore solo dopo paragrafi multi-riga (con w:br)
+                if (trimmedLines.length > 1 && trimmedLines.some(l => l.trim())) {
+                    if (allLines[allLines.length - 1]?.trim() !== '') {
+                        allLines.push('');
+                    }
+                }
+            }
+            
+            return allLines;
+        }
+        
         async function analyzeMultipleDocx(event) {
             const files = Array.from(event.target.files);
             if (files.length === 0) return;
@@ -8356,50 +8868,150 @@ function handleTouchEnd(e) {
         function renderAccordiReview() {
             const list = document.getElementById('accordi-review-list');
             
-            list.innerHTML = pendingAccordiFiles.map((item, idx) => {
+            // Imposta selezione default: ✅ selezionati, ❓ e ❌ deselezionati
+            pendingAccordiFiles.forEach(item => {
+                if (item.selected === undefined) {
+                    item.selected = item.ok && !item.error;
+                }
+            });
+            
+            const selectedCount = pendingAccordiFiles.filter(i => i.selected).length;
+            
+            list.innerHTML = `
+                <div style="padding: 10px 12px; background: #f5f5f5; border-bottom: 2px solid #ddd; display: flex; gap: 10px; align-items: center;">
+                    <button onclick="selectAllAccordi(true)" style="font-size: 11px; padding: 4px 8px; border: 1px solid #ddd; border-radius: 4px; cursor: pointer; background: white;">Seleziona tutti</button>
+                    <button onclick="selectAllAccordi(false)" style="font-size: 11px; padding: 4px 8px; border: 1px solid #ddd; border-radius: 4px; cursor: pointer; background: white;">Deseleziona tutti</button>
+                    <span style="font-size: 11px; color: #666; margin-left: auto;">${selectedCount} selezionati su ${pendingAccordiFiles.length}</span>
+                </div>
+                ${pendingAccordiFiles.map((item, idx) => {
                 const statusIcon = item.error ? '❌' : item.ok ? '✅' : '❓';
                 const bgColor = item.error ? '#fdecea' : item.ok ? '#f1f8f1' : '#fff8e1';
                 
+                // Genera anteprima testo
+                const previewHtml = generateAccordiPreview(item);
+                
                 return `
-                    <div style="padding: 12px; border-bottom: 1px solid #eee; background: ${bgColor};">
-                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
-                            <span style="font-size: 18px;">${statusIcon}</span>
-                            <span style="font-size: 11px; color: #999;">${item.fileName}</span>
+                    <div style="border-bottom: 1px solid #eee; background: ${bgColor};">
+                        <div style="padding: 10px 12px; display: flex; align-items: center; gap: 10px;">
+                            <input type="checkbox" ${item.selected ? 'checked' : ''} 
+                                onchange="pendingAccordiFiles[${idx}].selected = this.checked; renderAccordiReview();"
+                                style="width: 18px; height: 18px; cursor: pointer; flex-shrink: 0;">
+                            <span style="font-size: 16px;">${statusIcon}</span>
+                            <div style="flex: 1; min-width: 0;">
+                                <div style="font-weight: 600; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                    ${escapeHtmlAccordi(item.titolo) || '<span style="color:#999;">Titolo mancante</span>'}
+                                </div>
+                                <div style="font-size: 11px; color: #666;">${escapeHtmlAccordi(item.cantante) || '<span style="color:#e74c3c;">Cantante mancante</span>'}</div>
+                            </div>
+                            <button onclick="toggleAccordiPreview(${idx})" 
+                                style="font-size: 11px; padding: 4px 10px; border: 1px solid #3498db; border-radius: 4px; cursor: pointer; background: white; color: #3498db; flex-shrink: 0;">
+                                👁 Anteprima
+                            </button>
                         </div>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                            <div>
-                                <label style="font-size: 11px; color: #666;">Titolo:</label>
-                                <input type="text" value="${escapeHtmlAccordi(item.titolo)}" 
-                                    onchange="pendingAccordiFiles[${idx}].titolo = this.value"
-                                    style="width: 100%; padding: 5px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px; box-sizing: border-box;">
+                        
+                        <!-- Campi modifica -->
+                        <div style="padding: 0 12px 10px 40px;">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
+                                <div>
+                                    <label style="font-size: 10px; color: #666;">Titolo:</label>
+                                    <input type="text" value="${escapeHtmlAccordi(item.titolo)}" 
+                                        onchange="pendingAccordiFiles[${idx}].titolo = this.value; pendingAccordiFiles[${idx}].ok = !!(this.value && pendingAccordiFiles[${idx}].cantante); renderAccordiReview();"
+                                        style="width: 100%; padding: 4px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; box-sizing: border-box;">
+                                </div>
+                                <div>
+                                    <label style="font-size: 10px; color: #666;">Cantante:</label>
+                                    <input type="text" value="${escapeHtmlAccordi(item.cantante)}" 
+                                        onchange="pendingAccordiFiles[${idx}].cantante = this.value; pendingAccordiFiles[${idx}].ok = !!(pendingAccordiFiles[${idx}].titolo && this.value); renderAccordiReview();"
+                                        style="width: 100%; padding: 4px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; box-sizing: border-box;">
+                                </div>
+                                <div style="grid-column: span 2;">
+                                    <label style="font-size: 10px; color: #666;">Info extra:</label>
+                                    <input type="text" value="${escapeHtmlAccordi(item.dettagli.replace(/«[^»]*»/g, ''))}" 
+                                    onchange="pendingAccordiFiles[${idx}].dettagli = this.value; renderAccordiReview();"
+                                        style="width: 100%; padding: 4px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; box-sizing: border-box;">
+                                </div>
                             </div>
-                            <div>
-                                <label style="font-size: 11px; color: #666;">Cantante:</label>
-                                <input type="text" value="${escapeHtmlAccordi(item.cantante)}" 
-                                    onchange="pendingAccordiFiles[${idx}].cantante = this.value"
-                                    style="width: 100%; padding: 5px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px; box-sizing: border-box;">
-                            </div>
-                            <div style="grid-column: span 2;">
-                                <label style="font-size: 11px; color: #666;">Dettagli:</label>
-                                <input type="text" value="${escapeHtmlAccordi(item.dettagli)}" 
-                                    onchange="pendingAccordiFiles[${idx}].dettagli = this.value"
-                                    style="width: 100%; padding: 5px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px; box-sizing: border-box;">
-                            </div>
+                        </div>
+                        
+                        <!-- Anteprima a scomparsa -->
+                        <div id="preview-${idx}" style="display: none; margin: 0 12px 10px 40px; padding: 10px; background: white; border: 1px solid #ddd; border-radius: 5px; font-family: 'Verdana', sans-serif; font-weight: bold; font-size: 11pt; white-space: pre; line-height: 1.2; max-height: 250px; overflow-y: auto;">
+                            ${previewHtml}
                         </div>
                     </div>
                 `;
-            }).join('');
+            }).join('')}
+            `;
+            
+            // Aggiorna pulsanti import
+            const importBtn = document.getElementById('accordi-import-btn');
+            if (importBtn) {
+                importBtn.textContent = selectedCount > 0 ? 
+                    `Importa selezionati (${selectedCount})` : 'Importa tutti';
+            }
+        }
+        
+        function renderMarkersToHtml(text) {
+            return escapeHtmlAccordi(text)
+                .replace(/«Y»(.*?)«\/Y»/gs, '<span style="background:#FFFF00;">$1</span>')
+                .replace(/«R»(.*?)«\/R»/gs, '<span style="background:#FFCCCC;">$1</span>')
+                .replace(/«G»(.*?)«\/G»/gs, '<span style="background:#CCFFCC;">$1</span>')
+                .replace(/«B»(.*?)«\/B»/gs, '<span style="color:#993300;">$1</span>')
+                .replace(/«V»(.*?)«\/V»/gs, '<span style="color:#6600CC;">$1</span>')
+                .replace(/«O»(.*?)«\/O»/gs, '<span style="color:#FF6600;">$1</span>')
+                .replace(/«GR»(.*?)«\/GR»/gs, '<span style="color:#006600;">$1</span>')
+                .replace(/«U»(.*?)«\/U»/gs, '<span style="text-decoration:underline;">$1</span>')
+                .replace(/«([^»\/][^»]*)»/g, '<span style="background:#FFFF00;">$1</span>');
+        }
+        
+        function generateAccordiPreview(item) {
+            let html = '';
+            if (item.titolo) html += `<span style="color:#c0392b; font-size: 13pt;">${escapeHtmlAccordi(item.titolo)}</span>\n`;
+            if (item.cantante) html += `<span style="color:#666;">(${escapeHtmlAccordi(item.cantante)})</span>\n`;
+            if (item.dettagli) html += `<span style="color:#27ae60;">${escapeHtmlAccordi(item.dettagli.replace(/«[^»]*»/g, ''))}</span>\n`;
+            if (html) html += '\n';
+            
+            if (!item.lyrics) return html + '<span style="color:#999;">Nessun testo</span>';
+            
+            const lines = item.lyrics.split('\n').slice(0, 30);
+            html += lines.map(line => {
+                if (line.startsWith('§')) {
+                    return `<span style="color:#0000FF;">${renderMarkersToHtml(line.substring(1))}</span>`;
+                } else if (line.trim() === '') {
+                    return '';
+                } else {
+                    return `<span style="color:black;">${renderMarkersToHtml(line)}</span>`;
+                }
+            }).join('\n');
+            
+            return html;
+        }
+        
+        function toggleAccordiPreview(idx) {
+            const el = document.getElementById(`preview-${idx}`);
+            if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+        }
+        
+        function selectAllAccordi(select) {
+            pendingAccordiFiles.forEach(item => item.selected = select);
+            renderAccordiReview();
         }
         
         async function importAllAccordi() {
             if (pendingAccordiFiles.length === 0) return;
             
-            saveUndoState();
+            const toImport = pendingAccordiFiles.filter(i => i.selected);
+            const count = toImport.length;
             
+            if (count === 0) {
+                showModal('', 'Nessuna canzone selezionata!', null, false);
+                return;
+            }
+            
+            saveUndoState();
             let importedCount = 0;
             let skippedCount = 0;
             
-            pendingAccordiFiles.forEach((item, idx) => {
+            toImport.forEach((item, idx) => {
                 if (!item.titolo) {
                     skippedCount++;
                     return;
@@ -8422,13 +9034,23 @@ function handleTouchEnd(e) {
                 importedCount++;
             });
             
+            // Rimuovi i selezionati dal riepilogo, tieni i non selezionati
+            pendingAccordiFiles = pendingAccordiFiles.filter(i => !i.selected);
+            
             saveData();
             if (syncEnabled && currentUser) saveToFirebaseImmediate();
             
-            clearAccordi();
             updateAccordiList();
             
-            showModal('', `✅ ${importedCount} canzoni importate con successo!${skippedCount > 0 ? ' (' + skippedCount + ' saltate)' : ''}`, null, false);
+            if (pendingAccordiFiles.length > 0) {
+                // Rimangono file non importati — aggiorna il riepilogo
+                document.getElementById('accordi-total').textContent = pendingAccordiFiles.length;
+                renderAccordiReview();
+                showModal('', `✅ ${importedCount} canzoni importate! Rimangono ${pendingAccordiFiles.length} file da gestire.`, null, false);
+            } else {
+                clearAccordi();
+                showModal('', `✅ ${importedCount} canzoni importate con successo!${skippedCount > 0 ? ' (' + skippedCount + ' saltate)' : ''}`, null, false);
+            }
         }
         
         function clearAccordi() {
@@ -8819,6 +9441,337 @@ function handleTouchEnd(e) {
         
 // Font-size textarea lyrics
 let currentLyricsFontSize = 14; // dimensione iniziale in px
+
+// ===== EDITOR TESTI CON ACCORDI =====
+let editorHasChords = false;
+
+// Converte marcatori interni in HTML per l'editor contenteditable
+function markersToHtml(text) {
+    if (!text) return '';
+    const lines = text.split('\n');
+    return lines.map(line => {
+        let cleanLine = line;
+        let divStyle = '';
+        let dataForced = '';
+        
+        if (cleanLine.startsWith('§FORCED§')) {
+            cleanLine = cleanLine.substring(8);
+            divStyle = ' style="color:#0000FF;"';
+            dataForced = ' data-forced="chord"';
+        } else if (cleanLine.startsWith('§TEXT§')) {
+            cleanLine = cleanLine.substring(6);
+            divStyle = ' style="color:black;"';
+            dataForced = ' data-forced="text"';
+        } else if (cleanLine.startsWith('§')) {
+            cleanLine = cleanLine.substring(1);
+        }
+        
+        cleanLine = cleanLine.replace(/«SZ:\d+»(.*?)«\/SZ»/gs, '$1')
+                             .replace(/«BOLD»(.*?)«\/BOLD»/gs, '$1')
+                             .replace(/«I»(.*?)«\/I»/gs, '$1');
+        
+        let html = escapeHtmlAccordi(cleanLine)
+            .replace(/«Y»(.*?)«\/Y»/gs, '<span style="background:#FFFF00;">$1</span>')
+            .replace(/«R»(.*?)«\/R»/gs, '<span style="background:#FFCCCC;">$1</span>')
+            .replace(/«G»(.*?)«\/G»/gs, '<span style="background:#CCFFCC;">$1</span>')
+            .replace(/«B»(.*?)«\/B»/gs, '<span style="color:#993300;">$1</span>')
+            .replace(/«V»(.*?)«\/V»/gs, '<span style="color:#6600CC;">$1</span>')
+            .replace(/«O»(.*?)«\/O»/gs, '<span style="color:#FF6600;">$1</span>')
+            .replace(/«GR»(.*?)«\/GR»/gs, '<span style="color:#006600;">$1</span>')
+            .replace(/«U»(.*?)«\/U»/gs, '<span style="text-decoration:underline;">$1</span>')
+            .replace(/«([^»\/][^»]*)»/g, '<span style="background:#FFFF00;">$1</span>');
+        return `<div${divStyle}${dataForced}>${html || '<br>'}</div>`;
+    }).join('');
+}
+
+function toggleChordsEditor(enabled) {
+    editorHasChords = enabled;
+    document.getElementById('lyrics-normal-editor').style.display = enabled ? 'none' : 'block';
+    document.getElementById('lyrics-chords-editor').style.display = enabled ? 'block' : 'none';
+    
+    // Switch tra Dettagli e Info extra
+    const rowDettagli = document.getElementById('row-dettagli');
+    const rowInfoExtra = document.getElementById('row-info-extra');
+    if (rowDettagli) rowDettagli.style.display = enabled ? 'none' : '';
+    if (rowInfoExtra) rowInfoExtra.style.display = enabled ? '' : 'none';
+    
+    if (enabled) {
+        const textarea = document.getElementById('lyrics');
+        const editor = document.getElementById('lyrics-chords-content');
+        if (textarea.value) {
+            editor.innerHTML = markersToHtml(textarea.value);
+                    setTimeout(() => colorCurrentLine(), 50);
+        }
+        editor.focus();
+    } else {
+        const editor = document.getElementById('lyrics-chords-content');
+        const textarea = document.getElementById('lyrics');
+        textarea.value = getChordsEditorText();
+    }
+}
+function handleEditorPaste(e) {
+    e.preventDefault();
+    const editor = document.getElementById('lyrics-chords-content');
+    
+    const text = (e.clipboardData || window.clipboardData).getData('text/plain');
+    const normalized = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+    const lines = normalized.split('\n');
+    
+    // Ottieni posizione cursore
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) return;
+    
+    const range = selection.getRangeAt(0);
+    range.deleteContents();
+    
+    // Inserisci ogni riga come div separato
+    const fragment = document.createDocumentFragment();
+    lines.forEach((line, i) => {
+        const div = document.createElement('div');
+        if (line.trim() === '') {
+            div.innerHTML = '<br>';
+        } else {
+            div.textContent = line;
+        }
+        fragment.appendChild(div);
+    });
+    
+    range.insertNode(fragment);
+    
+    // Sposta cursore alla fine
+    selection.collapseToEnd();
+    
+    setTimeout(() => colorCurrentLine(), 50);
+}
+
+function handleEditorKeydown(e) {
+    if (e.key === 'Enter') {
+        // Piccolo delay per permettere all'invio di essere processato
+        setTimeout(() => colorCurrentLine(), 10);
+    }
+}
+
+function getCurrentLineElement() {
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) return null;
+    
+    let node = selection.getRangeAt(0).startContainer;
+    const editor = document.getElementById('lyrics-chords-content');
+    
+    // Risali fino al figlio diretto dell'editor
+    while (node && node.parentElement !== editor) {
+        node = node.parentElement;
+    }
+    return node;
+}
+
+function getLineText(lineEl) {
+    if (!lineEl) return '';
+    return lineEl.textContent || '';
+}
+
+function colorCurrentLine() {
+    const editor = document.getElementById('lyrics-chords-content');
+    if (!editor) return;
+    
+    // Colora tutte le righe (div figli dell'editor)
+    for (const child of editor.children) {
+        const text = child.textContent || '';
+        if (text.trim() === '') continue;
+        
+        // Non toccare il colore se è stato impostato manualmente tramite span interni
+        // Solo imposta il colore del div se non ci sono span con colori specifici
+        const hasManualColor = child.querySelector('span[style*="color:#993300"], span[style*="color:#6600CC"], span[style*="color:#FF6600"], span[style*="color:#006600"]');
+        if (hasManualColor) continue;
+        
+        if (isChordLine(text)) {
+            child.style.color = '#0000FF';
+        } else {
+            child.style.color = 'black';
+        }
+    }
+}
+
+function convertLineToChords() {
+    const editor = document.getElementById('lyrics-chords-content');
+    if (!editor) return;
+    
+    const lineEl = getCurrentLineElement();
+    if (lineEl && lineEl.parentElement === editor) {
+        lineEl.style.color = '#0000FF';
+        lineEl.setAttribute('data-forced', 'chord');
+    }
+}
+
+function convertLineToText() {
+    const editor = document.getElementById('lyrics-chords-content');
+    if (!editor) return;
+    
+    const lineEl = getCurrentLineElement();
+    if (lineEl && lineEl.parentElement === editor) {
+        lineEl.style.color = 'black';
+        lineEl.setAttribute('data-forced', 'text');
+    }
+}
+
+function applyBgColor(color) {
+    const editor = document.getElementById('lyrics-chords-content');
+    editor.focus();
+    const selection = window.getSelection();
+    if (!selection || selection.isCollapsed) return;
+    document.execCommand('hiliteColor', false, color);
+}
+
+function applyTextColor(color) {
+    const editor = document.getElementById('lyrics-chords-content');
+    editor.focus();
+    const selection = window.getSelection();
+    if (!selection || selection.isCollapsed) return;
+    document.execCommand('foreColor', false, color);
+}
+
+function applyUnderline() {
+    const editor = document.getElementById('lyrics-chords-content');
+    editor.focus();
+    document.execCommand('underline', false, null);
+}
+
+function removeAllFormatting() {
+    const editor = document.getElementById('lyrics-chords-content');
+    editor.focus();
+    const selection = window.getSelection();
+    if (!selection || selection.isCollapsed) return;
+    document.execCommand('removeFormat', false, null);
+}
+
+function highlightSelection() {
+    applyBgColor('#FFFF00');
+}
+
+function removeHighlight() {
+    removeAllFormatting();
+}
+
+// Estrae il testo dall'editor contenteditable convertendo in formato interno
+function getChordsEditorText() {
+    const editor = document.getElementById('lyrics-chords-content');
+    if (!editor) return '';
+    
+    let result = '';
+    
+    function normalizeColor(color) {
+        if (!color) return null;
+        const rgb = color.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+        if (rgb) {
+            return '#' + [rgb[1], rgb[2], rgb[3]].map(n => parseInt(n).toString(16).padStart(2, '0')).join('').toUpperCase();
+        }
+        return color.toUpperCase();
+    }
+    
+    function processNode(node) {
+        if (node.nodeType === Node.TEXT_NODE) {
+            result += node.textContent;
+        } else if (node.nodeType === Node.ELEMENT_NODE) {
+            const tag = node.tagName.toLowerCase();
+            
+            if (tag === 'br') {
+                result += '\n';
+            } else if (tag === 'div' || tag === 'p') {
+                if (result && !result.endsWith('\n')) result += '\n';
+                
+                // Controlla se la riga è forzata come accordo
+                const forced = node.getAttribute('data-forced');
+                const divColor = normalizeColor(node.style.color);
+                const isChordDiv = forced === 'chord' || divColor === '#0000FF';
+                const isTextDiv = forced === 'text';
+                
+                if (isChordDiv) result += '§FORCED§';
+                else if (isTextDiv) result += '§TEXT§';
+                
+                for (const child of node.childNodes) processNode(child);
+                if (!result.endsWith('\n')) result += '\n';
+            } else if (tag === 'span' || tag === 'font' || tag === 'u') {
+                const style = node.style || {};
+                const bg = normalizeColor(style.backgroundColor || style.background);
+                const color = normalizeColor(style.color || node.getAttribute?.('color'));
+                const underline = tag === 'u' || style.textDecoration?.includes('underline');
+                
+                // Marcatori per sfondo
+                const BG_MARKERS = {
+                    '#FFFF00': ['«Y»', '«/Y»'],
+                    '#FFCCCC': ['«R»', '«/R»'],
+                    '#CCFFCC': ['«G»', '«/G»'],
+                };
+                // Marcatori per colore carattere
+                const COLOR_MARKERS = {
+                    '#993300': ['«B»', '«/B»'],   // Marrone
+                    '#6600CC': ['«V»', '«/V»'],   // Viola
+                    '#FF6600': ['«O»', '«/O»'],   // Arancione
+                    '#006600': ['«GR»', '«/GR»'], // Verde
+                };
+                
+                const bgMarker = bg && BG_MARKERS[bg];
+                const colorMarker = color && COLOR_MARKERS[color];
+                
+                if (bgMarker) result += bgMarker[0];
+                if (colorMarker) result += colorMarker[0];
+                if (underline) result += '«U»';
+                
+                for (const child of node.childNodes) processNode(child);
+                
+                if (underline) result += '«/U»';
+                if (colorMarker) result += colorMarker[1];
+                if (bgMarker) result += bgMarker[1];
+                
+            } else {
+                for (const child of node.childNodes) processNode(child);
+            }
+        }
+    }
+    
+    for (const child of editor.childNodes) processNode(child);
+    return result.trim();
+}
+
+// Quando si salva con accordi, marca le righe di accordi con §
+function processLyricsWithChords(text) {
+    const lines = text.split('\n');
+    const result = [];
+    let prevWasText = false;
+    
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        const trimmed = line.trim();
+        
+        if (trimmed === '') {
+            result.push('');
+            prevWasText = false;
+            continue;
+        }
+        
+        // Preserva righe già marcate come forzate
+        if (line.startsWith('§FORCED§')) {
+            result.push(line);
+            prevWasText = false;
+            continue;
+        }
+        if (line.startsWith('§TEXT§')) {
+            result.push(line);
+            prevWasText = true;
+            continue;
+        }
+        
+        if (prevWasText && isChordLine(line)) {
+            result.push('§' + line);
+            prevWasText = false;
+        } else {
+            result.push(line);
+            prevWasText = true;
+        }
+    }
+    
+    return result.join('\n');
+}
 
 function changeLyricsFontSize(change) {
     currentLyricsFontSize = Math.max(10, Math.min(24, currentLyricsFontSize + change));
