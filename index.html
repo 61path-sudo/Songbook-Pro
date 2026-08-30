@@ -1839,8 +1839,7 @@ function calculateSongPagination(song, format, isPDF = false, isFullscreen = fal
 function getLineHeight(text) {
     const trimmed = text.trim();
     if (trimmed === '') {
-        // Riga vuota: altezza fissa per separazione strofe
-        return 22;  // Stessa altezza di una riga normale
+        return 26;
     }
     testDiv.textContent = text;
     const height = testDiv.offsetHeight;
