@@ -1832,6 +1832,12 @@ function calculateSongPagination(song, format, isPDF = false, isFullscreen = fal
     testDiv.style.position = 'absolute';
     testDiv.style.visibility = 'hidden';
     testDiv.style.width = (dims.width - 40) + 'px';  // Stessa larghezza della pagina reale
+    // ✅ FIX: il div va misurato con lo STESSO font usato nel PDF (Times),
+    // altrimenti eredita il sans-serif di <body> ed è più STRETTO di Times:
+    // una riga che "sembra" stare su una riga in fase di calcolo, nel PDF
+    // (font Times, pdf.setFont('times','normal')) si spezza in due righe,
+    // l'altezza reale supera quella prevista e il testo esce dalla pagina.
+    testDiv.style.fontFamily = isPDF ? "'Times New Roman', Times, serif" : "-apple-system, BlinkMacSystemFont, sans-serif";
     document.body.appendChild(testDiv);
     
     // Funzione per calcolare altezza reale usando il div di test
@@ -1839,11 +1845,16 @@ function calculateSongPagination(song, format, isPDF = false, isFullscreen = fal
 function getLineHeight(text) {
     const trimmed = text.trim();
     if (trimmed === '') {
-        return 26;
+        // Riga vuota: altezza fissa per separazione strofe
+        return 22;  // Stessa altezza di una riga normale
     }
     testDiv.textContent = text;
     const height = testDiv.offsetHeight;
-    return height;
+    // ✅ Piccolo margine di sicurezza SOLO per il calcolo PDF: le metriche del
+    // "Times New Roman" del browser e del font "times" interno di jsPDF non sono
+    // identiche al pixel. Il +4% evita che righe "al limite" vengano stimate
+    // per un pelo più corte di quanto risultino davvero nel PDF.
+    return isPDF ? Math.ceil(height * 1.04) : height;
 }
     
     const pages = [];
