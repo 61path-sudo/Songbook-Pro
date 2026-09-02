@@ -1832,12 +1832,26 @@ function calculateSongPagination(song, format, isPDF = false, isFullscreen = fal
     testDiv.style.position = 'absolute';
     testDiv.style.visibility = 'hidden';
     testDiv.style.width = (dims.width - 40) + 'px';  // Stessa larghezza della pagina reale
-    // ✅ FIX: il div va misurato con lo STESSO font usato nel PDF (Times),
-    // altrimenti eredita il sans-serif di <body> ed è più STRETTO di Times:
-    // una riga che "sembra" stare su una riga in fase di calcolo, nel PDF
-    // (font Times, pdf.setFont('times','normal')) si spezza in due righe,
-    // l'altezza reale supera quella prevista e il testo esce dalla pagina.
-    testDiv.style.fontFamily = isPDF ? "'Times New Roman', Times, serif" : "-apple-system, BlinkMacSystemFont, sans-serif";
+
+    // ✅ FIX DEFINITIVO: la classe .song-text viene sovrascritta da media query
+    // responsive (es. "@media max-width:768px { .song-text{font-size:12pt !important} }"),
+    // quindi su schermi stretti (praticamente ogni telefono) il div di test veniva
+    // misurato a 12pt mentre il PDF scrive SEMPRE a 14pt (A5) / 16pt (A4), e in
+    // Times New Roman anziché nel sans-serif ereditato da <body>. Qui forziamo
+    // via JS gli STESSI identici parametri usati in addSongToPDF, con priorità
+    // 'important' cosi' che nessuna media query possa più interferire, qualunque
+    // sia la larghezza reale dello schermo da cui si esporta il PDF.
+    const pdfFontSizePt = format === 'A5' ? 14 : 16;
+    const pdfLineHeightRatio = format === 'A5' ? 1.3 : 1.4;
+    if (isPDF) {
+        testDiv.style.setProperty('font-family', "'Times New Roman', Times, serif", 'important');
+        testDiv.style.setProperty('font-size', pdfFontSizePt + 'pt', 'important');
+        testDiv.style.setProperty('line-height', pdfLineHeightRatio, 'important');
+        testDiv.style.setProperty('text-transform', 'uppercase', 'important');
+        testDiv.style.setProperty('white-space', 'pre-line', 'important');
+    } else {
+        testDiv.style.setProperty('font-family', '-apple-system, BlinkMacSystemFont, sans-serif', 'important');
+    }
     document.body.appendChild(testDiv);
     
     // Funzione per calcolare altezza reale usando il div di test
@@ -3807,7 +3821,7 @@ y += 8;
         
         // TESTO
         pdf.setFont('times', 'normal');
-        pdf.setFontSize(14);
+        pdf.setFontSize(format === 'A5' ? 14 : 16);  // ✅ era hardcoded a 14 anche per A4
         
         page.lines.forEach(line => {
     if (line.trim() === '') {
