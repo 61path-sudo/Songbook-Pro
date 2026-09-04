@@ -1817,7 +1817,7 @@ function calculateSongPagination(song, format, isPDF = false, isFullscreen = fal
     }
 } else if (isPDF) {
     if (format === 'A5') {
-        firstPageHeight = 680;
+        firstPageHeight = 620;
         middlePageHeight = 740;
         lastPageHeight = 700;
     } else {
@@ -1898,6 +1898,34 @@ function getLineHeight(text) {
                 firstPageEndIndex = i + 1;
             } else {
                 break;
+            }
+        }
+        
+        // ✅ FIX: se la prima pagina risulta essere anche l'ultima (canzone corta
+        // che entrerebbe tutta in una pagina), serve riservare lo spazio per il
+        // FOOTER ("Torna ad Elenco cantanti" / "Torna al cantante"), cosa che il
+        // solo budget "firstPageHeight" non prevede (a differenza delle pagine
+        // successive, che per lo stesso motivo passano da middlePageHeight a
+        // lastPageHeight quando risultano essere l'ultima pagina). Rifacciamo
+        // il riempimento con lo stesso margine che l'app riserva altrove per il
+        // footer, calcolato dalla differenza tra middlePageHeight e lastPageHeight.
+        if (firstPageEndIndex >= lines.length) {
+            const footerReserve = middlePageHeight - lastPageHeight;
+            const firstLastPageHeight = firstPageHeight - footerReserve;
+            heightUsed = 0;
+            firstPageEndIndex = 0;
+            for (let i = 0; i < lines.length; i++) {
+                const lineRealHeight = getLineHeight(lines[i]);
+                if (heightUsed + lineRealHeight <= firstLastPageHeight) {
+                    heightUsed += lineRealHeight;
+                    firstPageEndIndex = i + 1;
+                } else {
+                    break;
+                }
+            }
+            // Forza almeno una riga anche se il budget ridotto non ce la fa
+            if (firstPageEndIndex === 0) {
+                firstPageEndIndex = 1;
             }
         }
         
