@@ -1787,7 +1787,19 @@ function calculateSongPagination(song, format, isPDF = false, isFullscreen = fal
     const lines = song.lyrics.split('\n');
     
     // Dimensioni pagina in pixel
-    const dims = getPageDimensions();
+    // ✅ FIX CRITICO: NON usare getPageDimensions(), perché legge la variabile
+    // globale "pageFormat" (il formato mostrato a schermo nella tab Performance),
+    // che può essere diverso dal parametro "format" passato a questa funzione
+    // (es. schermo in A4 mentre si sta esportando il PDF in A5). Con la larghezza
+    // sbagliata, il testo veniva misurato su una pagina più larga di quella reale
+    // del PDF: righe che sembravano stare su una riga sola in fase di calcolo si
+    // spezzavano in due nel PDF (più stretto), il conteggio andava fuori sincrono
+    // e il testo finiva fuori pagina. Calcoliamo le dimensioni SEMPRE dal
+    // parametro "format" ricevuto, mai da uno stato globale esterno.
+    const mmToPx = 3.7795;
+    const dims = format === 'A5'
+        ? { width: 148 * mmToPx, height: 210 * mmToPx }
+        : { width: 210 * mmToPx, height: 297 * mmToPx };
     
     // Calcola altezze disponibili in pixel per ogni tipo di pagina
     let firstPageHeight, middlePageHeight, lastPageHeight;
