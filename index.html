@@ -1940,6 +1940,14 @@ function getLineHeight(text) {
     
     // PAGINE SUCCESSIVE
 while (currentLineIndex < lines.length) {
+    // ✅ Se la nuova pagina inizierebbe con una riga vuota (lo spazio che separa
+    // le strofe è "caduto" proprio a cavallo tra una pagina e l'altra), la
+    // saltiamo: non ha senso iniziare una pagina con uno spazio vuoto in cima.
+    while (currentLineIndex < lines.length && lines[currentLineIndex].trim() === '') {
+        currentLineIndex++;
+    }
+    if (currentLineIndex >= lines.length) break;
+    
     // Prima riempi con middlePageHeight
     let heightUsed = 0;
     let pageEndIndex = currentLineIndex;
