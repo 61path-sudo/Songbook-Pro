@@ -4079,7 +4079,7 @@ function addFooterToPage(pdf, pageWidth, pageHeight, sideMargin) {
     
     // ✅ 3 colonne, come nel footer a schermo (Performance/Fullscreen):
     // Torna ad Elenco cantanti | Torna al cantante | Preferiti
-    pdf.text('Torna ad Elenco cantanti', pageWidth / 4, textY, { align: 'center' });
+    pdf.text('Torna ad Elenco cantanti', pageWidth / 5, textY, { align: 'center' });
     pdf.text('Torna al cantante', pageWidth / 2, textY, { align: 'center' });
     pdf.text('Preferiti', (pageWidth * 5) / 6, textY, { align: 'center' });
 }
@@ -4226,7 +4226,7 @@ function addLinksToSongs(pdf, songs, pageMap, pageWidth, pageHeight, margin, for
         const width3 = pdf.getTextWidth(text3);
         
         // Link "Torna all'indice" (primo terzo, centrato)
-        const leftCenter = pageWidth / 4;
+        const leftCenter = pageWidth / 5;
         const leftLinkX = leftCenter - (width1 / 2);
         pdf.link(leftLinkX, linkY, width1, linkHeight, { pageNumber: pageMap.index });
         
