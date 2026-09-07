@@ -3845,16 +3845,25 @@ pdf.link(linkX, lineY, textWidth, linkHeight, { pageNumber: 1 });
     }
     
     // Pagine di elenco per "Tutti i Preferiti" e per ogni categoria
+    pageMap.preferitiListRanges = new Map(); // key -> { start, end } (pagine fisiche occupate)
+    
     if (preferiti.length > 0) {
-        const buildPreferitiListPage = (songIds) => {
+        const buildPreferitiListPage = (songIds, pageTitle) => {
             pdf.addPage();
             currentPage++;
             const listStartPage = currentPage;
             
+            // Titolo della pagina
+            pdf.setFont('times', 'bold');
+            pdf.setFontSize(18);
+            pdf.text(pageTitle, pageWidth / 2, 14, { align: 'center' });
+            pdf.setLineWidth(0.4);
+            pdf.line(4, 20, pageWidth - 4, 20);
+            
             pdf.setFont('times', 'normal');
             pdf.setFontSize(16);
-            let ly = margin + 10;
-            const listBottomLimit = pageHeight - margin - 15;
+            let ly = margin + 25;  // sotto al titolo
+            const listBottomLimit = pageHeight - margin - 15;  // spazio per il footer
             
             songIds.forEach(songId => {
                 const s = songs.find(sg => sg.id === songId);
@@ -3862,22 +3871,34 @@ pdf.link(linkX, lineY, textWidth, linkHeight, { pageNumber: 1 });
                 if (ly + 8 > listBottomLimit) {
                     pdf.addPage();
                     currentPage++;
-                    ly = margin + 10;
+                    ly = margin + 10;  // niente titolo nelle pagine di continuazione
                 }
                 pdf.text(`${s.title.toUpperCase()} (${s.artist.toUpperCase()})`, 4, ly);
                 ly += 8;
             });
             
-            return listStartPage;
+            const listEndPage = currentPage;
+            
+            // Footer ("Torna ad Elenco cantanti" / "Torna a Preferiti") su tutte le pagine della lista
+            for (let p = listStartPage; p <= listEndPage; p++) {
+                pdf.setPage(p);
+                addPreferitiListFooter(pdf, pageWidth, pageHeight);
+            }
+            
+            return { start: listStartPage, end: listEndPage };
         };
         
         const allIds = preferiti.map(p => p.songId);
-        pageMap.preferitiCategoryPages.set('all', buildPreferitiListPage(allIds));
+        const allRange = buildPreferitiListPage(allIds, 'TUTTI I PREFERITI');
+        pageMap.preferitiCategoryPages.set('all', allRange.start);
+        pageMap.preferitiListRanges.set('all', allRange);
         
         categories.forEach(cat => {
             const catIds = preferiti.filter(p => p.categories && p.categories.includes(cat.id)).map(p => p.songId);
             if (catIds.length === 0) return;
-            pageMap.preferitiCategoryPages.set(cat.id, buildPreferitiListPage(catIds));
+            const catRange = buildPreferitiListPage(catIds, cat.name.toUpperCase());
+            pageMap.preferitiCategoryPages.set(cat.id, catRange.start);
+            pageMap.preferitiListRanges.set(cat.id, catRange);
         });
     }
     
@@ -3889,6 +3910,21 @@ pdf.link(linkX, lineY, textWidth, linkHeight, { pageNumber: 1 });
     
     pdf.save(`${fileName}.pdf`);
     alert('PDF generato con successo con link interattivi!');
+}
+
+// Footer delle pagine elenco Preferiti: "Torna ad Elenco cantanti" | "Torna a Preferiti"
+function addPreferitiListFooter(pdf, pageWidth, pageHeight) {
+    const lineY = pageHeight - 13;
+    const textY = lineY + 8;
+    
+    pdf.setLineWidth(0.1);
+    pdf.line(0, lineY, pageWidth, lineY);
+    
+    pdf.setFont('times', 'normal');
+    pdf.setFontSize(16);
+    pdf.setTextColor(0, 0, 0);
+    pdf.text('Torna ad Elenco cantanti', pageWidth / 4, textY, { align: 'center' });
+    pdf.text('Torna a Preferiti', (pageWidth * 3) / 4, textY, { align: 'center' });
 }
 
 // Ricalcola le stesse posizioni usate per disegnare le pagine Preferiti,
@@ -3949,7 +3985,7 @@ function addLinksToPreferiti(pdf, pageMap, pageWidth, pageHeight, margin, conten
         pdf.setPage(currentListPage);
         pdf.setFont('times', 'normal');
         pdf.setFontSize(16);
-        let ly = margin + 10;
+        let ly = margin + 25;  // ⚠️ prima pagina: deve combaciare con "sotto al titolo" del disegno
         const listBottomLimit = pageHeight - margin - 15;
         
         songIds.forEach(songId => {
@@ -3977,6 +4013,29 @@ function addLinksToPreferiti(pdf, pageMap, pageWidth, pageHeight, margin, conten
         const catIds = preferiti.filter(p => p.categories && p.categories.includes(cat.id)).map(p => p.songId);
         linkListPage(catIds, targetPage);
     });
+    
+    // Link del footer ("Torna ad Elenco cantanti" / "Torna a Preferiti") su ogni
+    // pagina fisica di ogni elenco (Tutti i Preferiti + ogni categoria)
+    if (pageMap.preferitiListRanges) {
+        pdf.setFont('times', 'normal');
+        pdf.setFontSize(16);
+        const text1 = 'Torna ad Elenco cantanti';
+        const text2 = 'Torna a Preferiti';
+        const width1 = pdf.getTextWidth(text1);
+        const width2 = pdf.getTextWidth(text2);
+        const lineY = pageHeight - 13;
+        const linkHeight = pageHeight - lineY;
+        
+        pageMap.preferitiListRanges.forEach(range => {
+            for (let p = range.start; p <= range.end; p++) {
+                pdf.setPage(p);
+                const leftCenter = pageWidth / 4;
+                pdf.link(leftCenter - width1 / 2, lineY, width1, linkHeight, { pageNumber: pageMap.index });
+                const rightCenter = (pageWidth * 3) / 4;
+                pdf.link(rightCenter - width2 / 2, lineY, width2, linkHeight, { pageNumber: pageMap.preferitiIndex });
+            }
+        });
+    }
 }
 
 // NUOVA FUNZIONE SEMPLICE PER I LINK
