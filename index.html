@@ -3851,7 +3851,7 @@ pdf.link(linkX, lineY, textWidth, linkHeight, { pageNumber: 1 });
         // Parametri di layout condivisi (anche da linkListPage per i link)
         const prefNumCols = 2;
         const prefColWidth = contentWidth / prefNumCols;
-        const prefItemHeight = 14;                  // titolo + cantante + separatore
+        const prefItemHeight = 13;                  // titolo + cantante + separatore
         const prefStartYFirst = margin + 25;        // prima pagina: sotto al titolo
         const prefStartYOther = margin + 10;        // pagine di continuazione
         const prefListBottomLimit = pageHeight - margin - 15;  // spazio per il footer
@@ -4030,7 +4030,7 @@ function addLinksToPreferiti(pdf, pageMap, pageWidth, pageHeight, margin, conten
     // ⚠️ Stessi parametri di layout usati nel blocco che disegna le liste (2 colonne)
     const prefNumCols = 2;
     const prefColWidth = contentWidth / prefNumCols;
-    const prefItemHeight = 14;
+    const prefItemHeight = 13;
     const prefStartYFirst = margin + 25;
     const prefStartYOther = margin + 10;
     const prefListBottomLimit = pageHeight - margin - 15;
