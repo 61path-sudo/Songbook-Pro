@@ -3779,7 +3779,8 @@ pdf.link(linkX, lineY, textWidth, linkHeight, { pageNumber: 1 });
     } else {
         const btnHeight = 10;
         const btnGap = 4;
-        const btnWidth = contentWidth;
+        const btnWidth = contentWidth * 0.3;   // 30% della larghezza utile: più stretto
+        const btnX = marginLR;                  // resta appoggiato al margine sinistro (= tutto a sx)
         let py = 35;
         const preferitiBottomLimit = pageHeight - margin;
         
