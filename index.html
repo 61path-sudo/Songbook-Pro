@@ -3848,20 +3848,19 @@ pdf.link(linkX, lineY, textWidth, linkHeight, { pageNumber: 1 });
     pageMap.preferitiListRanges = new Map(); // key -> { start, end } (pagine fisiche occupate)
     
     if (preferiti.length > 0) {
-        // Parametri di layout condivisi (anche da linkListPage per i link)
-        const prefNumCols = 2;
-        const prefColWidth = contentWidth / prefNumCols;
-        const prefItemHeight = 13;                  // titolo + cantante + separatore
-        const prefStartYFirst = margin + 25;        // prima pagina: sotto al titolo
-        const prefStartYOther = margin + 10;        // pagine di continuazione
-        const prefListBottomLimit = pageHeight - margin - 15;  // spazio per il footer
-        
         const buildPreferitiListPage = (songIds, pageTitle) => {
-            pdf.addPage();
-            currentPage++;
-            const listStartPage = currentPage;
+            const layout = computePreferitiLayout(songIds, songs, marginLR, margin, pageHeight, contentWidth);
+            const { positions, totalPages, colWidth, startYFirst, startYOther, bottomLimitGenerous, bottomLimitReserved } = layout;
             
-            // Titolo della pagina (stesso stile delle pagine cantante: linea sopra e sotto)
+            const listStartPage = currentPage + 1;
+            for (let i = 0; i < totalPages; i++) {
+                pdf.addPage();
+                currentPage++;
+            }
+            const listEndPage = currentPage;
+            
+            // Titolo della pagina, solo sulla prima (stesso stile delle pagine cantante)
+            pdf.setPage(listStartPage);
             pdf.setFont('times', 'bold');
             pdf.setFontSize(18);
             pdf.text(pageTitle, pageWidth / 2, 14, { align: 'center' });
@@ -3870,42 +3869,26 @@ pdf.link(linkX, lineY, textWidth, linkHeight, { pageNumber: 1 });
             pdf.line(4, 20, pageWidth - 4, 20);
             pdf.setLineWidth(0.2);
             
-            let col = 0;
-            let y = prefStartYFirst;
-            let isFirstPage = true;
-            
-            songIds.forEach(songId => {
-                const s = songs.find(sg => sg.id === songId);
+            // Disegna ogni canzone nella posizione già calcolata
+            positions.forEach(pos => {
+                const s = songs.find(sg => sg.id === pos.songId);
                 if (!s) return;
+                pdf.setPage(listStartPage + pos.pageOffset);
                 
-                if (y + prefItemHeight > prefListBottomLimit) {
-                    col++;
-                    y = isFirstPage ? prefStartYFirst : prefStartYOther;
-                    if (col >= prefNumCols) {
-                        pdf.addPage();
-                        currentPage++;
-                        isFirstPage = false;
-                        col = 0;
-                        y = prefStartYOther;
-                    }
-                }
+                const availableTitleWidth = colWidth - 8;
                 
-                const x = marginLR + col * prefColWidth;
-                
-                // Titolo in grassetto, con dimensione che si riduce se il testo
-                // non ci sta nella colonna (stessa logica di ELENCO CANTANTI)
+                // Titolo in grassetto, con dimensione che si riduce se il testo non ci sta
                 let titleFontSize = 14;
                 pdf.setFont('times', 'bold');
                 pdf.setFontSize(titleFontSize);
                 pdf.setTextColor(0, 0, 0);
                 const titleText = s.title.toUpperCase();
-                const availableTitleWidth = prefColWidth - 8;
                 const titleWidth = pdf.getTextWidth(titleText);
                 if (titleWidth > availableTitleWidth) {
                     titleFontSize = Math.max(8, Math.floor(titleFontSize * (availableTitleWidth / titleWidth)));
                     pdf.setFontSize(titleFontSize);
                 }
-                pdf.text(titleText, x, y);
+                pdf.text(titleText, pos.x, pos.y);
                 
                 // Cantante sotto, in grigio (stessa riduzione, se necessario)
                 let artistFontSize = 10;
@@ -3918,27 +3901,27 @@ pdf.link(linkX, lineY, textWidth, linkHeight, { pageNumber: 1 });
                     artistFontSize = Math.max(7, Math.floor(artistFontSize * (availableTitleWidth / artistWidth)));
                     pdf.setFontSize(artistFontSize);
                 }
-                pdf.text(artistText, x, y + 5);
+                pdf.text(artistText, pos.x, pos.y + 5);
                 pdf.setTextColor(0, 0, 0);
                 
                 // Linea separatrice sotto la voce
                 pdf.setDrawColor(204, 204, 204);
                 pdf.setLineWidth(0.2);
-                pdf.line(x, y + 7, x + prefColWidth - 6, y + 7);
+                pdf.line(pos.x, pos.y + 7, pos.x + colWidth - 6, pos.y + 7);
                 pdf.setDrawColor(0, 0, 0);
-                
-                y += prefItemHeight;
             });
             
-            const listEndPage = currentPage;
-            
             // Linea verticale divisoria tra le 2 colonne, su ogni pagina della lista
-            for (let p = listStartPage; p <= listEndPage; p++) {
-                pdf.setPage(p);
-                const sy = (p === listStartPage) ? prefStartYFirst : prefStartYOther;
+            // (usa il limite "generoso" ovunque tranne sull'ultima pagina, dove si ferma
+            // prima per lasciare spazio al footer)
+            for (let i = 0; i < totalPages; i++) {
+                pdf.setPage(listStartPage + i);
+                const sy = (i === 0) ? startYFirst : startYOther;
+                const isLastPage = (i === totalPages - 1);
+                const bottomLimit = isLastPage ? bottomLimitReserved : bottomLimitGenerous;
                 pdf.setDrawColor(204, 204, 204);
                 pdf.setLineWidth(0.3);
-                pdf.line(marginLR + prefColWidth - 3, sy - 6, marginLR + prefColWidth - 3, prefListBottomLimit);
+                pdf.line(marginLR + colWidth - 3, sy - 6, marginLR + colWidth - 3, bottomLimit);
                 pdf.setDrawColor(0, 0, 0);
             }
             
@@ -3973,6 +3956,73 @@ pdf.link(linkX, lineY, textWidth, linkHeight, { pageNumber: 1 });
     
     pdf.save(`${fileName}.pdf`);
     alert('PDF generato con successo con link interattivi!');
+}
+
+// Footer delle pagine elenco Preferiti: "Torna ad Elenco cantanti" | "Torna a Preferiti"
+// Calcola la posizione (pagina/colonna/coordinate) di ogni canzone nell'elenco
+// Preferiti, un'unica volta: sia il disegno che i link usano ESATTAMENTE questo
+// stesso risultato, quindi non possono più disallinearsi tra loro.
+// Usa tutto lo spazio disponibile ("generoso") su ogni pagina TRANNE l'ultima,
+// dove riserva spazio per il footer — invece di togliere spazio ovunque.
+function computePreferitiLayout(songIds, songs, marginLR, margin, pageHeight, contentWidth) {
+    const numCols = 2;
+    const colWidth = contentWidth / numCols;
+    const itemHeight = 13;                     // titolo + cantante + separatore
+    const startYFirst = margin + 25;           // prima pagina: sotto al titolo
+    const startYOther = margin + 10;           // pagine di continuazione
+    const bottomLimitGenerous = pageHeight - margin - 3;   // nessun margine per footer
+    const bottomLimitReserved = pageHeight - margin - 15;  // spazio per il footer
+    
+    const validSongs = songIds.map(id => songs.find(sg => sg.id === id)).filter(Boolean);
+    
+    function place(lastPageGuess) {
+        const positions = [];
+        let pageOffset = 0;
+        let col = 0;
+        let y = startYFirst;
+        
+        validSongs.forEach(s => {
+            const startY = (pageOffset === 0) ? startYFirst : startYOther;
+            const isLastPage = (pageOffset === lastPageGuess);
+            const bottomLimit = isLastPage ? bottomLimitReserved : bottomLimitGenerous;
+            
+            if (y + itemHeight > bottomLimit) {
+                col++;
+                y = startY;
+                if (col >= numCols) {
+                    pageOffset++;
+                    col = 0;
+                    y = startYOther;
+                }
+            }
+            
+            positions.push({ songId: s.id, pageOffset, x: marginLR + col * colWidth, y });
+            y += itemHeight;
+        });
+        
+        return { positions, lastPageIndex: pageOffset };
+    }
+    
+    // Converge sulla pagina realmente finale: proviamo con un'ipotesi, e se il
+    // risultato reale finisce su una pagina diversa da quella ipotizzata,
+    // riproviamo con l'ipotesi aggiornata (bastano pochi tentativi per stabilizzarsi).
+    let guess = 0;
+    let result = place(guess);
+    for (let attempt = 0; attempt < 4 && result.lastPageIndex !== guess; attempt++) {
+        guess = result.lastPageIndex;
+        result = place(guess);
+    }
+    
+    return {
+        positions: result.positions,
+        totalPages: result.lastPageIndex + 1,
+        colWidth,
+        itemHeight,
+        startYFirst,
+        startYOther,
+        bottomLimitGenerous,
+        bottomLimitReserved
+    };
 }
 
 // Footer delle pagine elenco Preferiti: "Torna ad Elenco cantanti" | "Torna a Preferiti"
@@ -4042,45 +4092,17 @@ function addLinksToPreferiti(pdf, pageMap, pageWidth, pageHeight, margin, conten
         btnIndex++;
     });
     
-    // Link dalle voci di ciascuna pagina elenco alla pagina della relativa canzone
-    // ⚠️ Stessi parametri di layout usati nel blocco che disegna le liste (2 colonne)
-    const prefNumCols = 2;
-    const prefColWidth = contentWidth / prefNumCols;
-    const prefItemHeight = 13;
-    const prefStartYFirst = margin + 25;
-    const prefStartYOther = margin + 10;
-    const prefListBottomLimit = pageHeight - margin - 15;
-    
+    // Link dalle voci di ciascuna pagina elenco alla pagina della relativa canzone.
+    // Usa la STESSA funzione computePreferitiLayout del disegno: nessun rischio
+    // che le posizioni calcolate qui e quelle disegnate prima si disallineino.
     const linkListPage = (songIds, startPage) => {
-        let currentListPage = startPage;
-        pdf.setPage(currentListPage);
+        const layout = computePreferitiLayout(songIds, songs, marginLR, margin, pageHeight, contentWidth);
         
-        let col = 0;
-        let y = prefStartYFirst;
-        let isFirstPage = true;
-        
-        songIds.forEach(songId => {
-            const s = songs.find(sg => sg.id === songId);
-            if (!s) return;
-            const songPage = pageMap.songs.get(songId);
-            
-            if (y + prefItemHeight > prefListBottomLimit) {
-                col++;
-                y = isFirstPage ? prefStartYFirst : prefStartYOther;
-                if (col >= prefNumCols) {
-                    currentListPage++;
-                    pdf.setPage(currentListPage);
-                    isFirstPage = false;
-                    col = 0;
-                    y = prefStartYOther;
-                }
-            }
-            
-            const x = marginLR + col * prefColWidth;
-            // Area cliccabile: copre titolo + cantante (dal testo fino alla linea separatrice)
-            if (songPage) pdf.link(x, y - 6, prefColWidth - 6, prefItemHeight - 2, { pageNumber: songPage });
-            
-            y += prefItemHeight;
+        layout.positions.forEach(pos => {
+            const songPage = pageMap.songs.get(pos.songId);
+            if (!songPage) return;
+            pdf.setPage(startPage + pos.pageOffset);
+            pdf.link(pos.x, pos.y - 6, layout.colWidth - 6, layout.itemHeight - 2, { pageNumber: songPage });
         });
     };
     
