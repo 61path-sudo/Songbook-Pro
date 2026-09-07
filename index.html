@@ -3848,6 +3848,14 @@ pdf.link(linkX, lineY, textWidth, linkHeight, { pageNumber: 1 });
     pageMap.preferitiListRanges = new Map(); // key -> { start, end } (pagine fisiche occupate)
     
     if (preferiti.length > 0) {
+        // Parametri di layout condivisi (anche da linkListPage per i link)
+        const prefNumCols = 2;
+        const prefColWidth = contentWidth / prefNumCols;
+        const prefItemHeight = 14;                  // titolo + cantante + separatore
+        const prefStartYFirst = margin + 25;        // prima pagina: sotto al titolo
+        const prefStartYOther = margin + 10;        // pagine di continuazione
+        const prefListBottomLimit = pageHeight - margin - 15;  // spazio per il footer
+        
         const buildPreferitiListPage = (songIds, pageTitle) => {
             pdf.addPage();
             currentPage++;
@@ -3862,24 +3870,61 @@ pdf.link(linkX, lineY, textWidth, linkHeight, { pageNumber: 1 });
             pdf.line(4, 20, pageWidth - 4, 20);
             pdf.setLineWidth(0.2);
             
-            pdf.setFont('times', 'normal');
-            pdf.setFontSize(16);
-            let ly = margin + 25;  // sotto al titolo
-            const listBottomLimit = pageHeight - margin - 15;  // spazio per il footer
+            let col = 0;
+            let y = prefStartYFirst;
+            let isFirstPage = true;
             
             songIds.forEach(songId => {
                 const s = songs.find(sg => sg.id === songId);
                 if (!s) return;
-                if (ly + 8 > listBottomLimit) {
-                    pdf.addPage();
-                    currentPage++;
-                    ly = margin + 10;  // niente titolo nelle pagine di continuazione
+                
+                if (y + prefItemHeight > prefListBottomLimit) {
+                    col++;
+                    y = isFirstPage ? prefStartYFirst : prefStartYOther;
+                    if (col >= prefNumCols) {
+                        pdf.addPage();
+                        currentPage++;
+                        isFirstPage = false;
+                        col = 0;
+                        y = prefStartYOther;
+                    }
                 }
-                pdf.text(`${s.title.toUpperCase()} (${s.artist.toUpperCase()})`, 4, ly);
-                ly += 8;
+                
+                const x = marginLR + col * prefColWidth;
+                
+                // Titolo in grassetto
+                pdf.setFont('times', 'bold');
+                pdf.setFontSize(14);
+                pdf.setTextColor(0, 0, 0);
+                pdf.text(s.title.toUpperCase(), x, y);
+                
+                // Cantante sotto, in grigio
+                pdf.setFont('times', 'normal');
+                pdf.setFontSize(11);
+                pdf.setTextColor(120, 120, 120);
+                pdf.text(s.artist.toUpperCase(), x, y + 5);
+                pdf.setTextColor(0, 0, 0);
+                
+                // Linea separatrice sotto la voce
+                pdf.setDrawColor(204, 204, 204);
+                pdf.setLineWidth(0.2);
+                pdf.line(x, y + 8, x + prefColWidth - 6, y + 8);
+                pdf.setDrawColor(0, 0, 0);
+                
+                y += prefItemHeight;
             });
             
             const listEndPage = currentPage;
+            
+            // Linea verticale divisoria tra le 2 colonne, su ogni pagina della lista
+            for (let p = listStartPage; p <= listEndPage; p++) {
+                pdf.setPage(p);
+                const sy = (p === listStartPage) ? prefStartYFirst : prefStartYOther;
+                pdf.setDrawColor(204, 204, 204);
+                pdf.setLineWidth(0.3);
+                pdf.line(marginLR + prefColWidth - 3, sy - 6, marginLR + prefColWidth - 3, prefListBottomLimit);
+                pdf.setDrawColor(0, 0, 0);
+            }
             
             // Footer ("Torna ad Elenco cantanti" / "Torna a Preferiti") SOLO sull'ultima
             // pagina fisica della lista, come per il footer delle canzoni: indica la fine
@@ -3982,27 +4027,44 @@ function addLinksToPreferiti(pdf, pageMap, pageWidth, pageHeight, margin, conten
     });
     
     // Link dalle voci di ciascuna pagina elenco alla pagina della relativa canzone
+    // ⚠️ Stessi parametri di layout usati nel blocco che disegna le liste (2 colonne)
+    const prefNumCols = 2;
+    const prefColWidth = contentWidth / prefNumCols;
+    const prefItemHeight = 14;
+    const prefStartYFirst = margin + 25;
+    const prefStartYOther = margin + 10;
+    const prefListBottomLimit = pageHeight - margin - 15;
+    
     const linkListPage = (songIds, startPage) => {
         let currentListPage = startPage;
         pdf.setPage(currentListPage);
-        pdf.setFont('times', 'normal');
-        pdf.setFontSize(16);
-        let ly = margin + 25;  // ⚠️ prima pagina: deve combaciare con "sotto al titolo" del disegno
-        const listBottomLimit = pageHeight - margin - 15;
+        
+        let col = 0;
+        let y = prefStartYFirst;
+        let isFirstPage = true;
         
         songIds.forEach(songId => {
             const s = songs.find(sg => sg.id === songId);
             if (!s) return;
             const songPage = pageMap.songs.get(songId);
-            if (ly + 8 > listBottomLimit) {
-                currentListPage++;
-                pdf.setPage(currentListPage);
-                ly = margin + 10;
+            
+            if (y + prefItemHeight > prefListBottomLimit) {
+                col++;
+                y = isFirstPage ? prefStartYFirst : prefStartYOther;
+                if (col >= prefNumCols) {
+                    currentListPage++;
+                    pdf.setPage(currentListPage);
+                    isFirstPage = false;
+                    col = 0;
+                    y = prefStartYOther;
+                }
             }
-            const text = `${s.title.toUpperCase()} (${s.artist.toUpperCase()})`;
-            const textWidth = pdf.getTextWidth(text);
-            if (songPage) pdf.link(4, ly - 5, textWidth + 2, 8, { pageNumber: songPage });
-            ly += 8;
+            
+            const x = marginLR + col * prefColWidth;
+            // Area cliccabile: copre titolo + cantante (dal testo fino alla linea separatrice)
+            if (songPage) pdf.link(x, y - 6, prefColWidth - 6, prefItemHeight - 2, { pageNumber: songPage });
+            
+            y += prefItemHeight;
         });
     };
     
