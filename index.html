@@ -3779,19 +3779,20 @@ pdf.link(linkX, lineY, textWidth, linkHeight, { pageNumber: 1 });
     } else {
         const btnHeight = 10;
         const btnGap = 4;
-        const btnWidth = contentWidth * 0.3;   // 30% della larghezza utile: più stretto
-        const btnX = marginLR;                  // resta appoggiato al margine sinistro (= tutto a sx)
+        const btnWidth = contentWidth * 0.6;   // bottoni più stretti (60% della larghezza utile)
+        const btnX = marginLR;                  // appoggiati al margine sinistro
+        const btnTextX = btnX + btnWidth / 2;    // centro del testo = centro del bottone (non della pagina)
         let py = 35;
         const preferitiBottomLimit = pageHeight - margin;
         
         // Bottone "Tutti i Preferiti"
         if (py + btnHeight > preferitiBottomLimit) { pdf.addPage(); currentPage++; py = margin + 10; }
         pdf.setFillColor(52, 73, 94);
-        pdf.roundedRect(marginLR, py, btnWidth, btnHeight, 2, 2, 'F');
+        pdf.roundedRect(btnX, py, btnWidth, btnHeight, 2, 2, 'F');
         pdf.setFont('times', 'bold');
         pdf.setFontSize(14);
         pdf.setTextColor(255, 255, 255);
-        pdf.text(`TUTTI I PREFERITI (${preferiti.length})`, pageWidth / 2, py + btnHeight / 2 + 3, { align: 'center' });
+        pdf.text(`TUTTI I PREFERITI (${preferiti.length})`, btnTextX, py + btnHeight / 2 + 3, { align: 'center' });
         pdf.setTextColor(0, 0, 0);
         py += btnHeight + btnGap;
         
@@ -3804,11 +3805,11 @@ pdf.link(linkX, lineY, textWidth, linkHeight, { pageNumber: 1 });
             
             const rgb = hexToRgbPdf(cat.color || '#3498db');
             pdf.setFillColor(rgb[0], rgb[1], rgb[2]);
-            pdf.roundedRect(marginLR, py, btnWidth, btnHeight, 2, 2, 'F');
+            pdf.roundedRect(btnX, py, btnWidth, btnHeight, 2, 2, 'F');
             pdf.setFont('times', 'bold');
             pdf.setFontSize(14);
             pdf.setTextColor(255, 255, 255);
-            pdf.text(`${cat.name.toUpperCase()} (${count})`, pageWidth / 2, py + btnHeight / 2 + 3, { align: 'center' });
+            pdf.text(`${cat.name.toUpperCase()} (${count})`, btnTextX, py + btnHeight / 2 + 3, { align: 'center' });
             pdf.setTextColor(0, 0, 0);
             py += btnHeight + btnGap;
         });
@@ -3872,11 +3873,13 @@ function addLinksToPreferiti(pdf, pageMap, pageWidth, pageHeight, margin, conten
     pdf.setPage(currentIndexPage);
     const btnHeight = 10;
     const btnGap = 4;
+    const btnWidth = contentWidth * 0.6;   // ⚠️ deve restare identico al blocco che disegna i bottoni
+    const btnX = marginLR;                  // ⚠️ deve restare identico al blocco che disegna i bottoni
     const preferitiBottomLimit = pageHeight - margin;
     
     if (py + btnHeight > preferitiBottomLimit) { currentIndexPage++; pdf.setPage(currentIndexPage); py = margin + 10; }
     const allPage = pageMap.preferitiCategoryPages.get('all');
-    if (allPage) pdf.link(marginLR, py, contentWidth, btnHeight, { pageNumber: allPage });
+    if (allPage) pdf.link(btnX, py, btnWidth, btnHeight, { pageNumber: allPage });
     py += btnHeight + btnGap;
     
     categories.forEach(cat => {
@@ -3884,7 +3887,7 @@ function addLinksToPreferiti(pdf, pageMap, pageWidth, pageHeight, margin, conten
         if (!targetPage) return;
         
         if (py + btnHeight > preferitiBottomLimit) { currentIndexPage++; pdf.setPage(currentIndexPage); py = margin + 10; }
-        pdf.link(marginLR, py, contentWidth, btnHeight, { pageNumber: targetPage });
+        pdf.link(btnX, py, btnWidth, btnHeight, { pageNumber: targetPage });
         py += btnHeight + btnGap;
     });
     
