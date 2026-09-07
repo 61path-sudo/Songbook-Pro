@@ -3779,7 +3779,7 @@ pdf.link(linkX, lineY, textWidth, linkHeight, { pageNumber: 1 });
     } else {
         const btnHeight = 10;
         const btnGap = 4;
-        const btnWidth = contentWidth * 0.6;   // bottoni più stretti (60% della larghezza utile)
+        const btnWidth = contentWidth * 0.3;   // bottoni più stretti (60% della larghezza utile)
         const btnX = marginLR;                  // appoggiati al margine sinistro
         const btnTextX = btnX + btnWidth / 2;    // centro del testo = centro del bottone (non della pagina)
         let py = 35;
@@ -3873,7 +3873,7 @@ function addLinksToPreferiti(pdf, pageMap, pageWidth, pageHeight, margin, conten
     pdf.setPage(currentIndexPage);
     const btnHeight = 10;
     const btnGap = 4;
-    const btnWidth = contentWidth * 0.6;   // ⚠️ deve restare identico al blocco che disegna i bottoni
+    const btnWidth = contentWidth * 0.3;   // ⚠️ deve restare identico al blocco che disegna i bottoni
     const btnX = marginLR;                  // ⚠️ deve restare identico al blocco che disegna i bottoni
     const preferitiBottomLimit = pageHeight - margin;
     
