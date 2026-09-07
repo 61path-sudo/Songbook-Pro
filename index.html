@@ -3777,41 +3777,70 @@ pdf.link(linkX, lineY, textWidth, linkHeight, { pageNumber: 1 });
         pdf.text('Nessuna canzone nei preferiti', pageWidth / 2, 40, { align: 'center' });
         pdf.setTextColor(0, 0, 0);
     } else {
+        // ✅ Layout a 3 colonne: riempie la colonna 1 dall'alto verso il basso,
+        // poi passa alla colonna 2, poi alla 3, poi (solo se serve) nuova pagina.
+        const numCols = 3;
+        const btnColWidth = contentWidth / numCols;
+        const btnWidthRatio = 0.9;              // % della colonna occupata dal bottone (regolabile)
+        const btnWidth = btnColWidth * btnWidthRatio;
         const btnHeight = 10;
         const btnGap = 4;
-        const btnWidth = contentWidth * 0.3;   // bottoni più stretti (60% della larghezza utile)
-        const btnX = marginLR;                  // appoggiati al margine sinistro
-        const btnTextX = btnX + btnWidth / 2;    // centro del testo = centro del bottone (non della pagina)
-        let py = 35;
+        const rowStep = btnHeight + btnGap;
+        const startY = 35;
         const preferitiBottomLimit = pageHeight - margin;
+        const itemsPerCol = Math.max(1, Math.floor((preferitiBottomLimit - startY) / rowStep));
+        const perPageCapacity = itemsPerCol * numCols;
         
-        // Bottone "Tutti i Preferiti"
-        if (py + btnHeight > preferitiBottomLimit) { pdf.addPage(); currentPage++; py = margin + 10; }
-        pdf.setFillColor(52, 73, 94);
-        pdf.roundedRect(btnX, py, btnWidth, btnHeight, 2, 2, 'F');
-        pdf.setFont('times', 'bold');
-        pdf.setFontSize(14);
-        pdf.setTextColor(255, 255, 255);
-        pdf.text(`TUTTI I PREFERITI (${preferiti.length})`, btnTextX, py + btnHeight / 2 + 3, { align: 'center' });
-        pdf.setTextColor(0, 0, 0);
-        py += btnHeight + btnGap;
+        // Posizione (colonna/riga/pagina) del bottone n-esimo (0 = "Tutti i Preferiti")
+        function getButtonPosition(index) {
+            const pageOffset = Math.floor(index / perPageCapacity);
+            const indexInPage = index % perPageCapacity;
+            const col = Math.floor(indexInPage / itemsPerCol);
+            const row = indexInPage % itemsPerCol;
+            return {
+                x: marginLR + col * btnColWidth,
+                y: startY + row * rowStep,
+                pageOffset
+            };
+        }
         
-        // Un bottone per ogni categoria che contiene almeno una canzone preferita
+        // Disegna un bottone, riducendo il font se il testo non ci sta (come in ELENCO CANTANTI)
+        function drawPreferitiButton(index, label, fillRgb) {
+            const pos = getButtonPosition(index);
+            if (pos.pageOffset > drawPreferitiButton.currentOffset) {
+                pdf.addPage();
+                currentPage++;
+                drawPreferitiButton.currentOffset = pos.pageOffset;
+            }
+            pdf.setFillColor(fillRgb[0], fillRgb[1], fillRgb[2]);
+            pdf.roundedRect(pos.x, pos.y, btnWidth, btnHeight, 2, 2, 'F');
+            
+            let fontSize = 14;
+            pdf.setFont('times', 'bold');
+            pdf.setFontSize(fontSize);
+            const availableTextWidth = btnWidth * 0.9;
+            const textWidth = pdf.getTextWidth(label);
+            if (textWidth > availableTextWidth) {
+                fontSize = Math.max(7, Math.floor(fontSize * (availableTextWidth / textWidth)));
+                pdf.setFontSize(fontSize);
+            }
+            pdf.setTextColor(255, 255, 255);
+            // ✅ Testo spostato più in basso rispetto al centro verticale del bottone
+            pdf.text(label, pos.x + btnWidth / 2, pos.y + btnHeight * 0.75, { align: 'center' });
+            pdf.setTextColor(0, 0, 0);
+        }
+        drawPreferitiButton.currentOffset = 0;
+        
+        let btnIndex = 0;
+        drawPreferitiButton(btnIndex, `TUTTI I PREFERITI (${preferiti.length})`, [52, 73, 94]);
+        btnIndex++;
+        
         categories.forEach(cat => {
             const count = preferiti.filter(p => p.categories && p.categories.includes(cat.id)).length;
             if (count === 0) return;
-            
-            if (py + btnHeight > preferitiBottomLimit) { pdf.addPage(); currentPage++; py = margin + 10; }
-            
             const rgb = hexToRgbPdf(cat.color || '#3498db');
-            pdf.setFillColor(rgb[0], rgb[1], rgb[2]);
-            pdf.roundedRect(btnX, py, btnWidth, btnHeight, 2, 2, 'F');
-            pdf.setFont('times', 'bold');
-            pdf.setFontSize(14);
-            pdf.setTextColor(255, 255, 255);
-            pdf.text(`${cat.name.toUpperCase()} (${count})`, btnTextX, py + btnHeight / 2 + 3, { align: 'center' });
-            pdf.setTextColor(0, 0, 0);
-            py += btnHeight + btnGap;
+            drawPreferitiButton(btnIndex, `${cat.name.toUpperCase()} (${count})`, rgb);
+            btnIndex++;
         });
     }
     
@@ -3868,27 +3897,50 @@ function addLinksToPreferiti(pdf, pageMap, pageWidth, pageHeight, margin, conten
     if (!pageMap.preferitiIndex || preferiti.length === 0) return;
     
     // Link dai bottoni della pagina indice Preferiti alle rispettive pagine elenco
-    let py = 35;
-    let currentIndexPage = pageMap.preferitiIndex;
-    pdf.setPage(currentIndexPage);
+    // ⚠️ Questi valori devono restare IDENTICI a quelli del blocco che disegna i bottoni
+    const numCols = 3;
+    const btnColWidth = contentWidth / numCols;
+    const btnWidthRatio = 0.9;
+    const btnWidth = btnColWidth * btnWidthRatio;
     const btnHeight = 10;
     const btnGap = 4;
-    const btnWidth = contentWidth * 0.3;   // ⚠️ deve restare identico al blocco che disegna i bottoni
-    const btnX = marginLR;                  // ⚠️ deve restare identico al blocco che disegna i bottoni
+    const rowStep = btnHeight + btnGap;
+    const startY = 35;
     const preferitiBottomLimit = pageHeight - margin;
+    const itemsPerCol = Math.max(1, Math.floor((preferitiBottomLimit - startY) / rowStep));
+    const perPageCapacity = itemsPerCol * numCols;
     
-    if (py + btnHeight > preferitiBottomLimit) { currentIndexPage++; pdf.setPage(currentIndexPage); py = margin + 10; }
+    function getButtonPosition(index) {
+        const pageOffset = Math.floor(index / perPageCapacity);
+        const indexInPage = index % perPageCapacity;
+        const col = Math.floor(indexInPage / itemsPerCol);
+        const row = indexInPage % itemsPerCol;
+        return {
+            x: marginLR + col * btnColWidth,
+            y: startY + row * rowStep,
+            pageOffset
+        };
+    }
+    
+    let btnIndex = 0;
     const allPage = pageMap.preferitiCategoryPages.get('all');
-    if (allPage) pdf.link(btnX, py, btnWidth, btnHeight, { pageNumber: allPage });
-    py += btnHeight + btnGap;
+    if (allPage) {
+        const pos = getButtonPosition(btnIndex);
+        pdf.setPage(pageMap.preferitiIndex + pos.pageOffset);
+        pdf.link(pos.x, pos.y, btnWidth, btnHeight, { pageNumber: allPage });
+    }
+    btnIndex++;
     
     categories.forEach(cat => {
         const targetPage = pageMap.preferitiCategoryPages.get(cat.id);
         if (!targetPage) return;
+        const count = preferiti.filter(p => p.categories && p.categories.includes(cat.id)).length;
+        if (count === 0) return;
         
-        if (py + btnHeight > preferitiBottomLimit) { currentIndexPage++; pdf.setPage(currentIndexPage); py = margin + 10; }
-        pdf.link(btnX, py, btnWidth, btnHeight, { pageNumber: targetPage });
-        py += btnHeight + btnGap;
+        const pos = getButtonPosition(btnIndex);
+        pdf.setPage(pageMap.preferitiIndex + pos.pageOffset);
+        pdf.link(pos.x, pos.y, btnWidth, btnHeight, { pageNumber: targetPage });
+        btnIndex++;
     });
     
     // Link dalle voci di ciascuna pagina elenco alla pagina della relativa canzone
