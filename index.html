@@ -3853,12 +3853,14 @@ pdf.link(linkX, lineY, textWidth, linkHeight, { pageNumber: 1 });
             currentPage++;
             const listStartPage = currentPage;
             
-            // Titolo della pagina
+            // Titolo della pagina (stesso stile delle pagine cantante: linea sopra e sotto)
             pdf.setFont('times', 'bold');
             pdf.setFontSize(18);
             pdf.text(pageTitle, pageWidth / 2, 14, { align: 'center' });
             pdf.setLineWidth(0.4);
+            pdf.line(4, 5, pageWidth - 4, 5);
             pdf.line(4, 20, pageWidth - 4, 20);
+            pdf.setLineWidth(0.2);
             
             pdf.setFont('times', 'normal');
             pdf.setFontSize(16);
@@ -3879,11 +3881,11 @@ pdf.link(linkX, lineY, textWidth, linkHeight, { pageNumber: 1 });
             
             const listEndPage = currentPage;
             
-            // Footer ("Torna ad Elenco cantanti" / "Torna a Preferiti") su tutte le pagine della lista
-            for (let p = listStartPage; p <= listEndPage; p++) {
-                pdf.setPage(p);
-                addPreferitiListFooter(pdf, pageWidth, pageHeight);
-            }
+            // Footer ("Torna ad Elenco cantanti" / "Torna a Preferiti") SOLO sull'ultima
+            // pagina fisica della lista, come per il footer delle canzoni: indica la fine
+            // di quella categoria, non va ripetuto su ogni pagina intermedia.
+            pdf.setPage(listEndPage);
+            addPreferitiListFooter(pdf, pageWidth, pageHeight);
             
             return { start: listStartPage, end: listEndPage };
         };
@@ -4014,8 +4016,8 @@ function addLinksToPreferiti(pdf, pageMap, pageWidth, pageHeight, margin, conten
         linkListPage(catIds, targetPage);
     });
     
-    // Link del footer ("Torna ad Elenco cantanti" / "Torna a Preferiti") su ogni
-    // pagina fisica di ogni elenco (Tutti i Preferiti + ogni categoria)
+    // Link del footer ("Torna ad Elenco cantanti" / "Torna a Preferiti") SOLO
+    // sull'ultima pagina fisica di ogni elenco (Tutti i Preferiti + ogni categoria)
     if (pageMap.preferitiListRanges) {
         pdf.setFont('times', 'normal');
         pdf.setFontSize(16);
@@ -4027,13 +4029,11 @@ function addLinksToPreferiti(pdf, pageMap, pageWidth, pageHeight, margin, conten
         const linkHeight = pageHeight - lineY;
         
         pageMap.preferitiListRanges.forEach(range => {
-            for (let p = range.start; p <= range.end; p++) {
-                pdf.setPage(p);
-                const leftCenter = pageWidth / 4;
-                pdf.link(leftCenter - width1 / 2, lineY, width1, linkHeight, { pageNumber: pageMap.index });
-                const rightCenter = (pageWidth * 3) / 4;
-                pdf.link(rightCenter - width2 / 2, lineY, width2, linkHeight, { pageNumber: pageMap.preferitiIndex });
-            }
+            pdf.setPage(range.end);
+            const leftCenter = pageWidth / 4;
+            pdf.link(leftCenter - width1 / 2, lineY, width1, linkHeight, { pageNumber: pageMap.index });
+            const rightCenter = (pageWidth * 3) / 4;
+            pdf.link(rightCenter - width2 / 2, lineY, width2, linkHeight, { pageNumber: pageMap.preferitiIndex });
         });
     }
 }
