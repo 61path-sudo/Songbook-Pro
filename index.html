@@ -3826,7 +3826,7 @@ pdf.link(linkX, lineY, textWidth, linkHeight, { pageNumber: 1 });
             }
             pdf.setTextColor(255, 255, 255);
             // ✅ Testo spostato più in basso rispetto al centro verticale del bottone
-            pdf.text(label, pos.x + btnWidth / 2, pos.y + btnHeight * 0.6, { align: 'center' });
+            pdf.text(label, pos.x + btnWidth / 2, pos.y + btnHeight * 0.5, { align: 'center' });
             pdf.setTextColor(0, 0, 0);
         }
         drawPreferitiButton.currentOffset = 0;
