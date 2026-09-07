@@ -3892,17 +3892,33 @@ pdf.link(linkX, lineY, textWidth, linkHeight, { pageNumber: 1 });
                 
                 const x = marginLR + col * prefColWidth;
                 
-                // Titolo in grassetto
+                // Titolo in grassetto, con dimensione che si riduce se il testo
+                // non ci sta nella colonna (stessa logica di ELENCO CANTANTI)
+                let titleFontSize = 14;
                 pdf.setFont('times', 'bold');
-                pdf.setFontSize(14);
+                pdf.setFontSize(titleFontSize);
                 pdf.setTextColor(0, 0, 0);
-                pdf.text(s.title.toUpperCase(), x, y);
+                const titleText = s.title.toUpperCase();
+                const availableTitleWidth = prefColWidth - 8;
+                const titleWidth = pdf.getTextWidth(titleText);
+                if (titleWidth > availableTitleWidth) {
+                    titleFontSize = Math.max(8, Math.floor(titleFontSize * (availableTitleWidth / titleWidth)));
+                    pdf.setFontSize(titleFontSize);
+                }
+                pdf.text(titleText, x, y);
                 
-                // Cantante sotto, in grigio
+                // Cantante sotto, in grigio (stessa riduzione, se necessario)
+                let artistFontSize = 10;
                 pdf.setFont('times', 'normal');
-                pdf.setFontSize(10);
+                pdf.setFontSize(artistFontSize);
                 pdf.setTextColor(120, 120, 120);
-                pdf.text(s.artist.toUpperCase(), x, y + 5);
+                const artistText = s.artist.toUpperCase();
+                const artistWidth = pdf.getTextWidth(artistText);
+                if (artistWidth > availableTitleWidth) {
+                    artistFontSize = Math.max(7, Math.floor(artistFontSize * (availableTitleWidth / artistWidth)));
+                    pdf.setFontSize(artistFontSize);
+                }
+                pdf.text(artistText, x, y + 5);
                 pdf.setTextColor(0, 0, 0);
                 
                 // Linea separatrice sotto la voce
