@@ -3996,7 +3996,7 @@ function computePreferitiLayout(songIds, songs, marginLR, margin, pageHeight, co
                 }
             }
             
-            positions.push({ songId: s.id, pageOffset, x: marginLR + col * colWidth, y });
+            positions.push({ songId: s.id, pageOffset, col, x: marginLR + col * colWidth, y, rowHeight: itemHeight });
             y += itemHeight;
         });
         
@@ -4013,9 +4013,41 @@ function computePreferitiLayout(songIds, songs, marginLR, margin, pageHeight, co
         result = place(guess);
     }
     
+    const totalPages = result.lastPageIndex + 1;
+    const positions = result.positions;
+    
+    // ✅ "Stiramento" (stesso principio di ELENCO CANTANTI): ogni colonna PIENA
+    // (cioè non l'ultima usata, dove la lista finisce naturalmente) viene
+    // ridistribuita in modo che l'ultimo elemento tocchi esattamente il fondo
+    // disponibile, invece di lasciare uno spazio residuo in basso.
+    const lastItem = positions[positions.length - 1];
+    if (lastItem) {
+        const lastKey = `${lastItem.pageOffset}-${lastItem.col}`;
+        const groups = new Map(); // "pagina-colonna" -> indici in positions
+        positions.forEach((p, idx) => {
+            const key = `${p.pageOffset}-${p.col}`;
+            if (!groups.has(key)) groups.set(key, []);
+            groups.get(key).push(idx);
+        });
+        
+        groups.forEach((indices, key) => {
+            if (key === lastKey) return; // l'ultima colonna resta con spaziatura normale
+            const first = positions[indices[0]];
+            const startY = (first.pageOffset === 0) ? startYFirst : startYOther;
+            const isLastPage = (first.pageOffset === totalPages - 1);
+            const bottomLimit = isLastPage ? bottomLimitReserved : bottomLimitGenerous;
+            const count = indices.length;
+            const spacing = (bottomLimit - startY) / count;
+            indices.forEach((idx, i) => {
+                positions[idx].y = startY + i * spacing;
+                positions[idx].rowHeight = spacing;
+            });
+        });
+    }
+    
     return {
-        positions: result.positions,
-        totalPages: result.lastPageIndex + 1,
+        positions,
+        totalPages,
         colWidth,
         itemHeight,
         startYFirst,
@@ -4102,7 +4134,7 @@ function addLinksToPreferiti(pdf, pageMap, pageWidth, pageHeight, margin, conten
             const songPage = pageMap.songs.get(pos.songId);
             if (!songPage) return;
             pdf.setPage(startPage + pos.pageOffset);
-            pdf.link(pos.x, pos.y - 6, layout.colWidth - 6, layout.itemHeight - 2, { pageNumber: songPage });
+            pdf.link(pos.x, pos.y - 6, layout.colWidth - 6, pos.rowHeight - 1, { pageNumber: songPage });
         });
     };
     
