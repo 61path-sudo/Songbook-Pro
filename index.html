@@ -3971,7 +3971,7 @@ function computePreferitiLayout(songIds, songs, marginLR, margin, pageHeight, co
     const startYFirst = margin + 25;           // prima pagina: sotto al titolo
     const startYOther = margin + 10;           // pagine di continuazione
     const bottomLimitGenerous = pageHeight - margin - 3;   // nessun margine per footer
-    const bottomLimitReserved = pageHeight - margin - 15;  // spazio per il footer
+    const bottomLimitReserved = pageHeight - 17;            // ~4mm sopra alla linea del footer (che è a pageHeight-13)
     
     const validSongs = songIds.map(id => songs.find(sg => sg.id === id)).filter(Boolean);
     
