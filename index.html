@@ -3497,6 +3497,14 @@ function generatePDFWithJsPDF(format, fileName) {
     pdf.setFont('times', 'bold');
     pdf.setFontSize(18);
     pdf.text('ELENCO CANTANTI', pageWidth / 2, 10, { align: 'center' });
+    
+    // Bottone "Preferiti" in alto a destra, vicino al titolo (il link vero e
+    // proprio viene aggiunto più avanti, quando la pagina Preferiti esiste già)
+    pdf.setFont('times', 'normal');
+    pdf.setFontSize(11);
+    pdf.text('Preferiti', pageWidth - 4, 10, { align: 'right' });
+    pdf.setFont('times', 'bold');
+    pdf.setFontSize(18);
 
     const colWidth = contentWidth / 3;
     let col = 0;
@@ -4093,6 +4101,18 @@ function addPreferitiListFooter(pdf, pageWidth, pageHeight) {
 // Ricalcola le stesse posizioni usate per disegnare le pagine Preferiti,
 // per aggiungere i link cliccabili (stessa logica di addLinksToArtistPages).
 function addLinksToPreferiti(pdf, pageMap, pageWidth, pageHeight, margin, contentWidth, marginLR) {
+    // Link "Preferiti" vicino al titolo di ELENCO CANTANTI → pagina Preferiti.
+    // Esiste sempre (anche se non ci sono ancora canzoni preferite, la pagina
+    // mostra semplicemente "Nessuna canzone nei preferiti").
+    if (pageMap.preferitiIndex) {
+        pdf.setPage(pageMap.index);
+        pdf.setFont('times', 'normal');
+        pdf.setFontSize(11);
+        const label = 'Preferiti';
+        const labelWidth = pdf.getTextWidth(label);
+        pdf.link(pageWidth - 4 - labelWidth, 5, labelWidth, 7, { pageNumber: pageMap.preferitiIndex });
+    }
+    
     if (!pageMap.preferitiIndex || preferiti.length === 0) return;
     
     // Link dai bottoni della pagina indice Preferiti alle rispettive pagine elenco
