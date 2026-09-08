@@ -3969,7 +3969,7 @@ function computePreferitiLayout(songIds, songs, marginLR, margin, pageHeight, co
     const colWidth = contentWidth / numCols;
     const itemHeight = 12;                     // titolo + cantante + separatore
     const startYFirst = margin + 25;           // prima pagina: sotto al titolo
-    const startYOther = margin + 10;           // pagine di continuazione
+    const startYOther = margin + 3;            // pagine di continuazione (senza titolo, poco margine sopra)
     const bottomLimitGenerous = pageHeight - margin - 3;   // nessun margine per footer
     const bottomLimitReserved = pageHeight - 17;            // ~4mm sopra alla linea del footer (che è a pageHeight-13)
     
