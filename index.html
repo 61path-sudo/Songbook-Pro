@@ -3877,29 +3877,47 @@ pdf.link(linkX, lineY, textWidth, linkHeight, { pageNumber: 1 });
                 
                 const availableTitleWidth = colWidth - 8;
                 
-                // Titolo in grassetto, con dimensione che si riduce se il testo non ci sta
+                // Titolo in grassetto: si riduce fino a un minimo, oltre il quale
+                // viene troncato con i puntini di sospensione invece di rimpicciolire
+                // ulteriormente (per non diventare illeggibile o sforare in colonna)
+                const minTitleFontSize = 10;
                 let titleFontSize = 14;
                 pdf.setFont('times', 'bold');
                 pdf.setFontSize(titleFontSize);
                 pdf.setTextColor(0, 0, 0);
-                const titleText = s.title.toUpperCase();
-                const titleWidth = pdf.getTextWidth(titleText);
+                let titleText = s.title.toUpperCase();
+                let titleWidth = pdf.getTextWidth(titleText);
                 if (titleWidth > availableTitleWidth) {
-                    titleFontSize = Math.max(8, Math.floor(titleFontSize * (availableTitleWidth / titleWidth)));
+                    titleFontSize = Math.max(minTitleFontSize, Math.floor(titleFontSize * (availableTitleWidth / titleWidth)));
                     pdf.setFontSize(titleFontSize);
+                    titleWidth = pdf.getTextWidth(titleText);
+                    if (titleWidth > availableTitleWidth) {
+                        while (titleText.length > 1 && pdf.getTextWidth(titleText + '...') > availableTitleWidth) {
+                            titleText = titleText.slice(0, -1);
+                        }
+                        titleText = titleText + '...';
+                    }
                 }
                 pdf.text(titleText, pos.x, pos.y);
                 
-                // Cantante sotto, in grigio (stessa riduzione, se necessario)
+                // Cantante sotto, in grigio (stessa logica: riduzione poi troncamento)
+                const minArtistFontSize = 8;
                 let artistFontSize = 10;
                 pdf.setFont('times', 'normal');
                 pdf.setFontSize(artistFontSize);
                 pdf.setTextColor(120, 120, 120);
-                const artistText = s.artist.toUpperCase();
-                const artistWidth = pdf.getTextWidth(artistText);
+                let artistText = s.artist.toUpperCase();
+                let artistWidth = pdf.getTextWidth(artistText);
                 if (artistWidth > availableTitleWidth) {
-                    artistFontSize = Math.max(7, Math.floor(artistFontSize * (availableTitleWidth / artistWidth)));
+                    artistFontSize = Math.max(minArtistFontSize, Math.floor(artistFontSize * (availableTitleWidth / artistWidth)));
                     pdf.setFontSize(artistFontSize);
+                    artistWidth = pdf.getTextWidth(artistText);
+                    if (artistWidth > availableTitleWidth) {
+                        while (artistText.length > 1 && pdf.getTextWidth(artistText + '...') > availableTitleWidth) {
+                            artistText = artistText.slice(0, -1);
+                        }
+                        artistText = artistText + '...';
+                    }
                 }
                 pdf.text(artistText, pos.x, pos.y + 5);
                 pdf.setTextColor(0, 0, 0);
@@ -3911,17 +3929,17 @@ pdf.link(linkX, lineY, textWidth, linkHeight, { pageNumber: 1 });
                 pdf.setDrawColor(0, 0, 0);
             });
             
-            // Linea verticale divisoria tra le 2 colonne, su ogni pagina della lista
-            // (usa il limite "generoso" ovunque tranne sull'ultima pagina, dove si ferma
-            // prima per lasciare spazio al footer)
+            // Linea verticale divisoria tra le 2 colonne: si ferma all'ultima riga
+            // effettivamente presente su quella pagina, non arriva fino in fondo.
             for (let i = 0; i < totalPages; i++) {
                 pdf.setPage(listStartPage + i);
                 const sy = (i === 0) ? startYFirst : startYOther;
-                const isLastPage = (i === totalPages - 1);
-                const bottomLimit = isLastPage ? bottomLimitReserved : bottomLimitGenerous;
+                const itemsOnThisPage = positions.filter(p => p.pageOffset === i);
+                if (itemsOnThisPage.length === 0) continue;
+                const lineEndY = Math.max(...itemsOnThisPage.map(p => p.y)) + 7;
                 pdf.setDrawColor(204, 204, 204);
                 pdf.setLineWidth(0.3);
-                pdf.line(marginLR + colWidth - 3, sy - 6, marginLR + colWidth - 3, bottomLimit);
+                pdf.line(marginLR + colWidth - 3, sy - 6, marginLR + colWidth - 3, lineEndY);
                 pdf.setDrawColor(0, 0, 0);
             }
             
