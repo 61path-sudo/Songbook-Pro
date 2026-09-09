@@ -3507,7 +3507,7 @@ function generatePDFWithJsPDF(format, fileName) {
     const prefBtnWidth = pdf.getTextWidth(prefBtnLabel) + prefBtnPadding * 2;
     const prefBtnHeight = 7;
     const prefBtnX = pageWidth - 8 - prefBtnWidth;   // più a sinistra rispetto al bordo
-    const prefBtnY = 5;
+    const prefBtnY = 4.5;
     pdf.setFillColor(52, 73, 94);
     pdf.roundedRect(prefBtnX, prefBtnY, prefBtnWidth, prefBtnHeight, 1.5, 1.5, 'F');
     pdf.setTextColor(255, 255, 255);
@@ -4123,7 +4123,7 @@ function addLinksToPreferiti(pdf, pageMap, pageWidth, pageHeight, margin, conten
         const prefBtnWidth = pdf.getTextWidth(prefBtnLabel) + prefBtnPadding * 2;
         const prefBtnHeight = 7;
         const prefBtnX = pageWidth - 8 - prefBtnWidth;
-        const prefBtnY = 5;
+        const prefBtnY = 4.5;
         pdf.link(prefBtnX, prefBtnY, prefBtnWidth, prefBtnHeight, { pageNumber: pageMap.preferitiIndex });
     }
     
