@@ -3488,6 +3488,7 @@ function generatePDFWithJsPDF(format, fileName) {
         index: 1,
         artists: new Map(),
         songs: new Map(),
+        artistFooterPages: new Map(),  // artista -> pagina dove si trova il suo footer
         artistPositions: []  // ← AGGIUNGI QUESTO
     };
     
@@ -3506,7 +3507,7 @@ function generatePDFWithJsPDF(format, fileName) {
     const prefBtnPadding = 3;
     const prefBtnWidth = pdf.getTextWidth(prefBtnLabel) + prefBtnPadding * 2;
     const prefBtnHeight = 7;
-    const prefBtnX = pageWidth - 8 - prefBtnWidth;   // più a sinistra rispetto al bordo
+    const prefBtnX = pageWidth - 8 - prefBtnWidth;
     const prefBtnY = 4.5;
     pdf.setFillColor(52, 73, 94);
     pdf.roundedRect(prefBtnX, prefBtnY, prefBtnWidth, prefBtnHeight, 1.5, 1.5, 'F');
@@ -3736,17 +3737,26 @@ const lineY = pageHeight - 13;
 const textY = lineY + 8;
 pdf.line(0, lineY, pageWidth, lineY);
 
-// ✅ Calcola larghezza effettiva del testo
+// ✅ Calcola larghezza effettiva dei testi
 const footerText = 'Torna ad Elenco cantanti';
 const textWidth = pdf.getTextWidth(footerText);
+const prefFooterText = 'Preferiti';
+const prefFooterWidth = pdf.getTextWidth(prefFooterText);
 
-// Disegna il testo centrato
-pdf.text(footerText, pageWidth / 2, textY, { align: 'center' });
+// Disegna i testi (2 colonne)
+pdf.text(footerText, pageWidth / 4, textY, { align: 'center' });
+pdf.text(prefFooterText, (pageWidth * 3) / 4, textY, { align: 'center' });
 
-// Link solo sulla larghezza del testo, centrato
+// Link solo sulla larghezza del testo, centrato in ciascuna colonna
 const linkHeight = pageHeight - lineY;
-const linkX = (pageWidth - textWidth) / 2;  // Centro orizzontale
+const linkX = pageWidth / 4 - textWidth / 2;
 pdf.link(linkX, lineY, textWidth, linkHeight, { pageNumber: 1 });
+
+// Il link di "Preferiti" viene aggiunto più avanti (in addLinksToPreferiti),
+// quando la pagina Preferiti esiste già: registriamo qui la pagina su cui
+// si trova davvero questo footer (può non coincidere con la prima pagina
+// dell'artista, se l'elenco canzoni sfora su più pagine).
+pageMap.artistFooterPages.set(artist, currentPage);
         
         // SUBITO DOPO: tutte le canzoni dell'artista
         artistSongs.forEach(song => {
@@ -3849,7 +3859,7 @@ pdf.link(linkX, lineY, textWidth, linkHeight, { pageNumber: 1 });
         drawPreferitiButton.currentOffset = 0;
         
         let btnIndex = 0;
-        drawPreferitiButton(btnIndex, `TUTTI I PREFERITI (${preferiti.length})`, [52, 73, 94]);
+        drawPreferitiButton(btnIndex, `TUTTI (${preferiti.length})`, [52, 73, 94]);
         btnIndex++;
         
         categories.forEach(cat => {
@@ -3969,13 +3979,13 @@ pdf.link(linkX, lineY, textWidth, linkHeight, { pageNumber: 1 });
             return { start: listStartPage, end: listEndPage };
         };
         
-        const allIds = preferiti.map(p => p.songId);
-        const allRange = buildPreferitiListPage(allIds, 'TUTTI I PREFERITI');
+        const allIds = sortSongIdsByTitle(preferiti.map(p => p.songId), songs);
+        const allRange = buildPreferitiListPage(allIds, 'TUTTI');
         pageMap.preferitiCategoryPages.set('all', allRange.start);
         pageMap.preferitiListRanges.set('all', allRange);
         
         categories.forEach(cat => {
-            const catIds = preferiti.filter(p => p.categories && p.categories.includes(cat.id)).map(p => p.songId);
+            const catIds = sortSongIdsByTitle(preferiti.filter(p => p.categories && p.categories.includes(cat.id)).map(p => p.songId), songs);
             if (catIds.length === 0) return;
             const catRange = buildPreferitiListPage(catIds, cat.name.toUpperCase());
             pageMap.preferitiCategoryPages.set(cat.id, catRange.start);
@@ -3994,6 +4004,16 @@ pdf.link(linkX, lineY, textWidth, linkHeight, { pageNumber: 1 });
 }
 
 // Footer delle pagine elenco Preferiti: "Torna ad Elenco cantanti" | "Torna a Preferiti"
+// Ordina un elenco di songId per titolo canzone (usato nelle liste Preferiti)
+function sortSongIdsByTitle(ids, songs) {
+    return [...ids].sort((a, b) => {
+        const sa = songs.find(sg => sg.id === a);
+        const sb = songs.find(sg => sg.id === b);
+        if (!sa || !sb) return 0;
+        return sa.title.localeCompare(sb.title, 'it', { sensitivity: 'base' });
+    });
+}
+
 // Calcola la posizione (pagina/colonna/coordinate) di ogni canzone nell'elenco
 // Preferiti, un'unica volta: sia il disegno che i link usano ESATTAMENTE questo
 // stesso risultato, quindi non possono più disallinearsi tra loro.
@@ -4125,6 +4145,19 @@ function addLinksToPreferiti(pdf, pageMap, pageWidth, pageHeight, margin, conten
         const prefBtnX = pageWidth - 8 - prefBtnWidth;
         const prefBtnY = 4.5;
         pdf.link(prefBtnX, prefBtnY, prefBtnWidth, prefBtnHeight, { pageNumber: pageMap.preferitiIndex });
+        
+        // Link "Preferiti" nel footer di ogni pagina cantante
+        // ⚠️ Coordinate identiche al testo disegnato nel footer della pagina cantante
+        pdf.setFont('times', 'normal');
+        pdf.setFontSize(16);
+        const prefFooterWidth = pdf.getTextWidth('Preferiti');
+        const footerLineY = pageHeight - 13;
+        const footerLinkHeight = pageHeight - footerLineY;
+        pageMap.artistFooterPages.forEach(footerPage => {
+            pdf.setPage(footerPage);
+            const linkX = (pageWidth * 3) / 4 - prefFooterWidth / 2;
+            pdf.link(linkX, footerLineY, prefFooterWidth, footerLinkHeight, { pageNumber: pageMap.preferitiIndex });
+        });
     }
     
     if (!pageMap.preferitiIndex || preferiti.length === 0) return;
@@ -4191,12 +4224,12 @@ function addLinksToPreferiti(pdf, pageMap, pageWidth, pageHeight, margin, conten
     };
     
     const allListPage = pageMap.preferitiCategoryPages.get('all');
-    if (allListPage) linkListPage(preferiti.map(p => p.songId), allListPage);
+    if (allListPage) linkListPage(sortSongIdsByTitle(preferiti.map(p => p.songId), songs), allListPage);
     
     categories.forEach(cat => {
         const targetPage = pageMap.preferitiCategoryPages.get(cat.id);
         if (!targetPage) return;
-        const catIds = preferiti.filter(p => p.categories && p.categories.includes(cat.id)).map(p => p.songId);
+        const catIds = sortSongIdsByTitle(preferiti.filter(p => p.categories && p.categories.includes(cat.id)).map(p => p.songId), songs);
         linkListPage(catIds, targetPage);
     });
     
