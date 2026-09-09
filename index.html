@@ -3896,11 +3896,23 @@ pageMap.artistFooterPages.set(artist, currentPage);
             pdf.line(4, 20, pageWidth - 4, 20);
             pdf.setLineWidth(0.2);
             
-            // Disegna ogni canzone nella posizione già calcolata
+            // Disegna ogni elemento (lettera separatrice o canzone) nella posizione già calcolata
             positions.forEach(pos => {
+                pdf.setPage(listStartPage + pos.pageOffset);
+                
+                if (pos.type === 'letter') {
+                    // Banda grigia con la lettera, stesso stile di Fullscreen
+                    pdf.setFillColor(204, 204, 204);
+                    pdf.rect(pos.x, pos.y - 8, colWidth - 6, pos.rowHeight, 'F');
+                    pdf.setFont('times', 'bold');
+                    pdf.setFontSize(14);
+                    pdf.setTextColor(0, 0, 0);
+                    pdf.text(pos.letter, pos.x + 2, pos.y);
+                    return;
+                }
+                
                 const s = songs.find(sg => sg.id === pos.songId);
                 if (!s) return;
-                pdf.setPage(listStartPage + pos.pageOffset);
                 
                 const availableTitleWidth = colWidth - 8;
                 
@@ -4014,15 +4026,22 @@ function sortSongIdsByTitle(ids, songs) {
     });
 }
 
-// Calcola la posizione (pagina/colonna/coordinate) di ogni canzone nell'elenco
-// Preferiti, un'unica volta: sia il disegno che i link usano ESATTAMENTE questo
-// stesso risultato, quindi non possono più disallinearsi tra loro.
+// Estrae la prima lettera ignorando simboli non alfabetici (stessa logica di Fullscreen)
+function getPreferitiFirstLetter(title) {
+    const cleaned = title.replace(/^[^a-zA-ZÀ-ÿ0-9]+/, '');
+    return (cleaned.charAt(0) || title.charAt(0)).toUpperCase();
+}
+
+// Calcola la posizione (pagina/colonna/coordinate) di ogni canzone (e delle
+// lettere separatrici, come in Fullscreen) nell'elenco Preferiti, un'unica
+// volta: sia il disegno che i link usano ESATTAMENTE questo stesso risultato,
+// quindi non possono più disallinearsi tra loro.
 // Usa tutto lo spazio disponibile ("generoso") su ogni pagina TRANNE l'ultima,
 // dove riserva spazio per il footer — invece di togliere spazio ovunque.
 function computePreferitiLayout(songIds, songs, marginLR, margin, pageHeight, contentWidth) {
     const numCols = 2;
     const colWidth = contentWidth / numCols;
-    const itemHeight = 12;                     // titolo + cantante + separatore
+    const itemHeight = 12;                     // titolo + cantante + separatore (uguale per le lettere)
     const startYFirst = margin + 25;           // prima pagina: sotto al titolo
     const startYOther = margin + 3;            // pagine di continuazione (senza titolo, poco margine sopra)
     const bottomLimitGenerous = pageHeight - 5;             // pagine senza footer: bordo quasi al margine fisico
@@ -4030,18 +4049,32 @@ function computePreferitiLayout(songIds, songs, marginLR, margin, pageHeight, co
     
     const validSongs = songIds.map(id => songs.find(sg => sg.id === id)).filter(Boolean);
     
+    // Costruisce la lista di elementi: una lettera separatrice ogni volta che
+    // cambia l'iniziale del titolo (i brani arrivano già ordinati per titolo)
+    const items = [];
+    let lastLetter = '';
+    validSongs.forEach(s => {
+        const letter = getPreferitiFirstLetter(s.title);
+        if (letter !== lastLetter) {
+            items.push({ type: 'letter', letter });
+            lastLetter = letter;
+        }
+        items.push({ type: 'song', songId: s.id });
+    });
+    
     function place(lastPageGuess) {
         const positions = [];
         let pageOffset = 0;
         let col = 0;
         let y = startYFirst;
         
-        validSongs.forEach(s => {
+        for (let i = 0; i < items.length; i++) {
+            const item = items[i];
             const startY = (pageOffset === 0) ? startYFirst : startYOther;
             const isLastPage = (pageOffset === lastPageGuess);
             const bottomLimit = isLastPage ? bottomLimitReserved : bottomLimitGenerous;
             
-            if (y + itemHeight > bottomLimit) {
+            const advanceColumn = () => {
                 col++;
                 y = startY;
                 if (col >= numCols) {
@@ -4049,11 +4082,31 @@ function computePreferitiLayout(songIds, songs, marginLR, margin, pageHeight, co
                     col = 0;
                     y = startYOther;
                 }
+            };
+            
+            if (y + itemHeight > bottomLimit) {
+                advanceColumn();
             }
             
-            positions.push({ songId: s.id, pageOffset, col, x: marginLR + col * colWidth, y, rowHeight: itemHeight });
+            // Evita di lasciare una lettera separatrice da sola a fine colonna,
+            // senza almeno una canzone subito sotto (stesso accorgimento di Fullscreen)
+            if (item.type === 'letter' && i + 1 < items.length) {
+                if (y + itemHeight * 2 > bottomLimit) {
+                    advanceColumn();
+                }
+            }
+            
+            positions.push({
+                type: item.type,
+                letter: item.letter,
+                songId: item.songId,
+                pageOffset, col,
+                x: marginLR + col * colWidth,
+                y,
+                rowHeight: itemHeight
+            });
             y += itemHeight;
-        });
+        }
         
         return { positions, lastPageIndex: pageOffset };
     }
@@ -4216,6 +4269,7 @@ function addLinksToPreferiti(pdf, pageMap, pageWidth, pageHeight, margin, conten
         const layout = computePreferitiLayout(songIds, songs, marginLR, margin, pageHeight, contentWidth);
         
         layout.positions.forEach(pos => {
+            if (pos.type !== 'song') return;  // salta le lettere separatrici, non cliccabili
             const songPage = pageMap.songs.get(pos.songId);
             if (!songPage) return;
             pdf.setPage(startPage + pos.pageOffset);
