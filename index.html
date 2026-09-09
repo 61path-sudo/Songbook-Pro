@@ -3901,9 +3901,12 @@ pageMap.artistFooterPages.set(artist, currentPage);
                 pdf.setPage(listStartPage + pos.pageOffset);
                 
                 if (pos.type === 'letter') {
-                    // Banda grigia con la lettera, stesso stile di Fullscreen
+                    // Banda grigia con la lettera, stesso stile di Fullscreen.
+                    // Parte poco sopra alla base del testo (non troppo in alto,
+                    // altrimenti si sovrappone alla riga precedente) e occupa
+                    // tutta l'altezza di riga assegnata a questo elemento.
                     pdf.setFillColor(204, 204, 204);
-                    pdf.rect(pos.x, pos.y - 8, colWidth - 6, pos.rowHeight, 'F');
+                    pdf.rect(pos.x, pos.y - 5, colWidth - 6, pos.rowHeight - 2, 'F');
                     pdf.setFont('times', 'bold');
                     pdf.setFontSize(14);
                     pdf.setTextColor(0, 0, 0);
@@ -3960,12 +3963,6 @@ pageMap.artistFooterPages.set(artist, currentPage);
                 }
                 pdf.text(artistText, pos.x, pos.y + 5);
                 pdf.setTextColor(0, 0, 0);
-                
-                // Linea separatrice sotto la voce
-                pdf.setDrawColor(204, 204, 204);
-                pdf.setLineWidth(0.2);
-                pdf.line(pos.x, pos.y + 7, pos.x + colWidth - 6, pos.y + 7);
-                pdf.setDrawColor(0, 0, 0);
             });
             
             // Linea verticale divisoria tra le 2 colonne: si ferma all'ultima riga
