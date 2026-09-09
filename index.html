@@ -3500,10 +3500,19 @@ function generatePDFWithJsPDF(format, fileName) {
     
     // Bottone "Preferiti" in alto a destra, vicino al titolo (il link vero e
     // proprio viene aggiunto più avanti, quando la pagina Preferiti esiste già)
-    pdf.setFont('times', 'normal');
-    pdf.setFontSize(11);
-    pdf.text('Preferiti', pageWidth - 4, 10, { align: 'right' });
     pdf.setFont('times', 'bold');
+    pdf.setFontSize(11);
+    const prefBtnLabel = 'PREFERITI';
+    const prefBtnPadding = 3;
+    const prefBtnWidth = pdf.getTextWidth(prefBtnLabel) + prefBtnPadding * 2;
+    const prefBtnHeight = 7;
+    const prefBtnX = pageWidth - 12 - prefBtnWidth;   // più a sinistra rispetto al bordo
+    const prefBtnY = 6;
+    pdf.setFillColor(52, 73, 94);
+    pdf.roundedRect(prefBtnX, prefBtnY, prefBtnWidth, prefBtnHeight, 1.5, 1.5, 'F');
+    pdf.setTextColor(255, 255, 255);
+    pdf.text(prefBtnLabel, prefBtnX + prefBtnWidth / 2, prefBtnY + prefBtnHeight * 0.7, { align: 'center' });
+    pdf.setTextColor(0, 0, 0);
     pdf.setFontSize(18);
 
     const colWidth = contentWidth / 3;
@@ -4104,13 +4113,18 @@ function addLinksToPreferiti(pdf, pageMap, pageWidth, pageHeight, margin, conten
     // Link "Preferiti" vicino al titolo di ELENCO CANTANTI → pagina Preferiti.
     // Esiste sempre (anche se non ci sono ancora canzoni preferite, la pagina
     // mostra semplicemente "Nessuna canzone nei preferiti").
+    // ⚠️ Coordinate identiche al bottone disegnato in ELENCO CANTANTI
     if (pageMap.preferitiIndex) {
         pdf.setPage(pageMap.index);
-        pdf.setFont('times', 'normal');
+        pdf.setFont('times', 'bold');
         pdf.setFontSize(11);
-        const label = 'Preferiti';
-        const labelWidth = pdf.getTextWidth(label);
-        pdf.link(pageWidth - 4 - labelWidth, 5, labelWidth, 7, { pageNumber: pageMap.preferitiIndex });
+        const prefBtnLabel = 'PREFERITI';
+        const prefBtnPadding = 3;
+        const prefBtnWidth = pdf.getTextWidth(prefBtnLabel) + prefBtnPadding * 2;
+        const prefBtnHeight = 7;
+        const prefBtnX = pageWidth - 12 - prefBtnWidth;
+        const prefBtnY = 6;
+        pdf.link(prefBtnX, prefBtnY, prefBtnWidth, prefBtnHeight, { pageNumber: pageMap.preferitiIndex });
     }
     
     if (!pageMap.preferitiIndex || preferiti.length === 0) return;
