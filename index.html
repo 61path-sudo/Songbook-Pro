@@ -3970,7 +3970,7 @@ pageMap.artistFooterPages.set(artist, currentPage);
                 // canzone in Fullscreen), non un'unica linea centrale tra le colonne
                 pdf.setDrawColor(204, 204, 204);
                 pdf.setLineWidth(0.5);
-                pdf.line(pos.x, pos.y - 5, pos.x, pos.y - 5 + pos.rowHeight - 2);
+                pdf.line(pos.x, pos.y - 5, pos.x, pos.y - 5 + pos.rowHeight);
                 pdf.setDrawColor(0, 0, 0);
             });
             
@@ -4008,13 +4008,16 @@ pageMap.artistFooterPages.set(artist, currentPage);
 }
 
 // Footer delle pagine elenco Preferiti: "Torna ad Elenco cantanti" | "Torna a Preferiti"
-// Ordina un elenco di songId per titolo canzone (usato nelle liste Preferiti)
+// Ordina un elenco di songId per titolo canzone (usato nelle liste Preferiti).
+// Ignora simboli iniziali (es. l'apostrofo di "'O SARRACINO") così l'ordine
+// coincide con la lettera mostrata nella banda separatrice (che fa lo stesso).
 function sortSongIdsByTitle(ids, songs) {
+    const cleanForSort = (title) => title.replace(/^[^a-zA-ZÀ-ÿ0-9]+/, '');
     return [...ids].sort((a, b) => {
         const sa = songs.find(sg => sg.id === a);
         const sb = songs.find(sg => sg.id === b);
         if (!sa || !sb) return 0;
-        return sa.title.localeCompare(sb.title, 'it', { sensitivity: 'base' });
+        return cleanForSort(sa.title).localeCompare(cleanForSort(sb.title), 'it', { sensitivity: 'base' });
     });
 }
 
