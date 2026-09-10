@@ -3906,7 +3906,7 @@ pageMap.artistFooterPages.set(artist, currentPage);
                     // altrimenti si sovrappone alla riga precedente) e occupa
                     // tutta l'altezza di riga assegnata a questo elemento.
                     pdf.setFillColor(204, 204, 204);
-                    pdf.rect(pos.x, pos.y - 5, colWidth - 6, pos.rowHeight - 2, 'F');
+                    pdf.rect(pos.x, pos.y - 5, colWidth - 6, pos.rowHeight, 'F');
                     pdf.setFont('times', 'bold');
                     pdf.setFontSize(14);
                     pdf.setTextColor(0, 0, 0);
