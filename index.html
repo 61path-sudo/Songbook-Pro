@@ -3906,7 +3906,7 @@ pageMap.artistFooterPages.set(artist, currentPage);
                     // altrimenti si sovrappone alla riga precedente) e occupa
                     // tutta l'altezza di riga assegnata a questo elemento.
                     pdf.setFillColor(204, 204, 204);
-                    pdf.rect(pos.x, pos.y - 5, colWidth - 6, pos.rowHeight, 'F');
+                    pdf.rect(pos.x, pos.y - 5, colWidth - 6, pos.rowHeight - 2, 'F');
                     pdf.setFont('times', 'bold');
                     pdf.setFontSize(14);
                     pdf.setTextColor(0, 0, 0);
@@ -3970,7 +3970,7 @@ pageMap.artistFooterPages.set(artist, currentPage);
                 // canzone in Fullscreen), non un'unica linea centrale tra le colonne
                 pdf.setDrawColor(204, 204, 204);
                 pdf.setLineWidth(0.5);
-                pdf.line(pos.x, pos.y - 5, pos.x, pos.y - 5 + pos.rowHeight);
+                pdf.line(pos.x, pos.y - 7, pos.x, pos.y - 7 + pos.rowHeight);
                 pdf.setDrawColor(0, 0, 0);
             });
             
