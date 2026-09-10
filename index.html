@@ -3917,14 +3917,16 @@ pageMap.artistFooterPages.set(artist, currentPage);
                 const s = songs.find(sg => sg.id === pos.songId);
                 if (!s) return;
                 
-                const availableTitleWidth = colWidth - 8;
+                const textX = pos.x + 2;   // piccolo spazio rispetto alla lineetta a sinistra
+                const availableTitleWidth = colWidth - 10;
                 
-                // Titolo in grassetto: si riduce fino a un minimo, oltre il quale
-                // viene troncato con i puntini di sospensione invece di rimpicciolire
-                // ulteriormente (per non diventare illeggibile o sforare in colonna)
+                // Titolo (normale, come in Fullscreen): si riduce fino a un minimo,
+                // oltre il quale viene troncato con i puntini di sospensione invece
+                // di rimpicciolire ulteriormente (per non diventare illeggibile o
+                // sforare in colonna)
                 const minTitleFontSize = 10;
                 let titleFontSize = 14;
-                pdf.setFont('times', 'bold');
+                pdf.setFont('times', 'normal');
                 pdf.setFontSize(titleFontSize);
                 pdf.setTextColor(0, 0, 0);
                 let titleText = s.title.toUpperCase();
@@ -3940,7 +3942,7 @@ pageMap.artistFooterPages.set(artist, currentPage);
                         titleText = titleText + '...';
                     }
                 }
-                pdf.text(titleText, pos.x, pos.y);
+                pdf.text(titleText, textX, pos.y);
                 
                 // Cantante sotto, in grigio (stessa logica: riduzione poi troncamento)
                 const minArtistFontSize = 8;
@@ -3961,23 +3963,16 @@ pageMap.artistFooterPages.set(artist, currentPage);
                         artistText = artistText + '...';
                     }
                 }
-                pdf.text(artistText, pos.x, pos.y + 5);
+                pdf.text(artistText, textX, pos.y + 5);
                 pdf.setTextColor(0, 0, 0);
-            });
-            
-            // Linea verticale divisoria tra le 2 colonne: si ferma all'ultima riga
-            // effettivamente presente su quella pagina, non arriva fino in fondo.
-            for (let i = 0; i < totalPages; i++) {
-                pdf.setPage(listStartPage + i);
-                const sy = (i === 0) ? startYFirst : startYOther;
-                const itemsOnThisPage = positions.filter(p => p.pageOffset === i);
-                if (itemsOnThisPage.length === 0) continue;
-                const lineEndY = Math.max(...itemsOnThisPage.map(p => p.y)) + 7;
+                
+                // Lineetta a sinistra della riga (come il "border-left" di ogni
+                // canzone in Fullscreen), non un'unica linea centrale tra le colonne
                 pdf.setDrawColor(204, 204, 204);
-                pdf.setLineWidth(0.3);
-                pdf.line(marginLR + colWidth - 3, sy - 6, marginLR + colWidth - 3, lineEndY);
+                pdf.setLineWidth(0.5);
+                pdf.line(pos.x, pos.y - 5, pos.x, pos.y - 5 + pos.rowHeight - 2);
                 pdf.setDrawColor(0, 0, 0);
-            }
+            });
             
             // Footer ("Torna ad Elenco cantanti" / "Torna a Preferiti") SOLO sull'ultima
             // pagina fisica della lista, come per il footer delle canzoni: indica la fine
