@@ -4014,15 +4014,27 @@ pageMap.artistFooterPages.set(artist, currentPage);
 
 // Footer delle pagine elenco Preferiti: "Torna ad Elenco cantanti" | "Torna a Preferiti"
 // Ordina un elenco di songId per titolo canzone (usato nelle liste Preferiti).
-// Ignora simboli iniziali (es. l'apostrofo di "'O SARRACINO") così l'ordine
-// coincide con la lettera mostrata nella banda separatrice (che fa lo stesso).
+// Ignora simboli iniziali (es. l'apostrofo di "'O SARRACINO"), maiuscolo, e
+// toglie gli accenti — così l'ordine coincide con la lettera mostrata nella
+// banda separatrice (che fa la stessa pulizia). Confronto diretto (non con
+// localeCompare/regole di collazione della lingua): con liste che mescolano
+// titoli che iniziano per numero e per lettera, localeCompare può produrre un
+// ordinamento incoerente che poi "salta indietro" a metà lista; un confronto
+// diretto sulle stringhe pulite è sempre stabile e coerente.
 function sortSongIdsByTitle(ids, songs) {
-    const cleanForSort = (title) => title.replace(/^[^a-zA-ZÀ-ÿ0-9]+/, '');
+    const cleanForSort = (title) => title
+        .toUpperCase()
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .replace(/^[^A-Z0-9]+/, '');
     return [...ids].sort((a, b) => {
         const sa = songs.find(sg => sg.id === a);
         const sb = songs.find(sg => sg.id === b);
         if (!sa || !sb) return 0;
-        return cleanForSort(sa.title).localeCompare(cleanForSort(sb.title), 'it', { sensitivity: 'base' });
+        const ta = cleanForSort(sa.title);
+        const tb = cleanForSort(sb.title);
+        if (ta < tb) return -1;
+        if (ta > tb) return 1;
+        return 0;
     });
 }
 
