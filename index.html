@@ -3967,10 +3967,15 @@ pageMap.artistFooterPages.set(artist, currentPage);
                 pdf.setTextColor(0, 0, 0);
                 
                 // Lineetta a sinistra della riga (come il "border-left" di ogni
-                // canzone in Fullscreen), non un'unica linea centrale tra le colonne
+                // canzone in Fullscreen), non un'unica linea centrale tra le colonne.
+                // +0.25 orizzontale: uno stroke di spessore 0.5mm è centrato sulla
+                // coordinata, quindi senza questo spostamento il suo bordo sinistro
+                // risulta leggermente più a sinistra del bordo netto della banda
+                // (che invece è un riempimento, non uno stroke). +2 in fondo: fa sì
+                // che tocchi la banda successiva invece di fermarsi 2mm prima.
                 pdf.setDrawColor(204, 204, 204);
                 pdf.setLineWidth(0.5);
-                pdf.line(pos.x, pos.y - 7, pos.x, pos.y - 7 + pos.rowHeight);
+                pdf.line(pos.x + 0.25, pos.y - 7, pos.x + 0.25, pos.y - 7 + pos.rowHeight + 2);
                 pdf.setDrawColor(0, 0, 0);
             });
             
