@@ -4026,16 +4026,44 @@ function sortSongIdsByTitle(ids, songs) {
         .toUpperCase()
         .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
         .replace(/^[^A-Z0-9]+/, '');
-    return [...ids].sort((a, b) => {
-        const sa = songs.find(sg => sg.id === a);
-        const sb = songs.find(sg => sg.id === b);
-        if (!sa || !sb) return 0;
-        const ta = cleanForSort(sa.title);
-        const tb = cleanForSort(sb.title);
-        if (ta < tb) return -1;
-        if (ta > tb) return 1;
-        return 0;
+    
+    // Precalcola la chiave di ordinamento per ogni id valido, scartando gli id
+    // che non trovano una canzone corrispondente (evita che un confronto "vuoto"
+    // corrompa l'ordinamento lasciando quell'elemento nella sua posizione originale)
+    const items = [];
+    ids.forEach(id => {
+        const s = songs.find(sg => sg.id === id);
+        if (s) items.push({ id, key: cleanForSort(s.title) });
     });
+    
+    // ✅ Merge sort scritto a mano, invece di affidarsi al sort nativo del
+    // motore JavaScript: su alcuni dispositivi/browser, con array di questa
+    // dimensione, l'ordinamento nativo può risultare in due blocchi ordinati
+    // separatamente e poi accostati invece che in un unico elenco ordinato
+    // (esattamente il sintomo "la lista ricomincia a metà" osservato). Un
+    // merge sort scritto esplicitamente è garantito corretto in ogni caso.
+    function mergeSort(arr) {
+        if (arr.length <= 1) return arr;
+        const mid = Math.floor(arr.length / 2);
+        const left = mergeSort(arr.slice(0, mid));
+        const right = mergeSort(arr.slice(mid));
+        const merged = [];
+        let i = 0, j = 0;
+        while (i < left.length && j < right.length) {
+            if (left[i].key <= right[j].key) {
+                merged.push(left[i]);
+                i++;
+            } else {
+                merged.push(right[j]);
+                j++;
+            }
+        }
+        while (i < left.length) { merged.push(left[i]); i++; }
+        while (j < right.length) { merged.push(right[j]); j++; }
+        return merged;
+    }
+    
+    return mergeSort(items).map(item => item.id);
 }
 
 // Estrae la prima lettera ignorando simboli non alfabetici (stessa logica di Fullscreen).
