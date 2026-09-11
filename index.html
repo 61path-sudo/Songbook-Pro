@@ -4026,10 +4026,13 @@ function sortSongIdsByTitle(ids, songs) {
     });
 }
 
-// Estrae la prima lettera ignorando simboli non alfabetici (stessa logica di Fullscreen)
+// Estrae la prima lettera ignorando simboli non alfabetici (stessa logica di Fullscreen).
+// Rimuove anche gli accenti (È→E, À→A, ecc.) così lettere accentate e non
+// finiscono nello stesso gruppo, invece di alternarsi come gruppi separati.
 function getPreferitiFirstLetter(title) {
     const cleaned = title.replace(/^[^a-zA-ZÀ-ÿ0-9]+/, '');
-    return (cleaned.charAt(0) || title.charAt(0)).toUpperCase();
+    const letter = (cleaned.charAt(0) || title.charAt(0)).toUpperCase();
+    return letter.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 }
 
 // Calcola la posizione (pagina/colonna/coordinate) di ogni canzone (e delle
