@@ -1208,12 +1208,23 @@ body.dark-mode #empty-trash-btn:disabled {
     /* Format selector più compatto */
     .format-selector {
         padding: 10px;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .format-selector strong {
+        margin-right: 0 !important;
+        width: 100%;
+        text-align: center;
     }
     
     .format-btn {
         padding: 8px 15px;
         font-size: 12px;
-        margin: 0 5px;
+        margin: 0;
     }
     
     /* Fullscreen button più piccolo */
@@ -1522,8 +1533,8 @@ body.dark-mode .piano-key.black {
         <div id="performance-tab" class="tab-content">
             <div class="format-selector">
     <strong style="margin-right: 15px;">Formato pagina:</strong>
-    <button class="format-btn active" onclick="setPageFormat('A4')">A4 (iPad Pro)</button>
-    <button class="format-btn" onclick="setPageFormat('A5')">A5 (iPad 2)</button>
+    <button class="format-btn active" onclick="setPageFormat('A4')">A4 (più grande)</button>
+    <button class="format-btn" onclick="setPageFormat('A5')">A5 (più compatto)</button>
 </div>
 
 <!-- Controlli Performance -->
@@ -1633,10 +1644,10 @@ body.dark-mode .piano-key.black {
         <p>Scegli il formato di esportazione:</p>
         <div style="margin: 20px 0;">
             <label style="display: inline-block; margin: 10px; padding: 20px; border: 2px solid #ddd; border-radius: 8px; cursor: pointer;">
-                <input type="radio" name="format" value="A5" checked> A5 (iPad 2)
+                <input type="radio" name="format" value="A5" checked> A5 (più compatto)
             </label>
             <label style="display: inline-block; margin: 10px; padding: 20px; border: 2px solid #ddd; border-radius: 8px; cursor: pointer;">
-                <input type="radio" name="format" value="A4"> A4 (iPad Pro)
+                <input type="radio" name="format" value="A4"> A4 (più grande)
             </label>
         </div>
         <div style="text-align: center;">
@@ -6812,11 +6823,20 @@ return `
                                                     html += `<div style="background: #cccccc; padding: 2px 0 2px 5px; font-weight: bold; font-size: 20pt; height: 38px; line-height: 38px; display: flex; align-items: center; margin-left: -10px;">${firstLetter}</div>`;
                                                                             }
                                                                             
+                                                                            // ✅ Font-size calcolato sulla larghezza REALE della colonna (con canvas),
+                                                                            // non solo sul numero di caratteri: su schermi stretti (iPhone) un
+                                                                            // nome "lungo" in caratteri può comunque non starci nello spazio reale.
+                                                                            const canvasFS = document.createElement('canvas');
+                                                                            const ctxFS = canvasFS.getContext('2d');
+                                                                            const targetWidthFS = columnWidth * 0.94;
                                                                             let fontSize = 20;
-                                                                            if (item.artistSort.length > 25) {
-                                                                                fontSize = 16;
-                                                                            } else if (item.artistSort.length > 20) {
-                                                                                fontSize = 18;
+                                                                            for (let size = 20; size >= 10; size -= 0.5) {
+                                                                                ctxFS.font = `${size}pt "Times New Roman", serif`;
+                                                                                if (ctxFS.measureText(item.artistSort).width <= targetWidthFS) {
+                                                                                    fontSize = size;
+                                                                                    break;
+                                                                                }
+                                                                                fontSize = size;
                                                                             }
                                                                             
                                                                             html += `<div class="artist-item" style="font-size: ${fontSize}pt; height: 38px; line-height: 38px;"><span class="artist-link">${item.artistSort}</span></div>`;
