@@ -1531,12 +1531,6 @@ body.dark-mode .piano-key.black {
 
         <!-- Performance -->
         <div id="performance-tab" class="tab-content">
-            <div class="format-selector">
-    <strong style="margin-right: 15px;">Formato pagina:</strong>
-    <button class="format-btn active" onclick="setPageFormat('A4')">A4 (più grande)</button>
-    <button class="format-btn" onclick="setPageFormat('A5')">A5 (più compatto)</button>
-</div>
-
 <!-- Controlli Performance -->
 <div style="text-align: center; padding: 20px 0; background: #f8f9fa; display: flex; justify-content: center; align-items: center; gap: 20px; flex-wrap: wrap;">
     <button class="fullscreen-mode-btn" onclick="enterFullscreen()">Fullscreen Mode</button>
@@ -1774,7 +1768,7 @@ body.dark-mode .piano-key.black {
         let tapTimes = [];
         let nextTickTime = 0;
         let metronomeBpm = 120;
-        let pageFormat = 'A4';
+        let pageFormat = 'A5';
         let currentPage = 0;
         let totalPages = 0;
         let allFullscreenPages = [];
