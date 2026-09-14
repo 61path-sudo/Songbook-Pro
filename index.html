@@ -3022,6 +3022,22 @@ function clearSearch() {
 }
 
         function updatePerformance() {
+    const previewContent = document.getElementById('preview-content');
+    
+    // ✅ Su iPhone/schermi stretti, l'anteprima "ELENCO CANTANTI" non serve
+    // (si usa Fullscreen per consultare): saltiamo tutto il calcolo e
+    // mostriamo solo un rimando al pulsante Fullscreen qui sopra.
+    if (window.innerWidth <= 768) {
+        previewContent.innerHTML = '';
+        totalPages = 1;
+        currentPage = 0;
+        const leftArrow = document.getElementById('arrow-left');
+        const rightArrow = document.getElementById('arrow-right');
+        if (leftArrow) leftArrow.style.display = 'none';
+        if (rightArrow) rightArrow.style.display = 'none';
+        return;
+    }
+    
     const artistsMap = new Map();
     songs.forEach(s => {
         if (!artistsMap.has(s.artist)) {
@@ -3034,8 +3050,6 @@ function clearSearch() {
     }));
     artistsArray.sort((a, b) => a.artistSort.localeCompare(b.artistSort));
     const artists = artistsArray.map(item => item.artist);
-    
-    const previewContent = document.getElementById('preview-content');
     
     if (artists.length === 0) {
         const content = '<div style="text-align: center; padding: 50px;"><p>Nessuna canzone aggiunta ancora</p></div>';
