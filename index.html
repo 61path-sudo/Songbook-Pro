@@ -1237,6 +1237,8 @@ body.dark-mode #empty-trash-btn:disabled {
     /* Pagine Performance */
     .page {
         padding: 15px !important;
+        width: calc(100vw - 30px) !important;
+        max-width: calc(100vw - 30px) !important;
     }
     
     /* Indice cantanti: 2 colonne invece di 3 */
@@ -1777,11 +1779,24 @@ body.dark-mode .piano-key.black {
         // Funzioni gestione pagine
         function getPageDimensions() {
             const mmToPx = 3.7795;
+            let width, height;
             if (pageFormat === 'A5') {
-                return { width: 148 * mmToPx, height: 210 * mmToPx };
+                width = 148 * mmToPx; height = 210 * mmToPx;
             } else {
-                return { width: 210 * mmToPx, height: 297 * mmToPx };
+                width = 210 * mmToPx; height = 297 * mmToPx;
             }
+            // ✅ Su schermi stretti (iPhone), la pagina viene resa responsive via
+            // CSS per stare nello schermo (vedi media query .page): la larghezza
+            // REALMENTE disponibile è quella dello schermo, non quella "fisica"
+            // A4/A5 in mm. Se non aggiornassimo anche qui, tutti i calcoli a
+            // valle (dimensione font, quanto testo entra per riga/pagina)
+            // continuerebbero a ragionare su una larghezza più larga di quella
+            // vera, facendo uscire il testo dalla colonna.
+            const mobilePageMargin = 30; // deve combaciare con il CSS (calc(100vw - 30px))
+            if (window.innerWidth <= 768 && (window.innerWidth - mobilePageMargin) < width) {
+                width = window.innerWidth - mobilePageMargin;
+            }
+            return { width, height };
         }
 
 // Funzione UNIFICATA per calcolare pagine di una canzone
@@ -3033,6 +3048,7 @@ function clearSearch() {
 
     // Calcola quanti artisti per pagina indice
     const dims = getPageDimensions();
+    const numCols = window.innerWidth <= 768 ? 2 : 3;  // ✅ deve combaciare con il CSS (.artist-columns)
     const firstPageHeight = dims.height - 100; // Prima pagina (con header "ELENCO CANTANTI")
     const otherPagesHeight = dims.height - 10; // Altre pagine (senza header)
     
@@ -3041,7 +3057,7 @@ function clearSearch() {
     testDiv.className = 'artist-item';
     testDiv.style.position = 'absolute';
     testDiv.style.visibility = 'hidden';
-    testDiv.style.width = ((dims.width - 40) / 3) + 'px';
+    testDiv.style.width = ((dims.width - 40) / numCols) + 'px';
     document.body.appendChild(testDiv);
     
     document.body.removeChild(testDiv);
@@ -3057,8 +3073,8 @@ if (pageFormat === 'A5') {
     itemsPerColOtherPages = 29;
 }
 
-const itemsFirstPage = itemsPerColFirstPage * 3;
-const itemsOtherPages = itemsPerColOtherPages * 3;
+const itemsFirstPage = itemsPerColFirstPage * numCols;
+const itemsOtherPages = itemsPerColOtherPages * numCols;
     
     // Il numero di pagine verrà calcolato automaticamente dal ciclo
 console.log(`Artisti: ${artists.length}, Prima pagina: ${itemsFirstPage}, Altre: ${itemsOtherPages}`);
@@ -3079,23 +3095,23 @@ document.body.appendChild(testDivFont);
 
 // ✅ CALCOLA columnWidth FUORI DAL LOOP
 const columnWidth = pageFormat === 'A5' 
-    ? ((dims.width - 40) / 3) - 31  // A5: più aggressivo
-    : ((dims.width - 40) / 3) - 25; // A4: meno aggressivo
+    ? ((dims.width - 40) / numCols) - 31  // A5: più aggressivo
+    : ((dims.width - 40) / numCols) - 25; // A4: meno aggressivo
 
 while (processedArtists < artists.length) {
     const isFirstPage = (indexPages.length === 0);
     const itemsPerCol = isFirstPage ? itemsPerColFirstPage : itemsPerColOtherPages;
     
-    const columns = [[], [], []];
+    const columns = Array.from({ length: numCols }, () => []);
     let currentCol = 0;
     let rowsInCurrentCol = 0;
     
     const startIndex = processedArtists;
     
     // FASE 1: DISTRIBUZIONE (calcola quali artisti vanno dove)
-    const columnData = [[], [], []]; // Salva anche info sui separatori
+    const columnData = Array.from({ length: numCols }, () => []); // Salva anche info sui separatori
     
-    while (processedArtists < artists.length && currentCol < 3) {
+    while (processedArtists < artists.length && currentCol < numCols) {
     const artist = artists[processedArtists];
     const artistSort = songs.find(s => s.artist === artist)?.artistSort || artist;
     const firstLetter = artistSort.charAt(0).toUpperCase();
@@ -3118,7 +3134,7 @@ while (processedArtists < artists.length) {
         rowsInCurrentCol += 1;
         
         // Vai alla colonna/pagina successiva
-        if (currentCol < 2) {
+        if (currentCol < numCols - 1) {
             currentCol++;
             rowsInCurrentCol = 0;
             // ✅ NON fare continue - prosegui per aggiungere l'artista nella nuova colonna
@@ -3148,12 +3164,12 @@ while (processedArtists < artists.length) {
     
     // Se supera il limite normale, vai alla colonna successiva
     if (rowsInCurrentCol + rowsNeeded > itemsPerCol) {
-        if (currentCol < 2) {
+        if (currentCol < numCols - 1) {
             currentCol++;
             rowsInCurrentCol = 0;
             // ✅ NON fare break - riprova ad aggiungere l'artista nella nuova colonna
         } else {
-            // Tutte e 3 le colonne piene
+            // Tutte le colonne piene
             break;
         }
     }
