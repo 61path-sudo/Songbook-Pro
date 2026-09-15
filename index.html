@@ -1241,6 +1241,13 @@ body.dark-mode #empty-trash-btn:disabled {
         max-width: calc(100vw - 8px) !important;
     }
     
+    /* ✅ Fullscreen ha una regola SEPARATA e più specifica (.fullscreen-active
+       .page) che altrimenti vince su quella qui sopra: qui il padding
+       orizzontale era 30px per lato (60px totali), pensato per iPad. */
+    .fullscreen-active .page {
+        padding: 15px 8px !important;
+    }
+    
     /* Indice cantanti: 2 colonne invece di 3 */
     .artist-columns {
         grid-template-columns: repeat(2, 1fr) !important;
@@ -1803,7 +1810,7 @@ body.dark-mode .piano-key.black {
             // valle (dimensione font, quanto testo entra per riga/pagina)
             // continuerebbero a ragionare su una larghezza più larga di quella
             // vera, facendo uscire il testo dalla colonna.
-            const mobilePageMargin = 8; // deve combaciare con il CSS (calc(100vw - 8px))
+            const mobilePageMargin = 16; // margine orizzontale reale (padding pagina, sia Performance che Fullscreen)
             if (window.innerWidth <= 768 && (window.innerWidth - mobilePageMargin) < width) {
                 width = window.innerWidth - mobilePageMargin;
             }
@@ -6743,7 +6750,7 @@ const numColsFS = window.innerWidth <= 768 ? 2 : 3;
 // toglie via più spazio di quanto ne sia davvero occupato, e il font si
 // restringe (o il testo viene tagliato) più del necessario.
 const columnWidth = window.innerWidth <= 768
-    ? ((dims.width - 8 - 8) / numColsFS) - 5   // mobile: 4px*2 padding + 8px gap, piccolo margine
+    ? ((dims.width - 16 - 8) / numColsFS) - 5   // mobile: 8px*2 padding (Fullscreen) + 8px gap, piccolo margine
     : (pageFormat === 'A5' 
         ? ((dims.width - 40) / numColsFS) - 31
         : ((dims.width - 40) / numColsFS) - 25);
