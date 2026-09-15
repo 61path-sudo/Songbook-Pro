@@ -6735,86 +6735,55 @@ testDivFont.style.width = 'auto';
 testDivFont.style.height = 'auto';
 document.body.appendChild(testDivFont);
 
+const numColsFS = window.innerWidth <= 768 ? 2 : 3;
+
 const columnWidth = pageFormat === 'A5' 
-    ? ((dims.width - 40) / 3) - 31
-    : ((dims.width - 40) / 3) - 25;
+    ? ((dims.width - 40) / numColsFS) - 31
+    : ((dims.width - 40) / numColsFS) - 25;
 
 let processedArtists = 0;
 let globalLastLetter = '';
 
-while (processedArtists < artists.length) {
+// ✅ Costruisce la lista piatta di elementi (lettera separatrice + artista),
+// una volta sola. Ogni elemento = ESATTAMENTE una riga visiva. Le colonne
+// vengono poi riempite fino allo stesso numero di righe: questo garantisce
+// che le righe delle due colonne restino sempre allineate, invece di
+// "pesare" una lettera come 2 unità e un artista come 1 (causa dello
+// sfasamento: colonne con più cambi di lettera finivano con più righe reali
+// delle altre, a parità di "budget").
+const allIndexItems = [];
+artists.forEach(artist => {
+    const artistSort = songs.find(s => s.artist === artist)?.artistSort || artist;
+    const letter = artistSort.charAt(0).toUpperCase();
+    if (letter !== globalLastLetter) {
+        allIndexItems.push({ type: 'letter', letter });
+        globalLastLetter = letter;
+    }
+    allIndexItems.push({ type: 'artist', artist, artistSort });
+});
+
+let itemIndex = 0;
+
+while (itemIndex < allIndexItems.length) {
     const isFirstPage = (allFullscreenPages.length === 0);
     const itemsPerCol = isFirstPage ? itemsPerColFirstPage : itemsPerColOtherPages;
     
-    const columnData = [[], [], []];
-    let currentCol = 0;
-    let rowsInCurrentCol = 0;
+    const columnData = Array.from({ length: numColsFS }, () => []);
     
-    // FASE 1: DISTRIBUZIONE
-    while (processedArtists < artists.length && currentCol < 3) {
-        const artist = artists[processedArtists];
-        const artistSort = songs.find(s => s.artist === artist)?.artistSort || artist;
-        const firstLetter = artistSort.charAt(0).toUpperCase();
-        
-        const needsSeparator = (firstLetter !== globalLastLetter);
-        const rowsNeeded = needsSeparator ? 2 : 1;
-        
-        // Se serve separatore ma c'è spazio solo per quello
-        if (needsSeparator && rowsInCurrentCol + 1 === itemsPerCol && rowsInCurrentCol + 2 > itemsPerCol) {
-            columnData[currentCol].push({
-                artist: null,
-                artistSort: null,
-                needsSeparator: true,
-                separatorLetter: firstLetter,
-                isOnlySeparator: true
-            });
-            
-            globalLastLetter = firstLetter;
-            rowsInCurrentCol += 1;
-            
-            if (currentCol < 2) {
-                currentCol++;
-                rowsInCurrentCol = 0;
-            } else {
+    // FASE 1: DISTRIBUZIONE — ogni colonna riceve fino a itemsPerCol righe
+    for (let col = 0; col < numColsFS && itemIndex < allIndexItems.length; col++) {
+        let rowsInCol = 0;
+        while (rowsInCol < itemsPerCol && itemIndex < allIndexItems.length) {
+            const item = allIndexItems[itemIndex];
+            // Evita una lettera "orfana" nell'ultima riga disponibile della
+            // colonna (senza nemmeno un artista sotto): la lasciamo per la
+            // colonna/pagina successiva.
+            if (item.type === 'letter' && rowsInCol === itemsPerCol - 1) {
                 break;
             }
-            
-            const rowsNeededInNewCol = 1;
-            
-            if (rowsInCurrentCol + rowsNeededInNewCol <= itemsPerCol) {
-                columnData[currentCol].push({
-                    artist: artist,
-                    artistSort: artistSort,
-                    needsSeparator: false
-                });
-                
-                rowsInCurrentCol += 1;
-                processedArtists++;
-                continue;
-            }
-        }
-        
-        if (rowsInCurrentCol + rowsNeeded > itemsPerCol) {
-            if (currentCol < 2) {
-                currentCol++;
-                rowsInCurrentCol = 0;
-            } else {
-                break;
-            }
-        }
-        
-        if (rowsInCurrentCol + rowsNeeded <= itemsPerCol) {
-            columnData[currentCol].push({
-                artist: artist,
-                artistSort: artistSort,
-                needsSeparator: (firstLetter !== globalLastLetter)
-            });
-            
-            rowsInCurrentCol += (firstLetter !== globalLastLetter) ? 2 : 1;
-            globalLastLetter = firstLetter;
-            processedArtists++;
-        } else {
-            break;
+            columnData[col].push(item);
+            rowsInCol++;
+            itemIndex++;
         }
     }
     
@@ -6840,59 +6809,42 @@ while (processedArtists < artists.length) {
     const indexContent = `
     ${isFirstPage ? fsHeaderHtml : ''}
     <div class="artist-columns">
-        ${columnData.map((colData, colIndex) => {
+        ${columnData.map((colData) => {
             if (colData.length === 0) {
                 return '';
             }
             
-            // Conta TUTTI gli elementi renderizzati (separatori + artisti)
-let totalVisibleElements = 0;
-colData.forEach(item => {
-    if (item.isOnlySeparator) {
-        totalVisibleElements += 1; // Solo separatore
-    } else if (item.needsSeparator) {
-        totalVisibleElements += 2; // Separatore + artista
-    } else {
-        totalVisibleElements += 1; // Solo artista
-    }
-});
-
-// Calcola altezza: ogni elemento 38px + gap 8px tra elementi - margine di sicurezza
-return `
+            // ✅ Righe più basse su iPhone (24px, come .artist-item compresso),
+            // dimensione normale altrove — bande lettera comprese, così
+            // restano coerenti con l'altezza reale delle righe.
+            const rowH = isMobileFS ? 24 : 38;
+            const bandFontSize = isMobileFS ? 14 : 20;
+            
+            return `
 <div class="artist-column" style="position: relative;">
         ${colData.map(item => {
-                        let html = '';
-                        
-                        if (item.isOnlySeparator) {
-                            html += `<div style="background: #cccccc; padding: 2px 0 2px 5px; font-weight: bold; font-size: 20pt; height: 38px; line-height: 38px; display: flex; align-items: center; margin-left: -10px;">${item.separatorLetter}</div>`;
-                                                    return html;
-                        }
-                        
-                        if (item.needsSeparator) {
-                                                    const firstLetter = item.artistSort.charAt(0).toUpperCase();
-                                                    html += `<div style="background: #cccccc; padding: 2px 0 2px 5px; font-weight: bold; font-size: 20pt; height: 38px; line-height: 38px; display: flex; align-items: center; margin-left: -10px;">${firstLetter}</div>`;
-                                                                            }
-                                                                            
-                                                                            // ✅ Font-size calcolato sulla larghezza REALE della colonna (con canvas),
-                                                                            // non solo sul numero di caratteri: su schermi stretti (iPhone) un
-                                                                            // nome "lungo" in caratteri può comunque non starci nello spazio reale.
-                                                                            const canvasFS = document.createElement('canvas');
-                                                                            const ctxFS = canvasFS.getContext('2d');
-                                                                            const targetWidthFS = columnWidth * 0.94;
-                                                                            let fontSize = 20;
-                                                                            for (let size = 20; size >= 10; size -= 0.5) {
-                                                                                ctxFS.font = `${size}pt "Times New Roman", serif`;
-                                                                                if (ctxFS.measureText(item.artistSort).width <= targetWidthFS) {
-                                                                                    fontSize = size;
-                                                                                    break;
-                                                                                }
-                                                                                fontSize = size;
-                                                                            }
-                                                                            
-                                                                            html += `<div class="artist-item" style="font-size: ${fontSize}pt; height: 38px; line-height: 38px;"><span class="artist-link">${item.artistSort}</span></div>`;
-                        
-                        return html;
-                    }).join('')}
+            if (item.type === 'letter') {
+                return `<div style="background: #cccccc; padding: 2px 0 2px 5px; font-weight: bold; font-size: ${bandFontSize}pt; height: ${rowH}px; line-height: ${rowH}px; display: flex; align-items: center; margin-left: -10px;">${item.letter}</div>`;
+            }
+            
+            // ✅ Font-size calcolato sulla larghezza REALE della colonna (con canvas),
+            // non solo sul numero di caratteri: su schermi stretti (iPhone) un
+            // nome "lungo" in caratteri può comunque non starci nello spazio reale.
+            const canvasFS = document.createElement('canvas');
+            const ctxFS = canvasFS.getContext('2d');
+            const targetWidthFS = columnWidth * 0.94;
+            let fontSize = 20;
+            for (let size = 20; size >= 10; size -= 0.5) {
+                ctxFS.font = `${size}pt "Times New Roman", serif`;
+                if (ctxFS.measureText(item.artistSort).width <= targetWidthFS) {
+                    fontSize = size;
+                    break;
+                }
+                fontSize = size;
+            }
+            
+            return `<div class="artist-item" style="font-size: ${fontSize}pt; height: ${rowH}px; line-height: ${rowH}px;"><span class="artist-link">${item.artistSort}</span></div>`;
+        }).join('')}
                 </div>
             `;
         }).join('')}
