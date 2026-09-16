@@ -368,9 +368,18 @@ body.dark-mode .fullscreen-active .artist-item {
     display: flex;
     align-items: center;
     overflow: hidden;
-    text-overflow: ellipsis;
     flex-shrink: 0;
     flex-grow: 0;
+}
+
+/* ✅ text-overflow non ha effetto su un contenitore flex (.artist-item lo è):
+   va applicato al testo interno perché i puntini di sospensione funzionino. */
+.artist-item .artist-link {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
 }
 
 /* Previeni selezione testo durante swipe in fullscreen */
@@ -6716,13 +6725,19 @@ function generateAllPagesForBook() {
     artistsArray.sort((a, b) => a.artistSort.localeCompare(b.artistSort));
     const artists = artistsArray.map(item => item.artist);
     
-    // ✅ VALORI FISSI per righe per colonna (come nel vecchio codice)
+    // ✅ VALORI per righe per colonna
 let itemsPerColFirstPage, itemsPerColOtherPages;
 
 if (window.innerWidth <= 768) {
-    // Righe più compatte su iPhone (26px invece di 37px): ne entrano di più
-    itemsPerColFirstPage = 27;
-    itemsPerColOtherPages = 28;
+    // ✅ Su iPhone, calcolate dall'altezza REALE dello schermo (non più un
+    // numero fisso indovinato): altrimenti una colonna può risultare più
+    // alta dello schermo stesso, richiedendo scroll dentro alla "pagina"
+    // invece di passare a quella successiva con lo swipe.
+    const rowH = 24; // deve combaciare con l'altezza reale di .artist-item su mobile
+    const pagePaddingTopBottom = 15 + 15; // .fullscreen-active .page: padding 15px 8px
+    const headerZoneHeight = 35 + 29 + 20; // titolo + riga icone + margin-bottom del blocco header
+    itemsPerColFirstPage = Math.max(5, Math.floor((window.innerHeight - pagePaddingTopBottom - headerZoneHeight) / rowH));
+    itemsPerColOtherPages = Math.max(5, Math.floor((window.innerHeight - pagePaddingTopBottom) / rowH));
 } else if (pageFormat === 'A5') {
     itemsPerColFirstPage = 19;
     itemsPerColOtherPages = 20;
