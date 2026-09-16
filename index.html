@@ -6899,6 +6899,10 @@ artists.forEach(artist => {
     const artistTitleFontSize = isMobileArtistPage ? 22 : 26;   // ✅ come il titolo di ELENCO CANTANTI su iPhone
     const artistTitlePadding = isMobileArtistPage ? '6px 0' : '15px 0';  // ✅ linee più vicine al nome, font più piccolo
     const songItemPadding = isMobileArtistPage ? '10px 0' : '6px 0';     // ✅ un po' più di spazio tra le canzoni
+    const songItemFontSize = isMobileArtistPage ? 12 : 20;  // ✅ come i nomi cantante in ELENCO CANTANTI
+    const footerLabel = isMobileArtistPage ? 'Elenco cantanti' : 'Torna ad Elenco cantanti'; // ✅ più corto: niente "Torna ad"
+    const footerFontSize = isMobileArtistPage ? 13 : 18;
+    const footerPaddingTop = isMobileArtistPage ? 6 : 15;
     const artistContent = `
         <div style="text-align: center; font-size: ${artistTitleFontSize}pt; font-weight: bold; border-top: 2px solid black; border-bottom: 2px solid black; padding: ${artistTitlePadding}; margin-bottom: 30px;">
             ${artistSort.toUpperCase()}
@@ -6906,15 +6910,15 @@ artists.forEach(artist => {
         <div>
             ${artistSongs.map(song => 
       `<div class="artist-item song-link" data-song-id="${song.id}"
-           style="font-size: 20pt; cursor: pointer; display: block; width: fit-content; padding: ${songItemPadding};">
+           style="font-size: ${songItemFontSize}pt; cursor: pointer; display: block; width: fit-content; padding: ${songItemPadding};">
         ${song.title.toUpperCase()}
       </div>`
     ).join('')}
         </div>
-        <div style="position: absolute; bottom: 20px; left: 0; right: 0; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; border-top: 1px solid black; padding-top: 15px;">
-            <div style="text-align: center; cursor: pointer; font-size: 18pt;" data-action="index">Torna ad Elenco cantanti</div>
-            <div style="text-align: center; cursor: pointer; font-size: 18pt;" data-action="preferiti">Preferiti</div>
-            <div style="text-align: center; cursor: pointer; font-size: 18pt;" data-action="audio">🎵</div>
+        <div style="position: absolute; bottom: 20px; left: 0; right: 0; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; border-top: 1px solid black; padding-top: ${footerPaddingTop}px;">
+            <div style="text-align: center; cursor: pointer; font-size: ${footerFontSize}pt; white-space: nowrap;" data-action="index">${footerLabel}</div>
+            <div style="text-align: center; cursor: pointer; font-size: ${footerFontSize}pt;" data-action="preferiti">Preferiti</div>
+            <div style="text-align: center; cursor: pointer; font-size: ${footerFontSize}pt;" data-action="audio">🎵</div>
         </div>
     `;
     
