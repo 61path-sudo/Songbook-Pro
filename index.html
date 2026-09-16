@@ -6895,14 +6895,18 @@ artists.forEach(artist => {
     const artistSort = songs.find(s => s.artist === artist)?.artistSort || artist;
     
     // Pagina artista con elenco canzoni
+    const isMobileArtistPage = window.innerWidth <= 768;
+    const artistTitleFontSize = isMobileArtistPage ? 22 : 26;   // ✅ come il titolo di ELENCO CANTANTI su iPhone
+    const artistTitlePadding = isMobileArtistPage ? '6px 0' : '15px 0';  // ✅ linee più vicine al nome, font più piccolo
+    const songItemPadding = isMobileArtistPage ? '10px 0' : '6px 0';     // ✅ un po' più di spazio tra le canzoni
     const artistContent = `
-        <div style="text-align: center; font-size: 26pt; font-weight: bold; border-top: 2px solid black; border-bottom: 2px solid black; padding: 15px 0; margin-bottom: 30px;">
+        <div style="text-align: center; font-size: ${artistTitleFontSize}pt; font-weight: bold; border-top: 2px solid black; border-bottom: 2px solid black; padding: ${artistTitlePadding}; margin-bottom: 30px;">
             ${artistSort.toUpperCase()}
         </div>
         <div>
             ${artistSongs.map(song => 
       `<div class="artist-item song-link" data-song-id="${song.id}"
-           style="font-size: 20pt; cursor: pointer; display: block; width: fit-content; padding: 6px 0;">
+           style="font-size: 20pt; cursor: pointer; display: block; width: fit-content; padding: ${songItemPadding};">
         ${song.title.toUpperCase()}
       </div>`
     ).join('')}
