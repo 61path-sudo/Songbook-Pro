@@ -6734,7 +6734,7 @@ if (window.innerWidth <= 768) {
     // alta dello schermo stesso, richiedendo scroll dentro alla "pagina"
     // invece di passare a quella successiva con lo swipe.
     const rowH = 24; // deve combaciare con l'altezza reale di .artist-item su mobile
-    const pagePaddingTopBottom = 15 + 15; // .fullscreen-active .page: padding 15px 8px
+    const pagePaddingTopBottom = 15 + 15 + 15; // .fullscreen-active .page: padding 15px 8px, + margine extra per la mezza riga che avanzava
     const headerZoneHeight = 35 + 29 + 20; // titolo + riga icone + margin-bottom del blocco header
     const safetyRows = 1; // margine di sicurezza: una riga in meno, per non lasciarne una "a metà" in fondo
     itemsPerColFirstPage = Math.max(5, Math.floor((window.innerHeight - pagePaddingTopBottom - headerZoneHeight) / rowH) - safetyRows);
