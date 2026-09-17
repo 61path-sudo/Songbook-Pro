@@ -7232,30 +7232,37 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
         
         if (page.isFirst) {
             let titleFontSize = isMobileSongPage ? 22 : 28;  // ✅ come il titolo di ELENCO CANTANTI
-            let titleFitsOneLine = false;
+            let titleDisplay = song.title.toUpperCase();
             if (isMobileSongPage) {
-                // ✅ Se il titolo è troppo lungo per stare su una riga sola,
-                // riduci il font finché non ci sta (fino a un minimo). Se
-                // anche al minimo non basta, lascialo andare a capo invece
-                // di forzarlo fuori dallo schermo.
-                const titleText = `"${song.title.toUpperCase()}"`;
+                // ✅ Il titolo deve SEMPRE restare su una riga sola (andare a
+                // capo scombussola lo spazio del testo sotto): riduci il font
+                // finché non ci sta, e se anche al minimo non basta, tronca
+                // con i puntini di sospensione mantenendo la virgoletta finale.
                 const availableTitleWidth = window.innerWidth - 40; // margini della pagina
                 const canvasTitle = document.createElement('canvas');
                 const ctxTitle = canvasTitle.getContext('2d');
                 const minTitleFontSize = 14;
+                let fits = false;
                 for (let size = titleFontSize; size >= minTitleFontSize; size -= 0.5) {
                     ctxTitle.font = `bold ${size}pt "Times New Roman", serif`;
                     titleFontSize = size;
-                    if (ctxTitle.measureText(titleText).width <= availableTitleWidth) {
-                        titleFitsOneLine = true;
+                    if (ctxTitle.measureText(`"${titleDisplay}"`).width <= availableTitleWidth) {
+                        fits = true;
                         break;
                     }
+                }
+                if (!fits) {
+                    ctxTitle.font = `bold ${minTitleFontSize}pt "Times New Roman", serif`;
+                    while (titleDisplay.length > 1 && ctxTitle.measureText(`"${titleDisplay}..."`).width > availableTitleWidth) {
+                        titleDisplay = titleDisplay.slice(0, -1);
+                    }
+                    titleDisplay = titleDisplay + '...';
                 }
             }
             content = `
                 <div style="text-align: center; margin-bottom: 25px;">
-                    <div style="font-size: ${titleFontSize}pt; font-weight: bold; margin-bottom: 2px; ${titleFitsOneLine ? 'white-space: nowrap;' : ''}">"${song.title.toUpperCase()}"</div>
-                    <div style="font-size: 13pt; margin-bottom: 2px;">(${song.artist.toUpperCase()})</div>
+                    <div style="font-size: ${titleFontSize}pt; font-weight: bold; margin-bottom: 2px; ${isMobileSongPage ? 'white-space: nowrap;' : ''}">"${titleDisplay}"</div>
+                    <div style="font-size: ${isMobileSongPage ? 12 : 13}pt; margin-bottom: 2px;">(${song.artist.toUpperCase()})</div>
                     ${notesHtml}
                 </div>
                 <div class="song-text" style="font-size: 19pt;">${page.lines.join('\n')}</div>
