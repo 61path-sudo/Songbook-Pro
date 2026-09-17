@@ -1959,21 +1959,30 @@ function getLineHeight(text) {
         if (firstPageEndIndex >= lines.length) {
             const footerReserve = middlePageHeight - lastPageHeight;
             const firstLastPageHeight = firstPageHeight - footerReserve;
-            heightUsed = 0;
-            firstPageEndIndex = 0;
+            const fullBudgetEndIndex = firstPageEndIndex; // teniamo da parte il risultato col budget pieno
+            let reducedHeightUsed = 0;
+            let reducedEndIndex = 0;
             for (let i = 0; i < lines.length; i++) {
                 const lineRealHeight = getLineHeight(lines[i]);
-                if (heightUsed + lineRealHeight <= firstLastPageHeight) {
-                    heightUsed += lineRealHeight;
-                    firstPageEndIndex = i + 1;
+                if (reducedHeightUsed + lineRealHeight <= firstLastPageHeight) {
+                    reducedHeightUsed += lineRealHeight;
+                    reducedEndIndex = i + 1;
                 } else {
                     break;
                 }
             }
             // Forza almeno una riga anche se il budget ridotto non ce la fa
-            if (firstPageEndIndex === 0) {
-                firstPageEndIndex = 1;
+            if (reducedEndIndex === 0) {
+                reducedEndIndex = 1;
             }
+            
+            // ✅ Il budget ridotto (per il footer) va usato SOLO se con quello il
+            // testo continua a stare tutto in una pagina sola: altrimenti il
+            // footer non verrà comunque mostrato (non è più l'ultima pagina), e
+            // useremmo uno spazio ridotto senza motivo, lasciando testo vuoto in
+            // fondo e spingendo righe su una pagina 2 inutile. In quel caso
+            // torniamo al budget pieno, calcolato sopra.
+            firstPageEndIndex = (reducedEndIndex >= lines.length) ? reducedEndIndex : fullBudgetEndIndex;
         }
         
         pages.push({
@@ -2012,18 +2021,25 @@ while (currentLineIndex < lines.length) {
     // Se siamo arrivati alla fine, prova a riempire di più con lastPageHeight
     if (pageEndIndex >= lines.length) {
         // È l'ultima pagina, riprova con lastPageHeight per recuperare più spazio
-        heightUsed = 0;
-        pageEndIndex = currentLineIndex;
+        const middleBudgetEndIndex = pageEndIndex; // teniamo da parte il risultato con middlePageHeight
+        let reducedHeightUsed = 0;
+        let reducedPageEndIndex = currentLineIndex;
         
         for (let i = currentLineIndex; i < lines.length; i++) {
             const lineRealHeight = getLineHeight(lines[i]);
-            if (heightUsed + lineRealHeight <= lastPageHeight) {
-                heightUsed += lineRealHeight;
-                pageEndIndex = i + 1;
+            if (reducedHeightUsed + lineRealHeight <= lastPageHeight) {
+                reducedHeightUsed += lineRealHeight;
+                reducedPageEndIndex = i + 1;
             } else {
                 break;
             }
         }
+        
+        // ✅ Stessa correzione della prima pagina: se con lastPageHeight il testo
+        // non arriva più fino in fondo, questa non è davvero l'ultima pagina —
+        // usare comunque quel budget lascerebbe spazio vuoto senza il footer
+        // (che non verrebbe mostrato) e spingerebbe righe su una pagina in più.
+        pageEndIndex = (reducedPageEndIndex >= lines.length) ? reducedPageEndIndex : middleBudgetEndIndex;
     }
     
     // Forza almeno una riga se non è riuscito ad aggiungerne
