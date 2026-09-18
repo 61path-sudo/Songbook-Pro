@@ -7243,12 +7243,16 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
 //                                                           ^PDF  ^FULLSCREEN
     
     // Footer HTML con link
+    const footerFontSizeSong = isMobileSongPage ? 12 : 18;
+    const footerPaddingTopSong = isMobileSongPage ? 6 : 15;
+    const indexLabel = isMobileSongPage ? 'Elenco cantanti' : 'Torna ad Elenco cantanti';
+    const artistLabel = isMobileSongPage ? 'Cantante' : 'Torna al cantante';
     const footerHtml = `
-            <div style="position: absolute; bottom: 20px; left: 0; right: 0; display: grid; grid-template-columns: 1.5fr 1fr 1.5fr 1fr; gap: 10px; border-top: 1px solid black; padding-top: 15px;">
-                <div style="text-align: center; cursor: pointer; font-size: 18pt;" data-action="index">Torna ad Elenco cantanti</div>
-                <div style="text-align: center; cursor: pointer; font-size: 18pt;" data-action="artist" data-artist="${song.artist}">Torna al cantante</div>
-                <div style="text-align: center; cursor: pointer; font-size: 18pt;" data-action="preferiti">Preferiti</div>
-                <div style="text-align: center; cursor: pointer; font-size: 18pt;" data-action="audio">🎵</div>
+            <div style="position: absolute; bottom: 20px; left: 0; right: 0; display: grid; grid-template-columns: 1.5fr 1fr 1.5fr 1fr; gap: 10px; border-top: 1px solid black; padding-top: ${footerPaddingTopSong}px;">
+                <div style="text-align: center; cursor: pointer; font-size: ${footerFontSizeSong}pt; white-space: nowrap;" data-action="index">${indexLabel}</div>
+                <div style="text-align: center; cursor: pointer; font-size: ${footerFontSizeSong}pt; white-space: nowrap;" data-action="artist" data-artist="${song.artist}">${artistLabel}</div>
+                <div style="text-align: center; cursor: pointer; font-size: ${footerFontSizeSong}pt;" data-action="preferiti">Preferiti</div>
+                <div style="text-align: center; cursor: pointer; font-size: ${footerFontSizeSong}pt;" data-action="audio">🎵</div>
             </div>
         `;
     
