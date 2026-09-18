@@ -1890,7 +1890,16 @@ function calculateSongPagination(song, format, isPDF = false, isFullscreen = fal
     testDiv.className = 'song-text';  // USA LA STESSA CLASSE
     testDiv.style.position = 'absolute';
     testDiv.style.visibility = 'hidden';
-    testDiv.style.width = (dims.width - 40) + 'px';  // Stessa larghezza della pagina reale
+    // ✅ Su Fullscreen e schermi stretti (iPhone), la larghezza REALE del testo
+    // è quella dello schermo (meno il padding di .fullscreen-active .page:
+    // 8px per lato), non quella "teorica" A5/A4 in mm — altrimenti una riga
+    // lunga che nella realtà va a capo (schermo stretto) viene misurata come
+    // se stesse su una riga sola (larghezza calcolata più larga), sottostimando
+    // quanto spazio occupa davvero e facendo uscire il testo dalla pagina.
+    const measureWidth = (isFullscreen && window.innerWidth <= 768)
+        ? (window.innerWidth - 16)
+        : (dims.width - 40);
+    testDiv.style.width = measureWidth + 'px';  // Stessa larghezza della pagina reale
 
     // ✅ FIX DEFINITIVO: la classe .song-text viene sovrascritta da media query
     // responsive (es. "@media max-width:768px { .song-text{font-size:12pt !important} }"),
