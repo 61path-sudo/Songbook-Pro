@@ -7288,8 +7288,9 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
                     titleDisplay = titleDisplay + '...';
                 }
             }
+            const headerMinHeight = isMobileSongPage ? 95 : 0;  // ✅ altezza fissa: il testo comincia sempre nello stesso punto, a prescindere da quanto si rimpicciolisce il titolo
             content = `
-                <div style="text-align: center; margin-bottom: 25px;">
+                <div style="text-align: center; margin-bottom: 25px; ${headerMinHeight ? `min-height: ${headerMinHeight}px; display: flex; flex-direction: column; justify-content: center;` : ''}">
                     <div style="font-size: ${titleFontSize}pt; font-weight: bold; margin-bottom: 2px; ${isMobileSongPage ? 'white-space: nowrap;' : ''}">"${titleDisplay}"</div>
                     <div style="font-size: ${isMobileSongPage ? 12 : 13}pt; margin-bottom: 2px;">(${song.artist.toUpperCase()})</div>
                     ${notesHtml}
