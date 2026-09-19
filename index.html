@@ -1854,7 +1854,7 @@ function calculateSongPagination(song, format, isPDF = false, isFullscreen = fal
     if (isFullscreen) {
     // ✅ USA GLI STESSI VALORI DI PERFORMANCE (non l'altezza reale dello schermo)
     if (format === 'A5') {
-        firstPageHeight = 612;  // tornato a metà strada: 544 era troppo severo per canzoni con molte righe vuote/corte
+        firstPageHeight = 646;  // +1 riga (~34 unità) rispetto a 612
         middlePageHeight = 740;
         lastPageHeight = 700;
     } else { // A4
