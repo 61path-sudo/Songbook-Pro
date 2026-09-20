@@ -1862,15 +1862,16 @@ function calculateSongPagination(song, format, isPDF = false, isFullscreen = fal
         const headerHeight = 95;          // altezza fissa del blocco titolo (min-height impostato)
         const headerMarginBottom = 25;    // margin-bottom del blocco titolo, prima del testo
         const footerHeight = 45;          // stima: spazio del footer (bottom 20px + padding-top 6px + riga di testo)
+        const extraSpace = 85;            // ✅ correzione: le stime sopra erano leggermente in eccesso (~2-3 righe vuote di troppo)
         
         // Prima pagina: c'è l'intestazione (titolo/cantante/dettagli) e il footer
-        firstPageHeight = window.innerHeight - pageVertPadding - headerHeight - headerMarginBottom - footerHeight;
+        firstPageHeight = window.innerHeight - pageVertPadding - headerHeight - headerMarginBottom - footerHeight + extraSpace;
         // Pagine intermedie: niente intestazione, e usiamo tutto lo spazio (il
         // footer si aggiunge solo se risulta essere davvero l'ultima pagina,
         // gestito già più sotto dal codice "budget pieno vs ridotto")
         middlePageHeight = window.innerHeight - pageVertPadding;
         // Ultima pagina: come le intermedie, ma con lo spazio per il footer
-        lastPageHeight = window.innerHeight - pageVertPadding - footerHeight;
+        lastPageHeight = window.innerHeight - pageVertPadding - footerHeight + extraSpace;
     } else if (format === 'A5') {
         firstPageHeight = 642;
         middlePageHeight = 740;
