@@ -1852,9 +1852,27 @@ function calculateSongPagination(song, format, isPDF = false, isFullscreen = fal
     let firstPageHeight, middlePageHeight, lastPageHeight;
     
     if (isFullscreen) {
-    // ✅ USA GLI STESSI VALORI DI PERFORMANCE (non l'altezza reale dello schermo)
-    if (format === 'A5') {
-        firstPageHeight = 638;  // via di mezzo: 612 toglieva 4 righe invece di 1
+    if (window.innerWidth <= 768) {
+        // ✅ Sistema "elastico" (solo iPhone): calcola lo spazio davvero
+        // disponibile dall'altezza reale dello schermo, invece di un numero
+        // fisso uguale per ogni canzone. Così ogni canzone usa esattamente lo
+        // spazio che ha davvero a disposizione, senza margine sprecato per
+        // chi ha righe corte né rischio di uscire per chi ha righe lunghe.
+        const pageVertPadding = 8 + 8;    // .fullscreen-active .page: padding 8px 8px (mobile)
+        const headerHeight = 95;          // altezza fissa del blocco titolo (min-height impostato)
+        const headerMarginBottom = 25;    // margin-bottom del blocco titolo, prima del testo
+        const footerHeight = 45;          // stima: spazio del footer (bottom 20px + padding-top 6px + riga di testo)
+        
+        // Prima pagina: c'è l'intestazione (titolo/cantante/dettagli) e il footer
+        firstPageHeight = window.innerHeight - pageVertPadding - headerHeight - headerMarginBottom - footerHeight;
+        // Pagine intermedie: niente intestazione, e usiamo tutto lo spazio (il
+        // footer si aggiunge solo se risulta essere davvero l'ultima pagina,
+        // gestito già più sotto dal codice "budget pieno vs ridotto")
+        middlePageHeight = window.innerHeight - pageVertPadding;
+        // Ultima pagina: come le intermedie, ma con lo spazio per il footer
+        lastPageHeight = window.innerHeight - pageVertPadding - footerHeight;
+    } else if (format === 'A5') {
+        firstPageHeight = 642;
         middlePageHeight = 740;
         lastPageHeight = 700;
     } else { // A4
