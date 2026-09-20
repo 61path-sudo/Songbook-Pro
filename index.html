@@ -1853,28 +1853,53 @@ function calculateSongPagination(song, format, isPDF = false, isFullscreen = fal
     
     if (isFullscreen) {
     if (window.innerWidth <= 768) {
-        // ✅ Sistema "elastico" (solo iPhone): calcola lo spazio davvero
-        // disponibile dall'altezza reale dello schermo, invece di un numero
-        // fisso uguale per ogni canzone. Così ogni canzone usa esattamente lo
-        // spazio che ha davvero a disposizione, senza margine sprecato per
-        // chi ha righe corte né rischio di uscire per chi ha righe lunghe.
-        const pageVertPadding = 8 + 8;    // .fullscreen-active .page: padding 8px 8px (mobile)
-        const headerHeight = 95;          // altezza fissa del blocco titolo (min-height impostato)
-        const headerMarginBottom = 25;    // margin-bottom del blocco titolo, prima del testo
-        const footerHeight = 80;          // era 45: non bastava, il footer si sovrapponeva ancora al testo
-        const extraSpace = 51;            // ✅ ridotto di 1 riga (~34px) rispetto a 85
+        // ✅ Sistema "elastico" (solo iPhone): invece di indovinare quanto
+        // spazio occupano intestazione/footer/pagina con numeri fissi, li
+        // MISURIAMO davvero creando temporaneamente la stessa identica
+        // struttura nel DOM (stesse classi, quindi stesse regole CSS —
+        // comprese eventuali differenze tra window.innerHeight e l'altezza
+        // reale della pagina a schermo intero su iOS).
+        const measureContainer = document.createElement('div');
+        measureContainer.className = 'fullscreen-active';
+        measureContainer.style.position = 'fixed';
+        measureContainer.style.top = '0';
+        measureContainer.style.left = '0';
+        measureContainer.style.visibility = 'hidden';
+        measureContainer.style.pointerEvents = 'none';
+        measureContainer.innerHTML = `
+            <div class="page active">
+                <div id="pgMeasureHeader" style="text-align: center; margin-bottom: 25px; min-height: 95px; display: flex; flex-direction: column; justify-content: center;">
+                    <div style="font-size: 22pt; font-weight: bold;">"MISURA TITOLO"</div>
+                    <div style="font-size: 12pt;">(ARTISTA)</div>
+                    <div style="font-size: 14pt; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                        <span>TEST | TEST | TEST</span>
+                        <span style="font-size: 16pt;">☆</span>
+                        <span style="font-size: 16pt;">🎵</span>
+                    </div>
+                </div>
+                <div id="pgMeasureFooter" style="position: absolute; bottom: 20px; left: 0; right: 0; display: grid; grid-template-columns: 1.5fr 1fr 1.5fr 1fr; gap: 10px; border-top: 1px solid black; padding-top: 6px;">
+                    <div style="font-size: 12pt;">Elenco cantanti</div>
+                    <div style="font-size: 12pt;">Cantante</div>
+                    <div style="font-size: 12pt;">Preferiti</div>
+                    <div style="font-size: 12pt;">🎵</div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(measureContainer);
+        const measuredPage = measureContainer.querySelector('.page');
+        const measuredPageHeight = measuredPage.clientHeight;                          // altezza REALE della pagina (non window.innerHeight)
+        const measuredHeaderHeight = document.getElementById('pgMeasureHeader').offsetHeight;
+        const measuredFooterHeight = document.getElementById('pgMeasureFooter').offsetHeight;
+        // Spazio tra il bordo inferiore del footer e il fondo della pagina (il "bottom: 20px" del footer)
+        const footerBottomGap = 20;
+        document.body.removeChild(measureContainer);
         
         // Prima pagina: c'è l'intestazione (titolo/cantante/dettagli) e il footer
-        firstPageHeight = window.innerHeight - pageVertPadding - headerHeight - headerMarginBottom - footerHeight + extraSpace;
-        // Pagine intermedie: niente intestazione, e usiamo tutto lo spazio (il
-        // footer si aggiunge solo se risulta essere davvero l'ultima pagina,
-        // gestito già più sotto dal codice "budget pieno vs ridotto")
-        middlePageHeight = window.innerHeight - pageVertPadding;
-        // Ultima pagina: come le intermedie, ma con lo spazio per il footer.
-        // ⚠️ Qui NON aggiungiamo extraSpace: quello spazio serve a lasciare
-        // davvero il footer libero, e sommarci la correzione lo annullava
-        // (causando la sovrapposizione vista con "Qualche stupido ti amo").
-        lastPageHeight = window.innerHeight - pageVertPadding - footerHeight;
+        firstPageHeight = measuredPageHeight - measuredHeaderHeight - measuredFooterHeight - footerBottomGap;
+        // Pagine intermedie: niente intestazione, tutto lo spazio della pagina
+        middlePageHeight = measuredPageHeight;
+        // Ultima pagina: come le intermedie, ma con lo spazio riservato per il footer
+        lastPageHeight = measuredPageHeight - measuredFooterHeight - footerBottomGap;
     } else if (format === 'A5') {
         firstPageHeight = 642;
         middlePageHeight = 740;
