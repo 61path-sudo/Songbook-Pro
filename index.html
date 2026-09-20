@@ -1870,8 +1870,11 @@ function calculateSongPagination(song, format, isPDF = false, isFullscreen = fal
         // footer si aggiunge solo se risulta essere davvero l'ultima pagina,
         // gestito già più sotto dal codice "budget pieno vs ridotto")
         middlePageHeight = window.innerHeight - pageVertPadding;
-        // Ultima pagina: come le intermedie, ma con lo spazio per il footer
-        lastPageHeight = window.innerHeight - pageVertPadding - footerHeight + extraSpace;
+        // Ultima pagina: come le intermedie, ma con lo spazio per il footer.
+        // ⚠️ Qui NON aggiungiamo extraSpace: quello spazio serve a lasciare
+        // davvero il footer libero, e sommarci la correzione lo annullava
+        // (causando la sovrapposizione vista con "Qualche stupido ti amo").
+        lastPageHeight = window.innerHeight - pageVertPadding - footerHeight;
     } else if (format === 'A5') {
         firstPageHeight = 642;
         middlePageHeight = 740;
