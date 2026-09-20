@@ -1937,7 +1937,14 @@ function calculateSongPagination(song, format, isPDF = false, isFullscreen = fal
         testDiv.style.setProperty('text-transform', 'uppercase', 'important');
         testDiv.style.setProperty('white-space', 'pre-line', 'important');
     } else {
-        testDiv.style.setProperty('font-family', '-apple-system, BlinkMacSystemFont, sans-serif', 'important');
+        // ✅ FIX: .song-text vive dentro .page, che ha "font-family: 'Times New
+        // Roman', serif" — ma il testDiv viene appeso a document.body, quindi
+        // SENZA questa riga erediterebbe il sans-serif di <body> invece del
+        // Times New Roman realmente usato per disegnare il testo. Misurare con
+        // un font diverso da quello vero fa sì che le righe lunghe vadano a
+        // capo in modo diverso nella misurazione rispetto al disegno reale —
+        // probabile causa delle differenze di spazio residuo tra canzoni.
+        testDiv.style.setProperty('font-family', "'Times New Roman', Times, serif", 'important');
     }
     document.body.appendChild(testDiv);
     
