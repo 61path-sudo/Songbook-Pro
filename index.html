@@ -7352,7 +7352,8 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
                 <div class="song-text" style="font-size: 19pt;">${page.lines.join('\n')}</div>
             `;
         } else {
-            content = `<div class="song-text" style="margin-top: 20px; font-size: 19pt;">${page.lines.join('\n')}</div>`;
+            const continuationMarginTop = isMobileSongPage ? 4 : 20;  // ✅ meno spazio in alto: il testo comincia prima
+            content = `<div class="song-text" style="margin-top: ${continuationMarginTop}px; font-size: 19pt;">${page.lines.join('\n')}</div>`;
         }
         
         // Aggiungi footer solo se è l'ultima pagina
