@@ -1862,7 +1862,7 @@ function calculateSongPagination(song, format, isPDF = false, isFullscreen = fal
         const headerHeight = 95;          // altezza fissa del blocco titolo (min-height impostato)
         const headerMarginBottom = 25;    // margin-bottom del blocco titolo, prima del testo
         const footerHeight = 45;          // stima: spazio del footer (bottom 20px + padding-top 6px + riga di testo)
-        const extraSpace = 85;            // ✅ correzione: le stime sopra erano leggermente in eccesso (~2-3 righe vuote di troppo)
+        const extraSpace = 51;            // ✅ ridotto di 1 riga (~34px) rispetto a 85
         
         // Prima pagina: c'è l'intestazione (titolo/cantante/dettagli) e il footer
         firstPageHeight = window.innerHeight - pageVertPadding - headerHeight - headerMarginBottom - footerHeight + extraSpace;
