@@ -1897,7 +1897,7 @@ function calculateSongPagination(song, format, isPDF = false, isFullscreen = fal
         // Prima pagina: c'è l'intestazione (titolo/cantante/dettagli) e il footer
         firstPageHeight = measuredPageHeight - measuredHeaderHeight - measuredFooterHeight - footerBottomGap;
         // Pagine intermedie: niente intestazione, tutto lo spazio della pagina
-        middlePageHeight = measuredPageHeight;
+        middlePageHeight = measuredPageHeight - 34;  // -1 riga dal fondo
         // Ultima pagina: come le intermedie, ma con lo spazio riservato per il footer
         lastPageHeight = measuredPageHeight - measuredFooterHeight - footerBottomGap;
     } else if (format === 'A5') {
