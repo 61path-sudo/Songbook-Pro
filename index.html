@@ -1901,7 +1901,13 @@ function calculateSongPagination(song, format, isPDF = false, isFullscreen = fal
         const footerSafetyMargin = 30;  // margine extra prudente: la sovrapposizione col footer va evitata sempre
         
         // Prima pagina: c'è l'intestazione (titolo/cantante/dettagli) e il footer
-        firstPageHeight = realPageHeight - measuredHeaderHeight - measuredFooterHeight - footerBottomGap - footerSafetyMargin;
+        // ✅ Il margine estra per il footer NON va qui: questa è la versione
+        // "generosa" di firstPageHeight, usata quando la canzone continua su
+        // altre pagine (caso già risolto in precedenza). Il margine si
+        // applica automaticamente solo quando risulta essere DAVVERO l'ultima
+        // pagina, tramite lastPageHeight qui sotto (la logica già esistente
+        // ricalcola con budget ridotto solo in quel caso).
+        firstPageHeight = realPageHeight - measuredHeaderHeight - measuredFooterHeight - footerBottomGap;
         // Pagine intermedie: niente intestazione, tutto lo spazio della pagina
         middlePageHeight = realPageHeight - 34;  // -1 riga dal fondo
         // Ultima pagina: come le intermedie, ma con lo spazio riservato per il footer
