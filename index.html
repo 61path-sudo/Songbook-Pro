@@ -2051,13 +2051,16 @@ function getLineHeight(text) {
                 reducedEndIndex = 1;
             }
             
-            // ✅ Il budget ridotto (per il footer) va usato SOLO se con quello il
-            // testo continua a stare tutto in una pagina sola: altrimenti il
-            // footer non verrà comunque mostrato (non è più l'ultima pagina), e
-            // useremmo uno spazio ridotto senza motivo, lasciando testo vuoto in
-            // fondo e spingendo righe su una pagina 2 inutile. In quel caso
-            // torniamo al budget pieno, calcolato sopra.
-            firstPageEndIndex = (reducedEndIndex >= lines.length) ? reducedEndIndex : fullBudgetEndIndex;
+            // ✅ SICUREZZA PRIMA DI TUTTO: usiamo sempre il budget ridotto (che
+            // lascia spazio al footer), anche quando non basta a contenere
+            // tutto il testo. Il motivo: se qui scegliessimo il budget pieno
+            // pensando "tanto non è l'ultima pagina", ma il testo restante
+            // fosse pochissimo, questa resterebbe comunque l'ultima pagina
+            // reale (nessun'altra ne seguirebbe) — con il footer sovrapposto
+            // al testo. Usando sempre il budget ridotto, l'eventuale resto
+            // finisce naturalmente su una nuova pagina, che gestirà da sola
+            // in sicurezza il proprio footer.
+            firstPageEndIndex = reducedEndIndex;
         }
         
         pages.push({
@@ -2110,11 +2113,18 @@ while (currentLineIndex < lines.length) {
             }
         }
         
-        // ✅ Stessa correzione della prima pagina: se con lastPageHeight il testo
-        // non arriva più fino in fondo, questa non è davvero l'ultima pagina —
-        // usare comunque quel budget lascerebbe spazio vuoto senza il footer
-        // (che non verrebbe mostrato) e spingerebbe righe su una pagina in più.
-        pageEndIndex = (reducedPageEndIndex >= lines.length) ? reducedPageEndIndex : middleBudgetEndIndex;
+        // Forza almeno una riga anche se il budget ridotto non ce la fa
+        if (reducedPageEndIndex === currentLineIndex) {
+            reducedPageEndIndex = currentLineIndex + 1;
+        }
+        
+        // ✅ SICUREZZA PRIMA DI TUTTO (stessa logica della prima pagina): usiamo
+        // sempre lastPageHeight (che lascia spazio al footer), anche se non
+        // basta a contenere tutto il testo restante — altrimenti questa
+        // potrebbe restare comunque l'ultima pagina reale (nessun'altra la
+        // seguirebbe) ma disegnata con budget pieno, col footer sovrapposto
+        // al testo. L'eventuale resto finisce su una nuova pagina, sicura.
+        pageEndIndex = reducedPageEndIndex;
     }
     
     // Forza almeno una riga se non è riuscito ad aggiungerne
