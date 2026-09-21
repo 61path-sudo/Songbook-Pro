@@ -1886,20 +1886,26 @@ function calculateSongPagination(song, format, isPDF = false, isFullscreen = fal
             </div>
         `;
         document.body.appendChild(measureContainer);
-        const measuredPage = measureContainer.querySelector('.page');
-        const measuredPageHeight = measuredPage.clientHeight;                          // altezza REALE della pagina (non window.innerHeight)
         const measuredHeaderHeight = document.getElementById('pgMeasureHeader').offsetHeight;
         const measuredFooterHeight = document.getElementById('pgMeasureFooter').offsetHeight;
         // Spazio tra il bordo inferiore del footer e il fondo della pagina (il "bottom: 20px" del footer)
         const footerBottomGap = 20;
         document.body.removeChild(measureContainer);
         
+        // ✅ Per l'altezza TOTALE della pagina torniamo a window.innerHeight
+        // (non l'altezza misurata su un elemento nascosto): su iOS l'unità
+        // "dvh" può differire tra un elemento nascosto e quello realmente
+        // visibile a schermo, mentre intestazione/footer misurati restano
+        // affidabili (sono dimensioni fisse, non legate al viewport).
+        const realPageHeight = window.innerHeight;
+        const footerSafetyMargin = 30;  // margine extra prudente: la sovrapposizione col footer va evitata sempre
+        
         // Prima pagina: c'è l'intestazione (titolo/cantante/dettagli) e il footer
-        firstPageHeight = measuredPageHeight - measuredHeaderHeight - measuredFooterHeight - footerBottomGap;
+        firstPageHeight = realPageHeight - measuredHeaderHeight - measuredFooterHeight - footerBottomGap - footerSafetyMargin;
         // Pagine intermedie: niente intestazione, tutto lo spazio della pagina
-        middlePageHeight = measuredPageHeight - 34;  // -1 riga dal fondo
+        middlePageHeight = realPageHeight - 34;  // -1 riga dal fondo
         // Ultima pagina: come le intermedie, ma con lo spazio riservato per il footer
-        lastPageHeight = measuredPageHeight - measuredFooterHeight - footerBottomGap;
+        lastPageHeight = realPageHeight - measuredFooterHeight - footerBottomGap - footerSafetyMargin;
     } else if (format === 'A5') {
         firstPageHeight = 642;
         middlePageHeight = 740;
