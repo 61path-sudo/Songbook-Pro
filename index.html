@@ -1900,14 +1900,18 @@ function calculateSongPagination(song, format, isPDF = false, isFullscreen = fal
         const realPageHeight = window.innerHeight;
         const footerSafetyMargin = 30;  // margine extra prudente: la sovrapposizione col footer va evitata sempre
         
-        // Prima pagina: c'è l'intestazione (titolo/cantante/dettagli) e il footer
-        // ⚠️ Il margine di sicurezza per il footer resta SEMPRE incluso qui,
-        // anche quando la canzone continua su altre pagine: il tentativo di
-        // applicarlo solo quando risultava "davvero l'ultima pagina" ha
-        // peggiorato le cose (sovrapposizioni ancora presenti + spazio vuoto
-        // imprevisto). Si perde qualche riga in più del necessario nelle
-        // canzoni multi-pagina, ma è un compromesso sicuro e prevedibile.
-        firstPageHeight = realPageHeight - measuredHeaderHeight - measuredFooterHeight - footerBottomGap - footerSafetyMargin;
+        // Prima pagina: c'è l'intestazione (titolo/cantante/dettagli).
+        // ✅ Il footer NON viene più riservato qui a priori: sulla prima
+        // pagina il footer compare solo se la canzone ci sta TUTTA (diventa
+        // anche l'ultima pagina). Il budget pieno viene usato per capire
+        // quante righe entrano; se poi risulta che sono finite tutte le
+        // righe della canzone, il blocco più sotto ("PRIMA PAGINA", righe
+        // ~2034-2064) rifà il conteggio riservando lo spazio per il footer
+        // — esattamente come già succede per le pagine successive quando
+        // diventano l'ultima (middlePageHeight -> lastPageHeight). Così le
+        // canzoni multi-pagina non perdono più righe inutilmente in fondo
+        // alla prima pagina.
+        firstPageHeight = realPageHeight - measuredHeaderHeight - 34;
         // Pagine intermedie: niente intestazione, tutto lo spazio della pagina
         middlePageHeight = realPageHeight - 34;  // -1 riga dal fondo
         // Ultima pagina: come le intermedie, ma con lo spazio riservato per il footer
