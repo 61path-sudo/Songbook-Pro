@@ -1900,18 +1900,14 @@ function calculateSongPagination(song, format, isPDF = false, isFullscreen = fal
         const realPageHeight = window.innerHeight;
         const footerSafetyMargin = 30;  // margine extra prudente: la sovrapposizione col footer va evitata sempre
         
-        // Prima pagina: c'è l'intestazione (titolo/cantante/dettagli).
-        // ✅ Il footer NON viene più riservato qui a priori: sulla prima
-        // pagina il footer compare solo se la canzone ci sta TUTTA (diventa
-        // anche l'ultima pagina). Il budget pieno viene usato per capire
-        // quante righe entrano; se poi risulta che sono finite tutte le
-        // righe della canzone, il blocco più sotto ("PRIMA PAGINA", righe
-        // ~2034-2064) rifà il conteggio riservando lo spazio per il footer
-        // — esattamente come già succede per le pagine successive quando
-        // diventano l'ultima (middlePageHeight -> lastPageHeight). Così le
-        // canzoni multi-pagina non perdono più righe inutilmente in fondo
-        // alla prima pagina.
-        firstPageHeight = realPageHeight - measuredHeaderHeight - 34;
+        // Prima pagina: c'è l'intestazione (titolo/cantante/dettagli) e il footer
+        // ⚠️ Il margine di sicurezza per il footer resta SEMPRE incluso qui,
+        // anche quando la canzone continua su altre pagine: il tentativo di
+        // applicarlo solo quando risultava "davvero l'ultima pagina" ha
+        // peggiorato le cose (sovrapposizioni ancora presenti + spazio vuoto
+        // imprevisto). Si perde qualche riga in più del necessario nelle
+        // canzoni multi-pagina, ma è un compromesso sicuro e prevedibile.
+        firstPageHeight = realPageHeight - measuredHeaderHeight - measuredFooterHeight - footerBottomGap - footerSafetyMargin;
         // Pagine intermedie: niente intestazione, tutto lo spazio della pagina
         middlePageHeight = realPageHeight - 34;  // -1 riga dal fondo
         // Ultima pagina: come le intermedie, ma con lo spazio riservato per il footer
@@ -2055,16 +2051,31 @@ function getLineHeight(text) {
                 reducedEndIndex = 1;
             }
             
-            // ✅ SICUREZZA PRIMA DI TUTTO: usiamo sempre il budget ridotto (che
-            // lascia spazio al footer), anche quando non basta a contenere
-            // tutto il testo. Il motivo: se qui scegliessimo il budget pieno
-            // pensando "tanto non è l'ultima pagina", ma il testo restante
-            // fosse pochissimo, questa resterebbe comunque l'ultima pagina
-            // reale (nessun'altra ne seguirebbe) — con il footer sovrapposto
-            // al testo. Usando sempre il budget ridotto, l'eventuale resto
-            // finisce naturalmente su una nuova pagina, che gestirà da sola
-            // in sicurezza il proprio footer.
-            firstPageEndIndex = reducedEndIndex;
+            if (reducedEndIndex >= lines.length) {
+                // Ci sta tutto anche col budget ridotto: perfetto, footer al sicuro.
+                firstPageEndIndex = reducedEndIndex;
+            } else {
+                // ✅ COMPROMESSO: prima di arrenderci e spingere tutto su una
+                // nuova pagina (magari quasi vuota, per una riga sola), proviamo
+                // un margine "a metà" tra pieno e ridotto. Se con quello il
+                // testo completa comunque tutto, lo usiamo (piccolo margine
+                // residuo, rischio minimo di sovrapposizione lieve). Se anche
+                // così non basta, restiamo sul budget ridotto (sicurezza piena).
+                const halfMarginHeight = firstPageHeight - (footerReserve / 2);
+                let mediumHeightUsed = 0;
+                let mediumEndIndex = 0;
+                for (let i = 0; i < lines.length; i++) {
+                    const lineRealHeight = getLineHeight(lines[i]);
+                    if (mediumHeightUsed + lineRealHeight <= halfMarginHeight) {
+                        mediumHeightUsed += lineRealHeight;
+                        mediumEndIndex = i + 1;
+                    } else {
+                        break;
+                    }
+                }
+                firstPageEndIndex = (mediumEndIndex >= lines.length) ? mediumEndIndex : reducedEndIndex;
+            }
+            
         }
         
         pages.push({
@@ -2122,13 +2133,28 @@ while (currentLineIndex < lines.length) {
             reducedPageEndIndex = currentLineIndex + 1;
         }
         
-        // ✅ SICUREZZA PRIMA DI TUTTO (stessa logica della prima pagina): usiamo
-        // sempre lastPageHeight (che lascia spazio al footer), anche se non
-        // basta a contenere tutto il testo restante — altrimenti questa
-        // potrebbe restare comunque l'ultima pagina reale (nessun'altra la
-        // seguirebbe) ma disegnata con budget pieno, col footer sovrapposto
-        // al testo. L'eventuale resto finisce su una nuova pagina, sicura.
-        pageEndIndex = reducedPageEndIndex;
+        if (reducedPageEndIndex >= lines.length) {
+            // Ci sta tutto anche col budget ridotto: perfetto, footer al sicuro.
+            pageEndIndex = reducedPageEndIndex;
+        } else {
+            // ✅ COMPROMESSO (stessa logica della prima pagina): proviamo un
+            // margine "a metà" prima di arrenderci e creare una nuova pagina
+            // magari quasi vuota per una riga sola.
+            const footerReserveMid = middlePageHeight - lastPageHeight;
+            const halfMarginPageHeight = middlePageHeight - (footerReserveMid / 2);
+            let mediumHeightUsed = 0;
+            let mediumPageEndIndex = currentLineIndex;
+            for (let i = currentLineIndex; i < lines.length; i++) {
+                const lineRealHeight = getLineHeight(lines[i]);
+                if (mediumHeightUsed + lineRealHeight <= halfMarginPageHeight) {
+                    mediumHeightUsed += lineRealHeight;
+                    mediumPageEndIndex = i + 1;
+                } else {
+                    break;
+                }
+            }
+            pageEndIndex = (mediumPageEndIndex >= lines.length) ? mediumPageEndIndex : reducedPageEndIndex;
+        }
     }
     
     // Forza almeno una riga se non è riuscito ad aggiungerne
