@@ -1853,67 +1853,24 @@ function calculateSongPagination(song, format, isPDF = false, isFullscreen = fal
     
     if (isFullscreen) {
     if (window.innerWidth <= 768) {
-        // ✅ Sistema "elastico" (solo iPhone): invece di indovinare quanto
-        // spazio occupano intestazione/footer/pagina con numeri fissi, li
-        // MISURIAMO davvero creando temporaneamente la stessa identica
-        // struttura nel DOM (stesse classi, quindi stesse regole CSS —
-        // comprese eventuali differenze tra window.innerHeight e l'altezza
-        // reale della pagina a schermo intero su iOS).
-        const measureContainer = document.createElement('div');
-        measureContainer.className = 'fullscreen-active';
-        measureContainer.style.position = 'fixed';
-        measureContainer.style.top = '0';
-        measureContainer.style.left = '0';
-        measureContainer.style.visibility = 'hidden';
-        measureContainer.style.pointerEvents = 'none';
-        measureContainer.innerHTML = `
-            <div class="page active">
-                <div id="pgMeasureHeader" style="text-align: center; margin-bottom: 25px; min-height: 95px; display: flex; flex-direction: column; justify-content: center;">
-                    <div style="font-size: 22pt; font-weight: bold;">"MISURA TITOLO"</div>
-                    <div style="font-size: 12pt;">(ARTISTA)</div>
-                    <div style="font-size: 14pt; display: flex; align-items: center; justify-content: center; gap: 8px;">
-                        <span>TEST | TEST | TEST</span>
-                        <span style="font-size: 16pt;">☆</span>
-                        <span style="font-size: 16pt;">🎵</span>
-                    </div>
-                </div>
-                <div id="pgMeasureFooter" style="position: absolute; bottom: 20px; left: 0; right: 0; display: grid; grid-template-columns: 1.5fr 1fr 1.5fr 1fr; gap: 10px; border-top: 1px solid black; padding-top: 6px;">
-                    <div style="font-size: 12pt;">Elenco cantanti</div>
-                    <div style="font-size: 12pt;">Cantante</div>
-                    <div style="font-size: 12pt;">Preferiti</div>
-                    <div style="font-size: 12pt;">🎵</div>
-                </div>
-            </div>
-        `;
-        document.body.appendChild(measureContainer);
-        const measuredHeaderHeight = document.getElementById('pgMeasureHeader').offsetHeight;
-        const measuredFooterHeight = document.getElementById('pgMeasureFooter').offsetHeight;
-        // Spazio tra il bordo inferiore del footer e il fondo della pagina (il "bottom: 20px" del footer)
-        const footerBottomGap = 20;
-        document.body.removeChild(measureContainer);
+        // ✅ Sistema "elastico" (solo iPhone): numeri fissi per intestazione e
+        // footer (misurarli dal vivo con un elemento nascosto si è rivelato
+        // imprevedibile in alcuni contesti), ma il totale disponibile si
+        // calcola dall'altezza reale dello schermo — e sopra c'è tutta la
+        // logica di sicurezza (margine "a metà", ripiego sicuro) che gestisce
+        // i casi limite senza sovrapposizioni.
+        const headerHeight = 95;          // altezza fissa del blocco titolo (min-height impostato)
+        const headerMarginBottom = 25;    // margin-bottom del blocco titolo, prima del testo
+        const measuredFooterHeight = 45;  // stima dell'altezza del footer
+        const footerBottomGap = 20;       // "bottom: 20px" del footer
         
-        // ✅ Per l'altezza TOTALE della pagina torniamo a window.innerHeight
-        // (non l'altezza misurata su un elemento nascosto): su iOS l'unità
-        // "dvh" può differire tra un elemento nascosto e quello realmente
-        // visibile a schermo, mentre intestazione/footer misurati restano
-        // affidabili (sono dimensioni fisse, non legate al viewport).
         const realPageHeight = window.innerHeight;
         const footerSafetyMargin = 30;  // margine extra prudente: la sovrapposizione col footer va evitata sempre
         
-        // Prima pagina: c'è l'intestazione (titolo/cantante/dettagli) e il footer
-        // ⚠️ Il margine di sicurezza per il footer resta SEMPRE incluso qui,
-        // anche quando la canzone continua su altre pagine: il tentativo di
-        // applicarlo solo quando risultava "davvero l'ultima pagina" ha
-        // peggiorato le cose (sovrapposizioni ancora presenti + spazio vuoto
-        // imprevisto). Si perde qualche riga in più del necessario nelle
-        // canzoni multi-pagina, ma è un compromesso sicuro e prevedibile.
-        // ✅ Versione "generosa" (senza il margine extra per il footer): ora che
-        // la logica più sotto gestisce correttamente da sola il caso "questa
-        // potrebbe essere anche l'ultima pagina" (con il tentativo "a metà" e
-        // il ripiego sicuro), possiamo lasciare che le canzoni con più pagine
-        // riempiano la prima pagina per intero, senza sottrarre un margine che
-        // in quel caso non serve.
-        firstPageHeight = realPageHeight - measuredHeaderHeight - measuredFooterHeight - footerBottomGap;
+        // Prima pagina: versione "generosa" (senza margine extra): la logica
+        // più sotto gestisce da sola, in sicurezza, il caso "potrebbe essere
+        // anche l'ultima pagina".
+        firstPageHeight = realPageHeight - headerHeight - headerMarginBottom - measuredFooterHeight - footerBottomGap;
         // Pagine intermedie: niente intestazione, tutto lo spazio della pagina
         middlePageHeight = realPageHeight - 34;  // -1 riga dal fondo
         // Ultima pagina: come le intermedie, ma con lo spazio riservato per il footer
