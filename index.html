@@ -1907,7 +1907,13 @@ function calculateSongPagination(song, format, isPDF = false, isFullscreen = fal
         // peggiorato le cose (sovrapposizioni ancora presenti + spazio vuoto
         // imprevisto). Si perde qualche riga in più del necessario nelle
         // canzoni multi-pagina, ma è un compromesso sicuro e prevedibile.
-        firstPageHeight = realPageHeight - measuredHeaderHeight - measuredFooterHeight - footerBottomGap - footerSafetyMargin;
+        // ✅ Versione "generosa" (senza il margine extra per il footer): ora che
+        // la logica più sotto gestisce correttamente da sola il caso "questa
+        // potrebbe essere anche l'ultima pagina" (con il tentativo "a metà" e
+        // il ripiego sicuro), possiamo lasciare che le canzoni con più pagine
+        // riempiano la prima pagina per intero, senza sottrarre un margine che
+        // in quel caso non serve.
+        firstPageHeight = realPageHeight - measuredHeaderHeight - measuredFooterHeight - footerBottomGap;
         // Pagine intermedie: niente intestazione, tutto lo spazio della pagina
         middlePageHeight = realPageHeight - 34;  // -1 riga dal fondo
         // Ultima pagina: come le intermedie, ma con lo spazio riservato per il footer
