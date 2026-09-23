@@ -368,18 +368,9 @@ body.dark-mode .fullscreen-active .artist-item {
     display: flex;
     align-items: center;
     overflow: hidden;
+    text-overflow: clip;
     flex-shrink: 0;
     flex-grow: 0;
-}
-
-/* ✅ text-overflow non ha effetto su un contenitore flex (.artist-item lo è):
-   va applicato al testo interno perché i puntini di sospensione funzionino. */
-.artist-item .artist-link {
-    display: block;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    max-width: 100%;
 }
 
 /* Previeni selezione testo durante swipe in fullscreen */
@@ -1217,23 +1208,12 @@ body.dark-mode #empty-trash-btn:disabled {
     /* Format selector più compatto */
     .format-selector {
         padding: 10px;
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: center;
-        align-items: center;
-        gap: 8px;
-    }
-    
-    .format-selector strong {
-        margin-right: 0 !important;
-        width: 100%;
-        text-align: center;
     }
     
     .format-btn {
         padding: 8px 15px;
         font-size: 12px;
-        margin: 0;
+        margin: 0 5px;
     }
     
     /* Fullscreen button più piccolo */
@@ -1245,39 +1225,19 @@ body.dark-mode #empty-trash-btn:disabled {
     
     /* Pagine Performance */
     .page {
-        padding: 4px !important;
-        width: calc(100vw - 8px) !important;
-        max-width: calc(100vw - 8px) !important;
-    }
-    
-    /* ✅ Fullscreen ha una regola SEPARATA e più specifica (.fullscreen-active
-       .page) che altrimenti vince su quella qui sopra: qui il padding
-       orizzontale era 30px per lato (60px totali), pensato per iPad. */
-    .fullscreen-active .page {
-        padding: 8px 8px !important;
+        padding: 15px !important;
     }
     
     /* Indice cantanti: 2 colonne invece di 3 */
     .artist-columns {
         grid-template-columns: repeat(2, 1fr) !important;
-        column-gap: 8px !important;
+        column-gap: 15px !important;
     }
     
     .artist-item {
         font-size: 12pt !important;
         height: 32px !important;
         line-height: 32px !important;
-    }
-    
-    /* ✅ Righe più compatte anche in Fullscreen: senza questa regola, la
-       regola specifica ".fullscreen-active .artist-item" (più specifica)
-       sovrascriveva sempre l'altezza a 37px anche su schermi stretti. */
-    .fullscreen-active .artist-item {
-        font-size: 12pt !important;
-        height: 24px !important;
-        line-height: 24px !important;
-        min-height: 24px !important;
-        max-height: 24px !important;
     }
     
     /* Testo canzoni più piccolo */
@@ -1560,6 +1520,12 @@ body.dark-mode .piano-key.black {
 
         <!-- Performance -->
         <div id="performance-tab" class="tab-content">
+            <div class="format-selector">
+    <strong style="margin-right: 15px;">Formato pagina:</strong>
+    <button class="format-btn active" onclick="setPageFormat('A4')">A4 (iPad Pro)</button>
+    <button class="format-btn" onclick="setPageFormat('A5')">A5 (iPad 2)</button>
+</div>
+
 <!-- Controlli Performance -->
 <div style="text-align: center; padding: 20px 0; background: #f8f9fa; display: flex; justify-content: center; align-items: center; gap: 20px; flex-wrap: wrap;">
     <button class="fullscreen-mode-btn" onclick="enterFullscreen()">Fullscreen Mode</button>
@@ -1667,10 +1633,10 @@ body.dark-mode .piano-key.black {
         <p>Scegli il formato di esportazione:</p>
         <div style="margin: 20px 0;">
             <label style="display: inline-block; margin: 10px; padding: 20px; border: 2px solid #ddd; border-radius: 8px; cursor: pointer;">
-                <input type="radio" name="format" value="A5" checked> A5 (più compatto)
+                <input type="radio" name="format" value="A5" checked> A5 (iPad 2)
             </label>
             <label style="display: inline-block; margin: 10px; padding: 20px; border: 2px solid #ddd; border-radius: 8px; cursor: pointer;">
-                <input type="radio" name="format" value="A4"> A4 (più grande)
+                <input type="radio" name="format" value="A4"> A4 (iPad Pro)
             </label>
         </div>
         <div style="text-align: center;">
@@ -1797,7 +1763,7 @@ body.dark-mode .piano-key.black {
         let tapTimes = [];
         let nextTickTime = 0;
         let metronomeBpm = 120;
-        let pageFormat = 'A5';
+        let pageFormat = 'A4';
         let currentPage = 0;
         let totalPages = 0;
         let allFullscreenPages = [];
@@ -1806,24 +1772,11 @@ body.dark-mode .piano-key.black {
         // Funzioni gestione pagine
         function getPageDimensions() {
             const mmToPx = 3.7795;
-            let width, height;
             if (pageFormat === 'A5') {
-                width = 148 * mmToPx; height = 210 * mmToPx;
+                return { width: 148 * mmToPx, height: 210 * mmToPx };
             } else {
-                width = 210 * mmToPx; height = 297 * mmToPx;
+                return { width: 210 * mmToPx, height: 297 * mmToPx };
             }
-            // ✅ Su schermi stretti (iPhone), la pagina viene resa responsive via
-            // CSS per stare nello schermo (vedi media query .page): la larghezza
-            // REALMENTE disponibile è quella dello schermo, non quella "fisica"
-            // A4/A5 in mm. Se non aggiornassimo anche qui, tutti i calcoli a
-            // valle (dimensione font, quanto testo entra per riga/pagina)
-            // continuerebbero a ragionare su una larghezza più larga di quella
-            // vera, facendo uscire il testo dalla colonna.
-            const mobilePageMargin = 16; // margine orizzontale reale (padding pagina, sia Performance che Fullscreen)
-            if (window.innerWidth <= 768 && (window.innerWidth - mobilePageMargin) < width) {
-                width = window.innerWidth - mobilePageMargin;
-            }
-            return { width, height };
         }
 
 // Funzione UNIFICATA per calcolare pagine di una canzone
@@ -1852,18 +1805,9 @@ function calculateSongPagination(song, format, isPDF = false, isFullscreen = fal
     let firstPageHeight, middlePageHeight, lastPageHeight;
     
     if (isFullscreen) {
-    if (window.innerWidth <= 768) {
-        // ✅ Stesso identico sistema di A4 (iPad): numeri fissi, tarati con le
-        // prove dirette, invece di formule/misurazioni che si sono rivelate
-        // imprevedibili. Si riparte dagli ultimi valori "buoni" trovati prima
-        // di provare il sistema elastico — ora, con il font corretto (Times
-        // New Roman) e la logica anti-sovrapposizione, dovrebbero comportarsi
-        // meglio di quando li avevamo lasciati.
-        firstPageHeight = 651;  // +34 (1 riga) rispetto al valore buono 617
-        middlePageHeight = 740;
-        lastPageHeight = 589;  // +34 (1 riga) rispetto al valore buono 555
-    } else if (format === 'A5') {
-        firstPageHeight = 642;
+    // ✅ USA GLI STESSI VALORI DI PERFORMANCE (non l'altezza reale dello schermo)
+    if (format === 'A5') {
+        firstPageHeight = 680;
         middlePageHeight = 740;
         lastPageHeight = 700;
     } else { // A4
@@ -1899,16 +1843,7 @@ function calculateSongPagination(song, format, isPDF = false, isFullscreen = fal
     testDiv.className = 'song-text';  // USA LA STESSA CLASSE
     testDiv.style.position = 'absolute';
     testDiv.style.visibility = 'hidden';
-    // ✅ Su Fullscreen e schermi stretti (iPhone), la larghezza REALE del testo
-    // è quella dello schermo (meno il padding di .fullscreen-active .page:
-    // 8px per lato), non quella "teorica" A5/A4 in mm — altrimenti una riga
-    // lunga che nella realtà va a capo (schermo stretto) viene misurata come
-    // se stesse su una riga sola (larghezza calcolata più larga), sottostimando
-    // quanto spazio occupa davvero e facendo uscire il testo dalla pagina.
-    const measureWidth = (isFullscreen && window.innerWidth <= 768)
-        ? (window.innerWidth - 16)
-        : (dims.width - 40);
-    testDiv.style.width = measureWidth + 'px';  // Stessa larghezza della pagina reale
+    testDiv.style.width = (dims.width - 40) + 'px';  // Stessa larghezza della pagina reale
 
     // ✅ FIX DEFINITIVO: la classe .song-text viene sovrascritta da media query
     // responsive (es. "@media max-width:768px { .song-text{font-size:12pt !important} }"),
@@ -1927,14 +1862,7 @@ function calculateSongPagination(song, format, isPDF = false, isFullscreen = fal
         testDiv.style.setProperty('text-transform', 'uppercase', 'important');
         testDiv.style.setProperty('white-space', 'pre-line', 'important');
     } else {
-        // ✅ FIX: .song-text vive dentro .page, che ha "font-family: 'Times New
-        // Roman', serif" — ma il testDiv viene appeso a document.body, quindi
-        // SENZA questa riga erediterebbe il sans-serif di <body> invece del
-        // Times New Roman realmente usato per disegnare il testo. Misurare con
-        // un font diverso da quello vero fa sì che le righe lunghe vadano a
-        // capo in modo diverso nella misurazione rispetto al disegno reale —
-        // probabile causa delle differenze di spazio residuo tra canzoni.
-        testDiv.style.setProperty('font-family', "'Times New Roman', Times, serif", 'important');
+        testDiv.style.setProperty('font-family', '-apple-system, BlinkMacSystemFont, sans-serif', 'important');
     }
     document.body.appendChild(testDiv);
     
@@ -1984,48 +1912,21 @@ function getLineHeight(text) {
         if (firstPageEndIndex >= lines.length) {
             const footerReserve = middlePageHeight - lastPageHeight;
             const firstLastPageHeight = firstPageHeight - footerReserve;
-            const fullBudgetEndIndex = firstPageEndIndex; // teniamo da parte il risultato col budget pieno
-            let reducedHeightUsed = 0;
-            let reducedEndIndex = 0;
+            heightUsed = 0;
+            firstPageEndIndex = 0;
             for (let i = 0; i < lines.length; i++) {
                 const lineRealHeight = getLineHeight(lines[i]);
-                if (reducedHeightUsed + lineRealHeight <= firstLastPageHeight) {
-                    reducedHeightUsed += lineRealHeight;
-                    reducedEndIndex = i + 1;
+                if (heightUsed + lineRealHeight <= firstLastPageHeight) {
+                    heightUsed += lineRealHeight;
+                    firstPageEndIndex = i + 1;
                 } else {
                     break;
                 }
             }
             // Forza almeno una riga anche se il budget ridotto non ce la fa
-            if (reducedEndIndex === 0) {
-                reducedEndIndex = 1;
+            if (firstPageEndIndex === 0) {
+                firstPageEndIndex = 1;
             }
-            
-            if (reducedEndIndex >= lines.length) {
-                // Ci sta tutto anche col budget ridotto: perfetto, footer al sicuro.
-                firstPageEndIndex = reducedEndIndex;
-            } else {
-                // ✅ COMPROMESSO: prima di arrenderci e spingere tutto su una
-                // nuova pagina (magari quasi vuota, per una riga sola), proviamo
-                // un margine "a metà" tra pieno e ridotto. Se con quello il
-                // testo completa comunque tutto, lo usiamo (piccolo margine
-                // residuo, rischio minimo di sovrapposizione lieve). Se anche
-                // così non basta, restiamo sul budget ridotto (sicurezza piena).
-                const halfMarginHeight = firstPageHeight - (footerReserve / 2);
-                let mediumHeightUsed = 0;
-                let mediumEndIndex = 0;
-                for (let i = 0; i < lines.length; i++) {
-                    const lineRealHeight = getLineHeight(lines[i]);
-                    if (mediumHeightUsed + lineRealHeight <= halfMarginHeight) {
-                        mediumHeightUsed += lineRealHeight;
-                        mediumEndIndex = i + 1;
-                    } else {
-                        break;
-                    }
-                }
-                firstPageEndIndex = (mediumEndIndex >= lines.length) ? mediumEndIndex : reducedEndIndex;
-            }
-            
         }
         
         pages.push({
@@ -2064,46 +1965,17 @@ while (currentLineIndex < lines.length) {
     // Se siamo arrivati alla fine, prova a riempire di più con lastPageHeight
     if (pageEndIndex >= lines.length) {
         // È l'ultima pagina, riprova con lastPageHeight per recuperare più spazio
-        const middleBudgetEndIndex = pageEndIndex; // teniamo da parte il risultato con middlePageHeight
-        let reducedHeightUsed = 0;
-        let reducedPageEndIndex = currentLineIndex;
+        heightUsed = 0;
+        pageEndIndex = currentLineIndex;
         
         for (let i = currentLineIndex; i < lines.length; i++) {
             const lineRealHeight = getLineHeight(lines[i]);
-            if (reducedHeightUsed + lineRealHeight <= lastPageHeight) {
-                reducedHeightUsed += lineRealHeight;
-                reducedPageEndIndex = i + 1;
+            if (heightUsed + lineRealHeight <= lastPageHeight) {
+                heightUsed += lineRealHeight;
+                pageEndIndex = i + 1;
             } else {
                 break;
             }
-        }
-        
-        // Forza almeno una riga anche se il budget ridotto non ce la fa
-        if (reducedPageEndIndex === currentLineIndex) {
-            reducedPageEndIndex = currentLineIndex + 1;
-        }
-        
-        if (reducedPageEndIndex >= lines.length) {
-            // Ci sta tutto anche col budget ridotto: perfetto, footer al sicuro.
-            pageEndIndex = reducedPageEndIndex;
-        } else {
-            // ✅ COMPROMESSO (stessa logica della prima pagina): proviamo un
-            // margine "a metà" prima di arrenderci e creare una nuova pagina
-            // magari quasi vuota per una riga sola.
-            const footerReserveMid = middlePageHeight - lastPageHeight;
-            const halfMarginPageHeight = middlePageHeight - (footerReserveMid / 2);
-            let mediumHeightUsed = 0;
-            let mediumPageEndIndex = currentLineIndex;
-            for (let i = currentLineIndex; i < lines.length; i++) {
-                const lineRealHeight = getLineHeight(lines[i]);
-                if (mediumHeightUsed + lineRealHeight <= halfMarginPageHeight) {
-                    mediumHeightUsed += lineRealHeight;
-                    mediumPageEndIndex = i + 1;
-                } else {
-                    break;
-                }
-            }
-            pageEndIndex = (mediumPageEndIndex >= lines.length) ? mediumPageEndIndex : reducedPageEndIndex;
         }
     }
     
@@ -3130,22 +3002,6 @@ function clearSearch() {
 }
 
         function updatePerformance() {
-    const previewContent = document.getElementById('preview-content');
-    
-    // ✅ Su iPhone/schermi stretti, l'anteprima "ELENCO CANTANTI" non serve
-    // (si usa Fullscreen per consultare): saltiamo tutto il calcolo e
-    // mostriamo solo un rimando al pulsante Fullscreen qui sopra.
-    if (window.innerWidth <= 768) {
-        previewContent.innerHTML = '';
-        totalPages = 1;
-        currentPage = 0;
-        const leftArrow = document.getElementById('arrow-left');
-        const rightArrow = document.getElementById('arrow-right');
-        if (leftArrow) leftArrow.style.display = 'none';
-        if (rightArrow) rightArrow.style.display = 'none';
-        return;
-    }
-    
     const artistsMap = new Map();
     songs.forEach(s => {
         if (!artistsMap.has(s.artist)) {
@@ -3159,6 +3015,8 @@ function clearSearch() {
     artistsArray.sort((a, b) => a.artistSort.localeCompare(b.artistSort));
     const artists = artistsArray.map(item => item.artist);
     
+    const previewContent = document.getElementById('preview-content');
+    
     if (artists.length === 0) {
         const content = '<div style="text-align: center; padding: 50px;"><p>Nessuna canzone aggiunta ancora</p></div>';
         previewContent.innerHTML = createPage(content, 0);
@@ -3170,7 +3028,6 @@ function clearSearch() {
 
     // Calcola quanti artisti per pagina indice
     const dims = getPageDimensions();
-    const numCols = window.innerWidth <= 768 ? 2 : 3;  // ✅ deve combaciare con il CSS (.artist-columns)
     const firstPageHeight = dims.height - 100; // Prima pagina (con header "ELENCO CANTANTI")
     const otherPagesHeight = dims.height - 10; // Altre pagine (senza header)
     
@@ -3179,7 +3036,7 @@ function clearSearch() {
     testDiv.className = 'artist-item';
     testDiv.style.position = 'absolute';
     testDiv.style.visibility = 'hidden';
-    testDiv.style.width = ((dims.width - 40) / numCols) + 'px';
+    testDiv.style.width = ((dims.width - 40) / 3) + 'px';
     document.body.appendChild(testDiv);
     
     document.body.removeChild(testDiv);
@@ -3195,8 +3052,8 @@ if (pageFormat === 'A5') {
     itemsPerColOtherPages = 29;
 }
 
-const itemsFirstPage = itemsPerColFirstPage * numCols;
-const itemsOtherPages = itemsPerColOtherPages * numCols;
+const itemsFirstPage = itemsPerColFirstPage * 3;
+const itemsOtherPages = itemsPerColOtherPages * 3;
     
     // Il numero di pagine verrà calcolato automaticamente dal ciclo
 console.log(`Artisti: ${artists.length}, Prima pagina: ${itemsFirstPage}, Altre: ${itemsOtherPages}`);
@@ -3217,23 +3074,23 @@ document.body.appendChild(testDivFont);
 
 // ✅ CALCOLA columnWidth FUORI DAL LOOP
 const columnWidth = pageFormat === 'A5' 
-    ? ((dims.width - 40) / numCols) - 31  // A5: più aggressivo
-    : ((dims.width - 40) / numCols) - 25; // A4: meno aggressivo
+    ? ((dims.width - 40) / 3) - 31  // A5: più aggressivo
+    : ((dims.width - 40) / 3) - 25; // A4: meno aggressivo
 
 while (processedArtists < artists.length) {
     const isFirstPage = (indexPages.length === 0);
     const itemsPerCol = isFirstPage ? itemsPerColFirstPage : itemsPerColOtherPages;
     
-    const columns = Array.from({ length: numCols }, () => []);
+    const columns = [[], [], []];
     let currentCol = 0;
     let rowsInCurrentCol = 0;
     
     const startIndex = processedArtists;
     
     // FASE 1: DISTRIBUZIONE (calcola quali artisti vanno dove)
-    const columnData = Array.from({ length: numCols }, () => []); // Salva anche info sui separatori
+    const columnData = [[], [], []]; // Salva anche info sui separatori
     
-    while (processedArtists < artists.length && currentCol < numCols) {
+    while (processedArtists < artists.length && currentCol < 3) {
     const artist = artists[processedArtists];
     const artistSort = songs.find(s => s.artist === artist)?.artistSort || artist;
     const firstLetter = artistSort.charAt(0).toUpperCase();
@@ -3256,7 +3113,7 @@ while (processedArtists < artists.length) {
         rowsInCurrentCol += 1;
         
         // Vai alla colonna/pagina successiva
-        if (currentCol < numCols - 1) {
+        if (currentCol < 2) {
             currentCol++;
             rowsInCurrentCol = 0;
             // ✅ NON fare continue - prosegui per aggiungere l'artista nella nuova colonna
@@ -3286,12 +3143,12 @@ while (processedArtists < artists.length) {
     
     // Se supera il limite normale, vai alla colonna successiva
     if (rowsInCurrentCol + rowsNeeded > itemsPerCol) {
-        if (currentCol < numCols - 1) {
+        if (currentCol < 2) {
             currentCol++;
             rowsInCurrentCol = 0;
             // ✅ NON fare break - riprova ad aggiungere l'artista nella nuova colonna
         } else {
-            // Tutte le colonne piene
+            // Tutte e 3 le colonne piene
             break;
         }
     }
@@ -6806,21 +6663,10 @@ function generateAllPagesForBook() {
     artistsArray.sort((a, b) => a.artistSort.localeCompare(b.artistSort));
     const artists = artistsArray.map(item => item.artist);
     
-    // ✅ VALORI per righe per colonna
+    // ✅ VALORI FISSI per righe per colonna (come nel vecchio codice)
 let itemsPerColFirstPage, itemsPerColOtherPages;
 
-if (window.innerWidth <= 768) {
-    // ✅ Su iPhone, calcolate dall'altezza REALE dello schermo (non più un
-    // numero fisso indovinato): altrimenti una colonna può risultare più
-    // alta dello schermo stesso, richiedendo scroll dentro alla "pagina"
-    // invece di passare a quella successiva con lo swipe.
-    const rowH = 24; // deve combaciare con l'altezza reale di .artist-item su mobile
-    const pagePaddingTopBottom = 15 + 15 + 8; // .fullscreen-active .page: padding 15px 8px, + margine extra (ridotto rispetto al tentativo precedente, era troppo)
-    const headerZoneHeight = 35 + 29 + 20; // titolo + riga icone + margin-bottom del blocco header
-    const safetyRows = 7; // margine di sicurezza (a 6 mancava ancora Bertoli & Mannoia)
-    itemsPerColFirstPage = Math.max(5, Math.floor((window.innerHeight - pagePaddingTopBottom - headerZoneHeight) / rowH) - safetyRows);
-    itemsPerColOtherPages = Math.max(5, Math.floor((window.innerHeight - pagePaddingTopBottom) / rowH) - safetyRows);
-} else if (pageFormat === 'A5') {
+if (pageFormat === 'A5') {
     itemsPerColFirstPage = 19;
     itemsPerColOtherPages = 20;
 } else { // A4
@@ -6839,123 +6685,144 @@ testDivFont.style.width = 'auto';
 testDivFont.style.height = 'auto';
 document.body.appendChild(testDivFont);
 
-const numColsFS = window.innerWidth <= 768 ? 2 : 3;
-
-// ✅ Su iPhone la formula è diversa: il .page reale ha padding 4px e gap 8px
-// tra colonne (molto meno di iPad), quindi va calcolata sulla misura vera
-// invece di riusare "-40/-31", tarati per iPad a 3 colonne — altrimenti si
-// toglie via più spazio di quanto ne sia davvero occupato, e il font si
-// restringe (o il testo viene tagliato) più del necessario.
-const columnWidth = window.innerWidth <= 768
-    ? ((dims.width - 16 - 8) / numColsFS) - 5   // mobile: 8px*2 padding (Fullscreen) + 8px gap, piccolo margine
-    : (pageFormat === 'A5' 
-        ? ((dims.width - 40) / numColsFS) - 31
-        : ((dims.width - 40) / numColsFS) - 25);
+const columnWidth = pageFormat === 'A5' 
+    ? ((dims.width - 40) / 3) - 31
+    : ((dims.width - 40) / 3) - 25;
 
 let processedArtists = 0;
 let globalLastLetter = '';
 
-// ✅ Costruisce la lista piatta di elementi (lettera separatrice + artista),
-// una volta sola. Ogni elemento = ESATTAMENTE una riga visiva. Le colonne
-// vengono poi riempite fino allo stesso numero di righe: questo garantisce
-// che le righe delle due colonne restino sempre allineate, invece di
-// "pesare" una lettera come 2 unità e un artista come 1 (causa dello
-// sfasamento: colonne con più cambi di lettera finivano con più righe reali
-// delle altre, a parità di "budget").
-const allIndexItems = [];
-artists.forEach(artist => {
-    const artistSort = songs.find(s => s.artist === artist)?.artistSort || artist;
-    const letter = artistSort.charAt(0).toUpperCase();
-    if (letter !== globalLastLetter) {
-        allIndexItems.push({ type: 'letter', letter });
-        globalLastLetter = letter;
-    }
-    allIndexItems.push({ type: 'artist', artist, artistSort });
-});
-
-let itemIndex = 0;
-
-while (itemIndex < allIndexItems.length) {
+while (processedArtists < artists.length) {
     const isFirstPage = (allFullscreenPages.length === 0);
     const itemsPerCol = isFirstPage ? itemsPerColFirstPage : itemsPerColOtherPages;
     
-    const columnData = Array.from({ length: numColsFS }, () => []);
+    const columnData = [[], [], []];
+    let currentCol = 0;
+    let rowsInCurrentCol = 0;
     
-    // FASE 1: DISTRIBUZIONE — ogni colonna riceve fino a itemsPerCol righe
-    for (let col = 0; col < numColsFS && itemIndex < allIndexItems.length; col++) {
-        let rowsInCol = 0;
-        while (rowsInCol < itemsPerCol && itemIndex < allIndexItems.length) {
-            const item = allIndexItems[itemIndex];
-            // Evita una lettera "orfana" nell'ultima riga disponibile della
-            // colonna (senza nemmeno un artista sotto): la lasciamo per la
-            // colonna/pagina successiva.
-            if (item.type === 'letter' && rowsInCol === itemsPerCol - 1) {
+    // FASE 1: DISTRIBUZIONE
+    while (processedArtists < artists.length && currentCol < 3) {
+        const artist = artists[processedArtists];
+        const artistSort = songs.find(s => s.artist === artist)?.artistSort || artist;
+        const firstLetter = artistSort.charAt(0).toUpperCase();
+        
+        const needsSeparator = (firstLetter !== globalLastLetter);
+        const rowsNeeded = needsSeparator ? 2 : 1;
+        
+        // Se serve separatore ma c'è spazio solo per quello
+        if (needsSeparator && rowsInCurrentCol + 1 === itemsPerCol && rowsInCurrentCol + 2 > itemsPerCol) {
+            columnData[currentCol].push({
+                artist: null,
+                artistSort: null,
+                needsSeparator: true,
+                separatorLetter: firstLetter,
+                isOnlySeparator: true
+            });
+            
+            globalLastLetter = firstLetter;
+            rowsInCurrentCol += 1;
+            
+            if (currentCol < 2) {
+                currentCol++;
+                rowsInCurrentCol = 0;
+            } else {
                 break;
             }
-            columnData[col].push(item);
-            rowsInCol++;
-            itemIndex++;
+            
+            const rowsNeededInNewCol = 1;
+            
+            if (rowsInCurrentCol + rowsNeededInNewCol <= itemsPerCol) {
+                columnData[currentCol].push({
+                    artist: artist,
+                    artistSort: artistSort,
+                    needsSeparator: false
+                });
+                
+                rowsInCurrentCol += 1;
+                processedArtists++;
+                continue;
+            }
+        }
+        
+        if (rowsInCurrentCol + rowsNeeded > itemsPerCol) {
+            if (currentCol < 2) {
+                currentCol++;
+                rowsInCurrentCol = 0;
+            } else {
+                break;
+            }
+        }
+        
+        if (rowsInCurrentCol + rowsNeeded <= itemsPerCol) {
+            columnData[currentCol].push({
+                artist: artist,
+                artistSort: artistSort,
+                needsSeparator: (firstLetter !== globalLastLetter)
+            });
+            
+            rowsInCurrentCol += (firstLetter !== globalLastLetter) ? 2 : 1;
+            globalLastLetter = firstLetter;
+            processedArtists++;
+        } else {
+            break;
         }
     }
     
     // FASE 2: RENDERING HTML con font-size CORRETTO
-    const isMobileFS = window.innerWidth <= 768;
-    const fsHeaderHtml = isMobileFS
-        ? `<div style="text-align: center; margin-bottom: 20px;">
-            <div style="font-size: 22pt; font-weight: bold; white-space: nowrap;">ELENCO CANTANTI</div>
-            <div style="display: flex; justify-content: center; gap: 12px; margin-top: 0px;">
-                <div data-action="preferiti" style="font-size: 14pt; cursor: pointer; padding: 5px 10px;">⭐</div>
-                <div data-action="search" style="font-size: 14pt; cursor: pointer; padding: 5px 10px; color: #555;">🔍</div>
-                <div data-action="audio" style="font-size: 14pt; cursor: pointer; padding: 5px 10px; color: #555;">🎵</div>
-            </div>
-        </div>`
-        : `<div style="display: flex; align-items: center; justify-content: center; margin-bottom: 30px; position: relative;">
+    const indexContent = `
+    ${isFirstPage ? `<div style="display: flex; align-items: center; justify-content: center; margin-bottom: 30px; position: relative;">
         <div style="text-align: center; font-size: 32pt; font-weight: bold;">ELENCO CANTANTI</div>
         <div style="position: absolute; right: 0; display: flex; gap: 15px; align-items: center;">
             <div data-action="preferiti" style="font-size: 28pt; cursor: pointer; padding: 5px 10px;">⭐</div>
             <div data-action="search" style="font-size: 28pt; cursor: pointer; padding: 5px 10px; color: #555;">🔍</div>
             <div data-action="audio" style="font-size: 28pt; cursor: pointer; padding: 5px 10px; color: #555;">🎵</div>
         </div>
-    </div>`;
-    const indexContent = `
-    ${isFirstPage ? fsHeaderHtml : ''}
+    </div>` : ''}
     <div class="artist-columns">
-        ${columnData.map((colData) => {
+        ${columnData.map((colData, colIndex) => {
             if (colData.length === 0) {
                 return '';
             }
             
-            // ✅ Righe più basse su iPhone (24px, come .artist-item compresso),
-            // dimensione normale altrove — bande lettera comprese, così
-            // restano coerenti con l'altezza reale delle righe.
-            const rowH = isMobileFS ? 24 : 38;
-            const bandFontSize = isMobileFS ? 14 : 20;
-            
-            return `
+            // Conta TUTTI gli elementi renderizzati (separatori + artisti)
+let totalVisibleElements = 0;
+colData.forEach(item => {
+    if (item.isOnlySeparator) {
+        totalVisibleElements += 1; // Solo separatore
+    } else if (item.needsSeparator) {
+        totalVisibleElements += 2; // Separatore + artista
+    } else {
+        totalVisibleElements += 1; // Solo artista
+    }
+});
+
+// Calcola altezza: ogni elemento 38px + gap 8px tra elementi - margine di sicurezza
+return `
 <div class="artist-column" style="position: relative;">
         ${colData.map(item => {
-            if (item.type === 'letter') {
-                return `<div style="background: #cccccc; padding: 2px 0 2px 5px; font-weight: bold; font-size: ${bandFontSize}pt; height: ${rowH}px; line-height: ${rowH}px; display: flex; align-items: center; margin-left: -10px;">${item.letter}</div>`;
-            }
-            
-            // ✅ Font-size calcolato sulla larghezza REALE della colonna (con canvas),
-            // non solo sul numero di caratteri: su schermi stretti (iPhone) un
-            // nome "lungo" in caratteri può comunque non starci nello spazio reale.
-            const canvasFS = document.createElement('canvas');
-            const ctxFS = canvasFS.getContext('2d');
-            const targetWidthFS = columnWidth * 0.94;
-            let fontSize = 20;
-            for (let size = 20; size >= 10; size -= 0.5) {
-                ctxFS.font = `${size}pt "Times New Roman", serif`;
-                if (ctxFS.measureText(item.artistSort).width <= targetWidthFS) {
-                    fontSize = size;
-                    break;
-                }
-                fontSize = size;
-            }
-            
-            return `<div class="artist-item" style="font-size: ${fontSize}pt; height: ${rowH}px; line-height: ${rowH}px;"><span class="artist-link">${item.artistSort}</span></div>`;
-        }).join('')}
+                        let html = '';
+                        
+                        if (item.isOnlySeparator) {
+                            html += `<div style="background: #cccccc; padding: 2px 0 2px 5px; font-weight: bold; font-size: 20pt; height: 38px; line-height: 38px; display: flex; align-items: center; margin-left: -10px;">${item.separatorLetter}</div>`;
+                                                    return html;
+                        }
+                        
+                        if (item.needsSeparator) {
+                                                    const firstLetter = item.artistSort.charAt(0).toUpperCase();
+                                                    html += `<div style="background: #cccccc; padding: 2px 0 2px 5px; font-weight: bold; font-size: 20pt; height: 38px; line-height: 38px; display: flex; align-items: center; margin-left: -10px;">${firstLetter}</div>`;
+                                                                            }
+                                                                            
+                                                                            let fontSize = 20;
+                                                                            if (item.artistSort.length > 25) {
+                                                                                fontSize = 16;
+                                                                            } else if (item.artistSort.length > 20) {
+                                                                                fontSize = 18;
+                                                                            }
+                                                                            
+                                                                            html += `<div class="artist-item" style="font-size: ${fontSize}pt; height: 38px; line-height: 38px;"><span class="artist-link">${item.artistSort}</span></div>`;
+                        
+                        return html;
+                    }).join('')}
                 </div>
             `;
         }).join('')}
@@ -6976,30 +6843,22 @@ artists.forEach(artist => {
     const artistSort = songs.find(s => s.artist === artist)?.artistSort || artist;
     
     // Pagina artista con elenco canzoni
-    const isMobileArtistPage = window.innerWidth <= 768;
-    const artistTitleFontSize = isMobileArtistPage ? 22 : 26;   // ✅ come il titolo di ELENCO CANTANTI su iPhone
-    const artistTitlePadding = isMobileArtistPage ? '6px 0' : '15px 0';  // ✅ linee più vicine al nome, font più piccolo
-    const songItemPadding = isMobileArtistPage ? '10px 0' : '6px 0';     // ✅ un po' più di spazio tra le canzoni
-    const songItemFontSize = isMobileArtistPage ? 12 : 20;  // ✅ come i nomi cantante in ELENCO CANTANTI
-    const footerLabel = isMobileArtistPage ? 'Elenco cantanti' : 'Torna ad Elenco cantanti'; // ✅ più corto: niente "Torna ad"
-    const footerFontSize = isMobileArtistPage ? 13 : 18;
-    const footerPaddingTop = isMobileArtistPage ? 6 : 15;
     const artistContent = `
-        <div style="text-align: center; font-size: ${artistTitleFontSize}pt; font-weight: bold; border-top: 2px solid black; border-bottom: 2px solid black; padding: ${artistTitlePadding}; margin-bottom: 30px;">
+        <div style="text-align: center; font-size: 26pt; font-weight: bold; border-top: 2px solid black; border-bottom: 2px solid black; padding: 15px 0; margin-bottom: 30px;">
             ${artistSort.toUpperCase()}
         </div>
         <div>
             ${artistSongs.map(song => 
       `<div class="artist-item song-link" data-song-id="${song.id}"
-           style="font-size: ${songItemFontSize}pt; cursor: pointer; display: block; width: fit-content; padding: ${songItemPadding};">
+           style="font-size: 20pt; cursor: pointer; display: block; width: fit-content; padding: 6px 0;">
         ${song.title.toUpperCase()}
       </div>`
     ).join('')}
         </div>
-        <div style="position: absolute; bottom: 20px; left: 0; right: 0; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; border-top: 1px solid black; padding-top: ${footerPaddingTop}px;">
-            <div style="text-align: center; cursor: pointer; font-size: ${footerFontSize}pt; white-space: nowrap;" data-action="index">${footerLabel}</div>
-            <div style="text-align: center; cursor: pointer; font-size: ${footerFontSize}pt;" data-action="preferiti">Preferiti</div>
-            <div style="text-align: center; cursor: pointer; font-size: ${footerFontSize}pt;" data-action="audio">🎵</div>
+        <div style="position: absolute; bottom: 20px; left: 0; right: 0; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; border-top: 1px solid black; padding-top: 15px;">
+            <div style="text-align: center; cursor: pointer; font-size: 18pt;" data-action="index">Torna ad Elenco cantanti</div>
+            <div style="text-align: center; cursor: pointer; font-size: 18pt;" data-action="preferiti">Preferiti</div>
+            <div style="text-align: center; cursor: pointer; font-size: 18pt;" data-action="audio">🎵</div>
         </div>
     `;
     
@@ -7247,10 +7106,6 @@ function updateStarOnly(songId, isPref) {
 
 function generateSongPagesForBook(song) {
     const pages = [];
-    const isMobileSongPage = window.innerWidth <= 768;
-    const detailsFontSize = isMobileSongPage ? 14 : 22;   // ✅ più piccolo, sta su una riga sola
-    const detailsIconSize = isMobileSongPage ? 16 : 26;   // ✅ icone più piccole
-    const detailsGap = isMobileSongPage ? 8 : 16;
     
     // Parse notes
     const noteParts = song.notes ? song.notes.split('|').map(s => s.trim()) : [];
@@ -7277,20 +7132,20 @@ function generateSongPagesForBook(song) {
         const starIcon = isPref ? '⭐' : '☆';
         const starStyle = isPref ? 'color: #f39c12;' : 'color: #aaa;';
         
-        notesHtml = `<div style="font-size: ${detailsFontSize}pt; margin-top: 2px; margin-bottom: 2px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: ${detailsGap}px; white-space: nowrap;">
+        notesHtml = `<div style="font-size: 22pt; margin-top: 2px; margin-bottom: 2px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 16px;">
             <span>${parts.join(' <span style="color: black;">|</span> ')}</span>
-            <span id="star-btn-${song.id}" data-action="star" data-song-id="${song.id}" style="cursor: pointer; font-size: ${detailsIconSize}pt; ${starStyle} line-height: 1;">${starIcon}</span>
-            <span data-action="audio" style="cursor: pointer; font-size: ${detailsIconSize}pt; line-height: 1;">🎵</span>
+            <span id="star-btn-${song.id}" data-action="star" data-song-id="${song.id}" style="cursor: pointer; font-size: 26pt; ${starStyle} line-height: 1;">${starIcon}</span>
+            <span data-action="audio" style="cursor: pointer; font-size: 26pt; line-height: 1;">🎵</span>
         </div>`;
     } else {
         const isPref = isPreferito(song.id);
         const starIcon = isPref ? '⭐' : '☆';
         const starStyle = isPref ? 'color: #f39c12;' : 'color: #aaa;';
         
-        notesHtml = `<div style="font-size: ${detailsFontSize}pt; margin-top: 2px; margin-bottom: 2px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: ${detailsGap}px; white-space: nowrap;">
+        notesHtml = `<div style="font-size: 22pt; margin-top: 2px; margin-bottom: 2px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 16px;">
             <span style="color: #999;">[ Dettagli da aggiungere ]</span>
-            <span id="star-btn-${song.id}" data-action="star" data-song-id="${song.id}" style="cursor: pointer; font-size: ${detailsIconSize}pt; ${starStyle} line-height: 1;">${starIcon}</span>
-            <span data-action="audio" style="cursor: pointer; font-size: ${detailsIconSize}pt; line-height: 1;">🎵</span>
+            <span id="star-btn-${song.id}" data-action="star" data-song-id="${song.id}" style="cursor: pointer; font-size: 26pt; ${starStyle} line-height: 1;">${starIcon}</span>
+            <span data-action="audio" style="cursor: pointer; font-size: 26pt; line-height: 1;">🎵</span>
         </div>`;
     }
     
@@ -7299,16 +7154,12 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
 //                                                           ^PDF  ^FULLSCREEN
     
     // Footer HTML con link
-    const footerFontSizeSong = isMobileSongPage ? 12 : 18;
-    const footerPaddingTopSong = isMobileSongPage ? 6 : 15;
-    const indexLabel = isMobileSongPage ? 'Elenco cantanti' : 'Torna ad Elenco cantanti';
-    const artistLabel = isMobileSongPage ? 'Cantante' : 'Torna al cantante';
     const footerHtml = `
-            <div style="position: absolute; bottom: 20px; left: 0; right: 0; display: grid; grid-template-columns: 1.5fr 1fr 1.5fr 1fr; gap: 10px; border-top: 1px solid black; padding-top: ${footerPaddingTopSong}px;">
-                <div style="text-align: center; cursor: pointer; font-size: ${footerFontSizeSong}pt; white-space: nowrap;" data-action="index">${indexLabel}</div>
-                <div style="text-align: center; cursor: pointer; font-size: ${footerFontSizeSong}pt; white-space: nowrap;" data-action="artist" data-artist="${song.artist}">${artistLabel}</div>
-                <div style="text-align: center; cursor: pointer; font-size: ${footerFontSizeSong}pt;" data-action="preferiti">Preferiti</div>
-                <div style="text-align: center; cursor: pointer; font-size: ${footerFontSizeSong}pt;" data-action="audio">🎵</div>
+            <div style="position: absolute; bottom: 20px; left: 0; right: 0; display: grid; grid-template-columns: 1.5fr 1fr 1.5fr 1fr; gap: 10px; border-top: 1px solid black; padding-top: 15px;">
+                <div style="text-align: center; cursor: pointer; font-size: 18pt;" data-action="index">Torna ad Elenco cantanti</div>
+                <div style="text-align: center; cursor: pointer; font-size: 18pt;" data-action="artist" data-artist="${song.artist}">Torna al cantante</div>
+                <div style="text-align: center; cursor: pointer; font-size: 18pt;" data-action="preferiti">Preferiti</div>
+                <div style="text-align: center; cursor: pointer; font-size: 18pt;" data-action="audio">🎵</div>
             </div>
         `;
     
@@ -7316,46 +7167,16 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
         let content = '';
         
         if (page.isFirst) {
-            let titleFontSize = isMobileSongPage ? 22 : 28;  // ✅ come il titolo di ELENCO CANTANTI
-            let titleDisplay = song.title.toUpperCase();
-            if (isMobileSongPage) {
-                // ✅ Il titolo deve SEMPRE restare su una riga sola (andare a
-                // capo scombussola lo spazio del testo sotto): riduci il font
-                // finché non ci sta, e se anche al minimo non basta, tronca
-                // con i puntini di sospensione mantenendo la virgoletta finale.
-                const availableTitleWidth = window.innerWidth - 40; // margini della pagina
-                const canvasTitle = document.createElement('canvas');
-                const ctxTitle = canvasTitle.getContext('2d');
-                const minTitleFontSize = 14;
-                let fits = false;
-                for (let size = titleFontSize; size >= minTitleFontSize; size -= 0.5) {
-                    ctxTitle.font = `bold ${size}pt "Times New Roman", serif`;
-                    titleFontSize = size;
-                    if (ctxTitle.measureText(`"${titleDisplay}"`).width <= availableTitleWidth) {
-                        fits = true;
-                        break;
-                    }
-                }
-                if (!fits) {
-                    ctxTitle.font = `bold ${minTitleFontSize}pt "Times New Roman", serif`;
-                    while (titleDisplay.length > 1 && ctxTitle.measureText(`"${titleDisplay}..."`).width > availableTitleWidth) {
-                        titleDisplay = titleDisplay.slice(0, -1);
-                    }
-                    titleDisplay = titleDisplay + '...';
-                }
-            }
-            const headerMinHeight = isMobileSongPage ? 95 : 0;  // ✅ altezza fissa: il testo comincia sempre nello stesso punto, a prescindere da quanto si rimpicciolisce il titolo
             content = `
-                <div style="text-align: center; margin-bottom: 25px; ${headerMinHeight ? `min-height: ${headerMinHeight}px; display: flex; flex-direction: column; justify-content: center;` : ''}">
-                    <div style="font-size: ${titleFontSize}pt; font-weight: bold; margin-bottom: 2px; ${isMobileSongPage ? 'white-space: nowrap;' : ''}">"${titleDisplay}"</div>
-                    <div style="font-size: ${isMobileSongPage ? 12 : 13}pt; margin-bottom: 2px;">(${song.artist.toUpperCase()})</div>
+                <div style="text-align: center; margin-bottom: 25px;">
+                    <div style="font-size: 28pt; font-weight: bold; margin-bottom: 2px;">"${song.title.toUpperCase()}"</div>
+                    <div style="font-size: 13pt; margin-bottom: 2px;">(${song.artist.toUpperCase()})</div>
                     ${notesHtml}
                 </div>
                 <div class="song-text" style="font-size: 19pt;">${page.lines.join('\n')}</div>
             `;
         } else {
-            const continuationMarginTop = isMobileSongPage ? 4 : 20;  // ✅ meno spazio in alto: il testo comincia prima
-            content = `<div class="song-text" style="margin-top: ${continuationMarginTop}px; font-size: 19pt;">${page.lines.join('\n')}</div>`;
+            content = `<div class="song-text" style="margin-top: 20px; font-size: 19pt;">${page.lines.join('\n')}</div>`;
         }
         
         // Aggiungi footer solo se è l'ultima pagina
