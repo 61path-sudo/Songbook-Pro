@@ -1859,9 +1859,9 @@ function calculateSongPagination(song, format, isPDF = false, isFullscreen = fal
         // di provare il sistema elastico — ora, con il font corretto (Times
         // New Roman) e la logica anti-sovrapposizione, dovrebbero comportarsi
         // meglio di quando li avevamo lasciati.
-        firstPageHeight = 762;  // +120 (~3-4 righe): ritarato dopo il fix del font Times New Roman
+        firstPageHeight = 728;  // -34 (1 riga) rispetto a 762: era una riga di troppo nel caso multi-pagina
         middlePageHeight = 740;
-        lastPageHeight = 700;
+        lastPageHeight = 666;  // -34 (1 riga) rispetto a 700: c'era una lieve sovrapposizione col footer nel caso "pagina singola"
     } else if (format === 'A5') {
         firstPageHeight = 642;
         middlePageHeight = 740;
