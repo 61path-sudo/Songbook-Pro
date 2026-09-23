@@ -1853,28 +1853,15 @@ function calculateSongPagination(song, format, isPDF = false, isFullscreen = fal
     
     if (isFullscreen) {
     if (window.innerWidth <= 768) {
-        // ✅ Sistema "elastico" (solo iPhone): numeri fissi per intestazione e
-        // footer (misurarli dal vivo con un elemento nascosto si è rivelato
-        // imprevedibile in alcuni contesti), ma il totale disponibile si
-        // calcola dall'altezza reale dello schermo — e sopra c'è tutta la
-        // logica di sicurezza (margine "a metà", ripiego sicuro) che gestisce
-        // i casi limite senza sovrapposizioni.
-        const headerHeight = 95;          // altezza fissa del blocco titolo (min-height impostato)
-        const headerMarginBottom = 25;    // margin-bottom del blocco titolo, prima del testo
-        const measuredFooterHeight = 45;  // stima dell'altezza del footer
-        const footerBottomGap = 20;       // "bottom: 20px" del footer
-        
-        const realPageHeight = window.innerHeight;
-        const footerSafetyMargin = 30;  // margine extra prudente: la sovrapposizione col footer va evitata sempre
-        
-        // Prima pagina: versione "generosa" (senza margine extra): la logica
-        // più sotto gestisce da sola, in sicurezza, il caso "potrebbe essere
-        // anche l'ultima pagina".
-        firstPageHeight = realPageHeight - headerHeight - headerMarginBottom - measuredFooterHeight - footerBottomGap;
-        // Pagine intermedie: niente intestazione, tutto lo spazio della pagina
-        middlePageHeight = realPageHeight - 34;  // -1 riga dal fondo
-        // Ultima pagina: come le intermedie, ma con lo spazio riservato per il footer
-        lastPageHeight = realPageHeight - measuredFooterHeight - footerBottomGap - footerSafetyMargin;
+        // ✅ Stesso identico sistema di A4 (iPad): numeri fissi, tarati con le
+        // prove dirette, invece di formule/misurazioni che si sono rivelate
+        // imprevedibili. Si riparte dagli ultimi valori "buoni" trovati prima
+        // di provare il sistema elastico — ora, con il font corretto (Times
+        // New Roman) e la logica anti-sovrapposizione, dovrebbero comportarsi
+        // meglio di quando li avevamo lasciati.
+        firstPageHeight = 642;
+        middlePageHeight = 740;
+        lastPageHeight = 700;
     } else if (format === 'A5') {
         firstPageHeight = 642;
         middlePageHeight = 740;
