@@ -1857,7 +1857,7 @@ function calculateSongPagination(song, format, isPDF = false, isFullscreen = fal
     if (window.innerWidth <= 768) {
         // ✅ Solo iPhone: numeri tarati specificamente per schermi stretti,
         // non toccano in alcun modo i rami A5/A4 di iPad qui sotto.
-        firstPageHeight = 651;  // +34 (1 riga) rispetto a 617
+        firstPageHeight = 685;  // +34 (1 riga) rispetto a 651
         middlePageHeight = 740;
         lastPageHeight = 555;
     } else if (format === 'A5') {
