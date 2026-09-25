@@ -1857,9 +1857,9 @@ function calculateSongPagination(song, format, isPDF = false, isFullscreen = fal
     if (window.innerWidth <= 768) {
         // ✅ Solo iPhone: numeri tarati specificamente per schermi stretti,
         // non toccano in alcun modo i rami A5/A4 di iPad qui sotto.
-        firstPageHeight = 651;  // -34: tolta la riga di troppo generale
-        middlePageHeight = 706;  // -34: stessa correzione, coerente con firstPageHeight
-        lastPageHeight = 657;  // +34: recuperare parte delle righe perse dietro al footer
+        firstPageHeight = 617;
+        middlePageHeight = 740;
+        lastPageHeight = 555;
     } else if (format === 'A5') {
     // ✅ USA GLI STESSI VALORI DI PERFORMANCE (non l'altezza reale dello schermo)
         firstPageHeight = 680;
@@ -2003,33 +2003,11 @@ function getLineHeight(text) {
                 reducedEndIndex = 1;
             }
             
-            if (window.innerWidth <= 768) {
-                // ✅ Solo iPhone: se anche il budget ridotto non basta, proviamo
-                // un margine "a metà" prima di arrenderci e creare una nuova
-                // pagina magari quasi vuota per una riga sola. Su iPad/Mac si
-                // usa invece il comportamento originale, semplice e già tarato,
-                // qui sotto nell'else.
-                if (reducedEndIndex >= lines.length) {
-                    firstPageEndIndex = reducedEndIndex;
-                } else {
-                    const halfMarginHeight = firstPageHeight - (footerReserve / 2);
-                    let mediumHeightUsed = 0;
-                    let mediumEndIndex = 0;
-                    for (let i = 0; i < lines.length; i++) {
-                        const lineRealHeight = getLineHeight(lines[i]);
-                        if (mediumHeightUsed + lineRealHeight <= halfMarginHeight) {
-                            mediumHeightUsed += lineRealHeight;
-                            mediumEndIndex = i + 1;
-                        } else {
-                            break;
-                        }
-                    }
-                    firstPageEndIndex = (mediumEndIndex >= lines.length) ? mediumEndIndex : reducedEndIndex;
-                }
-            } else {
-                // Comportamento originale (iPad/Mac): sempre il budget ridotto.
-                firstPageEndIndex = reducedEndIndex;
-            }
+            // ✅ Semplificato: stesso comportamento identico di iPad/Mac (sempre
+            // il budget ridotto, niente tentativo "a metà"). Quella complicazione
+            // rendeva instabile la taratura perché aggiungeva un'altra variabile
+            // da bilanciare insieme alle altre.
+            firstPageEndIndex = reducedEndIndex;
         }
         
         pages.push({
@@ -2082,32 +2060,8 @@ while (currentLineIndex < lines.length) {
             }
         }
         
-        if (window.innerWidth <= 768) {
-            // ✅ Solo iPhone: stesso margine "a metà" della prima pagina, prima
-            // di arrenderci e creare una pagina nuova per una riga sola. Su
-            // iPad/Mac resta il comportamento originale (else sotto).
-            if (reducedPageEndIndex >= lines.length) {
-                pageEndIndex = reducedPageEndIndex;
-            } else {
-                const footerReserveMid = middlePageHeight - lastPageHeight;
-                const halfMarginPageHeight = middlePageHeight - (footerReserveMid / 2);
-                let mediumHeightUsed = 0;
-                let mediumPageEndIndex = currentLineIndex;
-                for (let i = currentLineIndex; i < lines.length; i++) {
-                    const lineRealHeight = getLineHeight(lines[i]);
-                    if (mediumHeightUsed + lineRealHeight <= halfMarginPageHeight) {
-                        mediumHeightUsed += lineRealHeight;
-                        mediumPageEndIndex = i + 1;
-                    } else {
-                        break;
-                    }
-                }
-                pageEndIndex = (mediumPageEndIndex >= lines.length) ? mediumPageEndIndex : reducedPageEndIndex;
-            }
-        } else {
-            // Comportamento originale (iPad/Mac)
-            pageEndIndex = reducedPageEndIndex;
-        }
+        // ✅ Semplificato: stesso comportamento identico di iPad/Mac.
+        pageEndIndex = reducedPageEndIndex;
     }
     
     // Forza almeno una riga se non è riuscito ad aggiungerne
