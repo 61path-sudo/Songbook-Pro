@@ -1858,7 +1858,7 @@ function calculateSongPagination(song, format, isPDF = false, isFullscreen = fal
         // ✅ Solo iPhone: numeri tarati specificamente per schermi stretti,
         // non toccano in alcun modo i rami A5/A4 di iPad qui sotto.
         firstPageHeight = 569;  // -150 rispetto a 719: le riduzioni piccole non bastavano
-        middlePageHeight = 740;
+        middlePageHeight = 706;  // -34: mai toccato finora, forse è la vera causa della riga di troppo su tutte le canzoni
         lastPageHeight = 625;  // -68 invece di -34: la riduzione precedente non bastava
     } else if (format === 'A5') {
     // ✅ USA GLI STESSI VALORI DI PERFORMANCE (non l'altezza reale dello schermo)
