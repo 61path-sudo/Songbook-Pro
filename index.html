@@ -1859,7 +1859,7 @@ function calculateSongPagination(song, format, isPDF = false, isFullscreen = fal
         // non toccano in alcun modo i rami A5/A4 di iPad qui sotto.
         firstPageHeight = 668;  // tornato indietro: 676 era peggio
         middlePageHeight = 740;
-        lastPageHeight = 555;
+        lastPageHeight = 623;  // +68 (2 righe): per ridurre il vuoto di "La Fisarmonica" (zona grigia footer)
     } else if (format === 'A5') {
     // ✅ USA GLI STESSI VALORI DI PERFORMANCE (non l'altezza reale dello schermo)
         firstPageHeight = 680;
