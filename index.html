@@ -1859,7 +1859,7 @@ function calculateSongPagination(song, format, isPDF = false, isFullscreen = fal
         // non toccano in alcun modo i rami A5/A4 di iPad qui sotto.
         firstPageHeight = 668;  // tornato indietro: 676 era peggio
         middlePageHeight = 792;  // -34 (1 riga) ancora rispetto a 826
-        lastPageHeight = 691;  // +68 (2 righe) ancora rispetto a 623
+        lastPageHeight = 759;  // +68 (2 righe) ancora: stesso "buco" di prima ma per le pagine successive come ultima
     } else if (format === 'A5') {
     // ✅ USA GLI STESSI VALORI DI PERFORMANCE (non l'altezza reale dello schermo)
         firstPageHeight = 680;
