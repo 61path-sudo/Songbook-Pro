@@ -1989,7 +1989,7 @@ function getLineHeight(text) {
         // le pagine intermedie alterava senza volerlo anche questo calcolo
         // per la prima pagina. Ora i due aggiustamenti non si toccano più.
         if (firstPageEndIndex >= lines.length) {
-            const footerSpaceFixed = 80; // stima fissa dello spazio per il footer (solo iPhone)
+            const footerSpaceFixed = 40; // ridotto da 80: lasciava troppo poco spazio per le canzoni a pagina singola
             const firstLastPageHeight = firstPageHeight - footerSpaceFixed;
             const fullBudgetEndIndex = firstPageEndIndex;
             let reducedHeightUsed = 0;
