@@ -1983,9 +1983,14 @@ function getLineHeight(text) {
         // lastPageHeight quando risultano essere l'ultima pagina). Rifacciamo
         // il riempimento con lo stesso margine che l'app riserva altrove per il
         // footer, calcolato dalla differenza tra middlePageHeight e lastPageHeight.
+        // ✅ CORRETTO: la riserva per il footer ora è un valore fisso e
+        // indipendente da middlePageHeight — prima veniva calcolata come
+        // "middlePageHeight meno lastPageHeight", quindi cambiare l'uno per
+        // le pagine intermedie alterava senza volerlo anche questo calcolo
+        // per la prima pagina. Ora i due aggiustamenti non si toccano più.
         if (firstPageEndIndex >= lines.length) {
-            const footerReserve = middlePageHeight - lastPageHeight;
-            const firstLastPageHeight = firstPageHeight - footerReserve;
+            const footerSpaceFixed = 80; // stima fissa dello spazio per il footer (solo iPhone)
+            const firstLastPageHeight = firstPageHeight - footerSpaceFixed;
             const fullBudgetEndIndex = firstPageEndIndex;
             let reducedHeightUsed = 0;
             let reducedEndIndex = 0;
