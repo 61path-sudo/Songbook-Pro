@@ -1907,7 +1907,7 @@ function calculateSongPagination(song, format, isPDF = false, isFullscreen = fal
     // ⚠️ Su iPad/Mac (window.innerWidth > 768) questa condizione non scatta
     // mai: si usa esattamente la stessa formula di sempre.
     const measureWidth = (isFullscreen && window.innerWidth <= 768)
-        ? (window.innerWidth - 16 - 20)  // -20px extra di prudenza: le righe "al limite" andavano a capo nel disegno reale ma non nella misurazione
+        ? (window.innerWidth - 16)
         : (dims.width - 40);
     testDiv.style.width = measureWidth + 'px';  // Stessa larghezza della pagina reale
 
