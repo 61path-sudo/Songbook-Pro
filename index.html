@@ -7684,7 +7684,7 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
                 return 19;
             }
             
-            const prefRowHeight = isMobilePrefFS ? 42 : 62;  // +6px per distanziare un poco le righe
+            const prefRowHeight = isMobilePrefFS ? 36 : 62;  // ridotto uniformemente (era 42): tutte le righe uguali, per non sfasare le pagine
             const prefArtistFontSize = isMobilePrefFS ? 10 : 13;
             const prefLetterFontSize = isMobilePrefFS ? 14 : 20;
             
@@ -7722,7 +7722,7 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
             // Calcola righe per pagina usando altezza reale schermo
             const screenHeight = window.innerHeight;
             const prefItemHeight = prefRowHeight;
-            const prefLetterHeight = isMobilePrefFS ? (prefRowHeight - 6) : prefRowHeight;  // ✅ barra grigia leggermente più bassa su iPhone (non serve più allineare 2 colonne, ora ce n'è una sola)
+            const prefLetterHeight = prefRowHeight;  // ✅ stessa altezza delle righe canzone: evita che pagine con più/meno cambi di lettera abbiano un numero diverso di righe visibili
             const prefHeaderFirst = isMobilePrefFS ? 110 : 178;  // spazio header prima pagina
             const prefHeaderOther = isMobilePrefFS ? 20 : 58;   // spazio header pagine successive
             // ✅ Riserva per il footer (mai considerata finora): la prima pagina
