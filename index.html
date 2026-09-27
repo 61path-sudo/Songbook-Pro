@@ -7684,18 +7684,22 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
                 return 19;
             }
             
-            const prefRowHeight = isMobilePrefFS ? 24 : 62;  // ✅ come le righe di ELENCO CANTANTI
+            const prefRowHeight = isMobilePrefFS ? 36 : 62;  // ✅ compatto ma con spazio per titolo + cantante su 2 righe
             const prefArtistFontSize = isMobilePrefFS ? 10 : 13;
             const prefLetterFontSize = isMobilePrefFS ? 14 : 20;
             
             // ITEM: modalità A-Z Titolo (titolo + cantante sotto)
             function renderPrefSongItemFS(song) {
                 if (isMobilePrefFS) {
-                    // ✅ Su iPhone, una sola riga compatta (titolo soltanto), come ELENCO CANTANTI
+                    // ✅ Su iPhone: titolo + cantante sotto, compatti (come richiesto),
+                    // una canzone per riga a piena larghezza (vedi colonna unica sotto).
                     return `
-                        <div class="song-link artist-item" data-song-id="${song.id}"
-                            style="cursor: pointer; padding-left: 8px; border-left: 2px solid #cccccc; height: ${prefRowHeight}px; line-height: ${prefRowHeight}px;">
-                            <span class="artist-link" style="font-weight: normal; font-size: ${getPrefTitleFontSizeFS(song.title)}pt;">${song.title.toUpperCase()}</span>
+                        <div class="song-link" data-song-id="${song.id}"
+                            style="cursor: pointer; padding-left: 8px; border-left: 2px solid #cccccc; display: block; width: 100%; box-sizing: border-box; height: ${prefRowHeight}px; overflow: hidden;">
+                            <div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.15;">
+                                <span style="font-weight: normal; font-size: ${getPrefTitleFontSizeFS(song.title)}pt;">${song.title.toUpperCase()}</span>
+                            </div>
+                            <div style="font-size: ${prefArtistFontSize}pt; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.15;">${song.artist.toUpperCase()}</div>
                         </div>
                     `;
                 }
@@ -7756,11 +7760,12 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
                 const pages = [];
                 let itemIndex = 0;
                 let isFirstPage = true;
+                const numCols = isMobilePrefFS ? 1 : 2;  // ✅ una sola colonna su iPhone: titoli lunghi, una canzone per riga
                 
                 while (itemIndex < items.length) {
                     const maxH = isFirstPage ? maxHeightFirst : maxHeightOther;
-                    const cols = [[], []];
-                    let colHeights = [0, 0];
+                    const cols = Array.from({ length: numCols }, () => []);
+                    let colHeights = new Array(numCols).fill(0);
                     let currentCol = 0;
                     
                     while (itemIndex < items.length) {
@@ -7768,8 +7773,8 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
                         const h = item.height;
                         
                         if (colHeights[currentCol] + h > maxH) {
-                            if (currentCol === 0) {
-                                currentCol = 1;
+                            if (currentCol < numCols - 1) {
+                                currentCol++;
                             } else {
                                 break; // pagina piena
                             }
@@ -7779,8 +7784,8 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
                         if (item.type === 'letter' && itemIndex + 1 < items.length) {
                             const nextItem = items[itemIndex + 1];
                             if (colHeights[currentCol] + h + nextItem.height > maxH) {
-                                if (currentCol === 0) {
-                                    currentCol = 1;
+                                if (currentCol < numCols - 1) {
+                                    currentCol++;
                                 } else {
                                     break;
                                 }
@@ -7850,8 +7855,7 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
                 const pages = distributeItems(items, prefMaxHeightFirst, prefMaxHeightOther);
                 
                 pages.forEach((page, pageIdx) => {
-                    const col0Html = page.cols[0].map(renderItem).join('');
-                    const col1Html = page.cols[1].map(renderItem).join('');
+                    const columnsHtml = page.cols.map(col => `<div>${col.map(renderItem).join('')}</div>`).join('');
                     
                     const headerHtml = page.isFirst ? `
                         <div style="text-align: center; font-size: ${prefTitleFontSize}pt; font-weight: bold; border-top: 2px solid black; border-bottom: 2px solid black; padding: 10px 0; margin-bottom: 5px;">PREFERITI</div>
@@ -7860,9 +7864,8 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
                     
                     prefPages.push(`
                         ${headerHtml}
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; column-gap: ${isMobilePrefFS ? 12 : 30}px; width: 100%; box-sizing: border-box;">
-                            <div>${col0Html}</div>
-                            <div>${col1Html}</div>
+                        <div style="display: grid; grid-template-columns: ${isMobilePrefFS ? '1fr' : '1fr 1fr'}; column-gap: ${isMobilePrefFS ? 12 : 30}px; width: 100%; box-sizing: border-box;">
+                            ${columnsHtml}
                         </div>
                         <div style="position: absolute; bottom: 20px; left: 0; right: 0; border-top: 1px solid black; padding-top: 15px; text-align: center;">
                             <span style="cursor: pointer; font-size: ${prefFooterFontSize}pt; white-space: nowrap;" data-action="index">${prefFooterLabel}</span>
