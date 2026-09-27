@@ -7716,13 +7716,13 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
             
             // SEPARATORE lettera alfabetica
             function renderLetterSeparator(letter) {
-                return `<div style="background: #cccccc; padding: 2px 0 2px 8px; font-weight: bold; font-size: ${prefLetterFontSize}pt; height: ${prefRowHeight}px; line-height: ${prefRowHeight}px; display: flex; align-items: center; box-sizing: border-box;">${letter}</div>`;
+                return `<div style="background: #cccccc; padding: 2px 0 2px 8px; font-weight: bold; font-size: ${prefLetterFontSize}pt; height: ${prefLetterHeight}px; line-height: ${prefLetterHeight}px; display: flex; align-items: center; box-sizing: border-box;">${letter}</div>`;
             }
             
             // Calcola righe per pagina usando altezza reale schermo
             const screenHeight = window.innerHeight;
             const prefItemHeight = prefRowHeight;
-            const prefLetterHeight = prefRowHeight;  // uguale a prefItemHeight per allineamento perfetto
+            const prefLetterHeight = isMobilePrefFS ? (prefRowHeight - 6) : prefRowHeight;  // ✅ barra grigia leggermente più bassa su iPhone (non serve più allineare 2 colonne, ora ce n'è una sola)
             const prefHeaderFirst = isMobilePrefFS ? 110 : 178;  // spazio header prima pagina
             const prefHeaderOther = isMobilePrefFS ? 20 : 58;   // spazio header pagine successive
             // ✅ Riserva per il footer (mai considerata finora): la prima pagina
