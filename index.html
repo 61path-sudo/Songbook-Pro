@@ -7729,7 +7729,7 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
             // si sovrapponeva di poco (~1mm = circa 1 riga), le successive di più
             // (~2-3mm), quindi qui la riserva è maggiore.
             const prefFooterReserveFirst = isMobilePrefFS ? 55 : 0;
-            const prefFooterReserveOther = isMobilePrefFS ? 75 : 0;
+            const prefFooterReserveOther = isMobilePrefFS ? 39 : 0;  // -36 (1 riga) rispetto a 75
             const prefMaxHeightFirst = screenHeight - prefHeaderFirst - prefFooterReserveFirst;
             const prefMaxHeightOther = screenHeight - prefHeaderOther - prefFooterReserveOther;
             
