@@ -7352,8 +7352,8 @@ function updateStarOnly(songId, isPref) {
 function updateNoteIconOnly(songId, hasNote) {
     const noteBtn = document.getElementById(`note-btn-${songId}`);
     if (!noteBtn) return;
-    noteBtn.textContent = hasNote ? '✏️' : '✎';
-    noteBtn.style.color = hasNote ? '' : '#aaa';
+    noteBtn.style.filter = hasNote ? '' : 'grayscale(100%)';
+    noteBtn.style.opacity = hasNote ? '1' : '0.5';
 }
 
 function showPerformanceNotePopup(songId) {
@@ -7442,8 +7442,8 @@ function generateSongPagesForBook(song) {
         const starIcon = isPref ? '⭐' : '☆';
         const starStyle = isPref ? 'color: #f39c12;' : 'color: #aaa;';
         const hasNote = !!(song.performanceNote && song.performanceNote.trim());
-        const noteIcon = hasNote ? '✏️' : '✎';
-        const noteStyle = hasNote ? '' : 'color: #aaa;';
+        const noteIcon = '✏️';
+        const noteStyle = hasNote ? '' : 'filter: grayscale(100%); opacity: 0.5;';
         
         notesHtml = `<div style="font-size: ${detailsFontSize}pt; margin-top: 2px; margin-bottom: 2px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: ${detailsGap}px; white-space: nowrap;">
             <span>${parts.join(' <span style="color: black;">|</span> ')}</span>
@@ -7456,8 +7456,8 @@ function generateSongPagesForBook(song) {
         const starIcon = isPref ? '⭐' : '☆';
         const starStyle = isPref ? 'color: #f39c12;' : 'color: #aaa;';
         const hasNote = !!(song.performanceNote && song.performanceNote.trim());
-        const noteIcon = hasNote ? '✏️' : '✎';
-        const noteStyle = hasNote ? '' : 'color: #aaa;';
+        const noteIcon = '✏️';
+        const noteStyle = hasNote ? '' : 'filter: grayscale(100%); opacity: 0.5;';
         
         notesHtml = `<div style="font-size: ${detailsFontSize}pt; margin-top: 2px; margin-bottom: 2px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: ${detailsGap}px; white-space: nowrap;">
             <span style="color: #999;">[ Dettagli da aggiungere ]</span>
