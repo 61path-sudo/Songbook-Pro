@@ -6268,14 +6268,16 @@ async function smartMerge(cloudSongs, localSongs) {
                 artist: cloudSong.artist,
                 artistSort: cloudSong.artistSort,
                 lyrics: cloudSong.lyrics,
-                notes: cloudSong.notes
+                notes: cloudSong.notes,
+                performanceNote: cloudSong.performanceNote
             });
             const localContent = JSON.stringify({
                 title: localSong.title,
                 artist: localSong.artist,
                 artistSort: localSong.artistSort,
                 lyrics: localSong.lyrics,
-                notes: localSong.notes
+                notes: localSong.notes,
+                performanceNote: localSong.performanceNote
             });
             
             if (cloudContent !== localContent) {
@@ -7347,6 +7349,66 @@ function updateStarOnly(songId, isPref) {
     starBtn.style.color = isPref ? '#f39c12' : '#aaa';
 }
 
+function updateNoteIconOnly(songId, hasNote) {
+    const noteBtn = document.getElementById(`note-btn-${songId}`);
+    if (!noteBtn) return;
+    noteBtn.style.color = hasNote ? '#3498db' : '#aaa';
+}
+
+function showPerformanceNotePopup(songId) {
+    const song = songs.find(s => s.id === parseInt(songId));
+    if (!song) return;
+    
+    // Rimuovi popup esistente
+    const existing = document.getElementById('perfnote-popup');
+    if (existing) existing.remove();
+    
+    const popup = document.createElement('div');
+    popup.id = 'perfnote-popup';
+    popup.style.cssText = `
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.6); z-index: 99999;
+        display: flex; align-items: center; justify-content: center;
+    `;
+    
+    const currentNote = song.performanceNote || '';
+    
+    popup.innerHTML = `
+        <div style="background: white; border-radius: 12px; padding: 30px; max-width: 450px; width: 85%; box-shadow: 0 10px 40px rgba(0,0,0,0.3);">
+            <div style="font-size: 18pt; font-weight: 600; margin-bottom: 5px; text-align: center;">"${song.title}"</div>
+            <div style="font-size: 13pt; color: #666; text-align: center; margin-bottom: 15px;">${song.artist}</div>
+            <div style="font-size: 13pt; color: #666; margin-bottom: 8px; text-align: left;">Note (es. comincia senza batteria, doppia introduzione, ecc.):</div>
+            <textarea id="perfnote-textarea" rows="5" placeholder="Scrivi qui..."
+                style="width: 100%; box-sizing: border-box; padding: 10px; font-size: 14pt; border: 1px solid #ddd; border-radius: 8px; font-family: inherit; resize: vertical;">${currentNote}</textarea>
+            <div style="display: flex; gap: 12px; justify-content: center; margin-top: 20px; flex-wrap: wrap;">
+                <button onclick="document.getElementById('perfnote-popup').remove()"
+                    style="padding: 12px 20px; border: 1px solid #ddd; border-radius: 8px; font-size: 14pt; cursor: pointer; background: white;">Annulla</button>
+                <button onclick="savePerformanceNote(${song.id})"
+                    style="padding: 12px 20px; border: none; border-radius: 8px; font-size: 14pt; cursor: pointer; background: #3498db; color: white; font-weight: 600;">Salva 📝</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(popup);
+    document.getElementById('perfnote-textarea').focus();
+}
+
+function savePerformanceNote(songId) {
+    const song = songs.find(s => s.id === parseInt(songId));
+    if (!song) return;
+    
+    const textarea = document.getElementById('perfnote-textarea');
+    const noteText = textarea.value.trim();
+    
+    song.performanceNote = noteText;
+    saveData();
+    if (syncEnabled && currentUser) {
+        saveToFirebaseImmediate();
+    }
+    
+    document.getElementById('perfnote-popup').remove();
+    updateNoteIconOnly(songId, !!noteText);
+}
+
 function generateSongPagesForBook(song) {
     const pages = [];
     const isMobileSongPage = window.innerWidth <= 768;
@@ -7378,20 +7440,26 @@ function generateSongPagesForBook(song) {
         const isPref = isPreferito(song.id);
         const starIcon = isPref ? '⭐' : '☆';
         const starStyle = isPref ? 'color: #f39c12;' : 'color: #aaa;';
+        const hasNote = !!(song.performanceNote && song.performanceNote.trim());
+        const noteStyle = hasNote ? 'color: #3498db;' : 'color: #aaa;';
         
         notesHtml = `<div style="font-size: ${detailsFontSize}pt; margin-top: 2px; margin-bottom: 2px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: ${detailsGap}px; white-space: nowrap;">
             <span>${parts.join(' <span style="color: black;">|</span> ')}</span>
             <span id="star-btn-${song.id}" data-action="star" data-song-id="${song.id}" style="cursor: pointer; font-size: ${detailsIconSize}pt; ${starStyle} line-height: 1;">${starIcon}</span>
+            <span id="note-btn-${song.id}" data-action="perfnote" data-song-id="${song.id}" style="cursor: pointer; font-size: ${detailsIconSize}pt; ${noteStyle} line-height: 1;">📝</span>
             <span data-action="audio" style="cursor: pointer; font-size: ${detailsIconSize}pt; line-height: 1;">🎵</span>
         </div>`;
     } else {
         const isPref = isPreferito(song.id);
         const starIcon = isPref ? '⭐' : '☆';
         const starStyle = isPref ? 'color: #f39c12;' : 'color: #aaa;';
+        const hasNote = !!(song.performanceNote && song.performanceNote.trim());
+        const noteStyle = hasNote ? 'color: #3498db;' : 'color: #aaa;';
         
         notesHtml = `<div style="font-size: ${detailsFontSize}pt; margin-top: 2px; margin-bottom: 2px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: ${detailsGap}px; white-space: nowrap;">
             <span style="color: #999;">[ Dettagli da aggiungere ]</span>
             <span id="star-btn-${song.id}" data-action="star" data-song-id="${song.id}" style="cursor: pointer; font-size: ${detailsIconSize}pt; ${starStyle} line-height: 1;">${starIcon}</span>
+            <span id="note-btn-${song.id}" data-action="perfnote" data-song-id="${song.id}" style="cursor: pointer; font-size: ${detailsIconSize}pt; ${noteStyle} line-height: 1;">📝</span>
             <span data-action="audio" style="cursor: pointer; font-size: ${detailsIconSize}pt; line-height: 1;">🎵</span>
         </div>`;
     }
@@ -8187,6 +8255,36 @@ function addFullscreenLinkHandlers() {
             e.stopPropagation();
             const songId = parseInt(star.getAttribute('data-song-id'));
             showFavouritePopup(songId);
+        });
+    });
+    
+    // Handler per icona note di scena
+    document.querySelectorAll('[data-action="perfnote"]').forEach(noteBtn => {
+        let touchStartTime = 0;
+        let touchStartPos = { x: 0, y: 0 };
+        
+        noteBtn.addEventListener('touchstart', (e) => {
+            touchStartTime = Date.now();
+            touchStartPos = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        }, { passive: true });
+        
+        noteBtn.addEventListener('touchend', (e) => {
+            const duration = Date.now() - touchStartTime;
+            const diffX = Math.abs(e.changedTouches[0].clientX - touchStartPos.x);
+            const diffY = Math.abs(e.changedTouches[0].clientY - touchStartPos.y);
+            if (duration < 400 && diffX < 15 && diffY < 15) {
+                e.preventDefault();
+                e.stopPropagation();
+                const songId = parseInt(noteBtn.getAttribute('data-song-id'));
+                showPerformanceNotePopup(songId);
+            }
+        });
+        
+        // Click per desktop
+        noteBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const songId = parseInt(noteBtn.getAttribute('data-song-id'));
+            showPerformanceNotePopup(songId);
         });
     });
     
