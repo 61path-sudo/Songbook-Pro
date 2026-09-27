@@ -7371,6 +7371,47 @@ function showPerformanceNotePopup(songId) {
         background: rgba(0,0,0,0.6); z-index: 99999;
         display: flex; align-items: center; justify-content: center;
     `;
+    document.body.appendChild(popup);
+    
+    renderPerfNoteView(songId);
+}
+
+// ✅ Modalità VISUALIZZAZIONE (default all'apertura): mostra la nota già
+// scritta (o un messaggio se non c'è ancora), con un pulsante per passare
+// alla modifica solo quando serve davvero.
+function renderPerfNoteView(songId) {
+    const song = songs.find(s => s.id === parseInt(songId));
+    if (!song) return;
+    const popup = document.getElementById('perfnote-popup');
+    if (!popup) return;
+    
+    const currentNote = (song.performanceNote || '').trim();
+    const hasNote = !!currentNote;
+    
+    popup.innerHTML = `
+        <div style="background: white; border-radius: 12px; padding: 30px; max-width: 450px; width: 85%; box-shadow: 0 10px 40px rgba(0,0,0,0.3);">
+            <div style="font-size: 18pt; font-weight: 600; margin-bottom: 5px; text-align: center;">"${song.title}"</div>
+            <div style="font-size: 13pt; color: #666; text-align: center; margin-bottom: 15px;">${song.artist}</div>
+            ${hasNote
+                ? `<div style="font-size: 14pt; white-space: pre-wrap; padding: 12px; background: #f8f9fa; border-radius: 8px; min-height: 60px;">${currentNote}</div>`
+                : `<div style="font-size: 13pt; color: #999; text-align: center; padding: 20px 0;">Nessuna nota inserita</div>`
+            }
+            <div style="display: flex; gap: 12px; justify-content: center; margin-top: 20px; flex-wrap: wrap;">
+                <button onclick="document.getElementById('perfnote-popup').remove()"
+                    style="padding: 12px 20px; border: 1px solid #ddd; border-radius: 8px; font-size: 14pt; cursor: pointer; background: white;">Chiudi</button>
+                <button onclick="renderPerfNoteEdit(${song.id})"
+                    style="padding: 12px 20px; border: none; border-radius: 8px; font-size: 14pt; cursor: pointer; background: #3498db; color: white; font-weight: 600;">${hasNote ? 'Modifica ✏️' : 'Inserisci ✏️'}</button>
+            </div>
+        </div>
+    `;
+}
+
+// ✅ Modalità MODIFICA: solo dopo aver premuto "Modifica"/"Inserisci"
+function renderPerfNoteEdit(songId) {
+    const song = songs.find(s => s.id === parseInt(songId));
+    if (!song) return;
+    const popup = document.getElementById('perfnote-popup');
+    if (!popup) return;
     
     const currentNote = song.performanceNote || '';
     
@@ -7382,14 +7423,13 @@ function showPerformanceNotePopup(songId) {
             <textarea id="perfnote-textarea" rows="5" placeholder="Scrivi qui..."
                 style="width: 100%; box-sizing: border-box; padding: 10px; font-size: 14pt; border: 1px solid #ddd; border-radius: 8px; font-family: inherit; resize: vertical;">${currentNote}</textarea>
             <div style="display: flex; gap: 12px; justify-content: center; margin-top: 20px; flex-wrap: wrap;">
-                <button onclick="document.getElementById('perfnote-popup').remove()"
+                <button onclick="renderPerfNoteView(${song.id})"
                     style="padding: 12px 20px; border: 1px solid #ddd; border-radius: 8px; font-size: 14pt; cursor: pointer; background: white;">Annulla</button>
                 <button onclick="savePerformanceNote(${song.id})"
-                    style="padding: 12px 20px; border: none; border-radius: 8px; font-size: 14pt; cursor: pointer; background: #3498db; color: white; font-weight: 600;">Salva 📝</button>
+                    style="padding: 12px 20px; border: none; border-radius: 8px; font-size: 14pt; cursor: pointer; background: #3498db; color: white; font-weight: 600;">Salva ✏️</button>
             </div>
         </div>
     `;
-    document.body.appendChild(popup);
     document.getElementById('perfnote-textarea').focus();
 }
 
@@ -7406,8 +7446,8 @@ function savePerformanceNote(songId) {
         saveToFirebaseImmediate();
     }
     
-    document.getElementById('perfnote-popup').remove();
     updateNoteIconOnly(songId, !!noteText);
+    renderPerfNoteView(songId);  // ✅ torna alla visualizzazione dopo il salvataggio
 }
 
 function generateSongPagesForBook(song) {
