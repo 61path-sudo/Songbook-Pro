@@ -7675,7 +7675,7 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
             
             // Font dinamico per titoli
             function getPrefTitleFontSizeFS(title) {
-                if (isMobilePrefFS) return 12;  // ✅ come i nomi cantante in ELENCO CANTANTI
+                if (isMobilePrefFS) return 13;  // +1pt
                 const len = title.length;
                 if (len > 35) return 15;
                 if (len > 28) return 16;
@@ -7684,7 +7684,7 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
                 return 19;
             }
             
-            const prefRowHeight = isMobilePrefFS ? 36 : 62;  // ✅ compatto ma con spazio per titolo + cantante su 2 righe
+            const prefRowHeight = isMobilePrefFS ? 42 : 62;  // +6px per distanziare un poco le righe
             const prefArtistFontSize = isMobilePrefFS ? 10 : 13;
             const prefLetterFontSize = isMobilePrefFS ? 14 : 20;
             
