@@ -7736,7 +7736,9 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
             // Estrae la prima lettera ignorando simboli non alfabetici ('O → O)
             function getFirstLetter(title) {
                 const cleaned = title.replace(/^[^a-zA-ZÀ-ÿ0-9]+/, '');
-                return cleaned.charAt(0).toUpperCase() || title.charAt(0).toUpperCase();
+                const letter = (cleaned.charAt(0) || title.charAt(0)).toUpperCase();
+                // ✅ Rimuove l'accento (É, È → E) così finiscono nella stessa barra
+                return letter.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
             }
             
             // =============================================
