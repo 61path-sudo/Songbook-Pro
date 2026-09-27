@@ -7709,7 +7709,7 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
                         <div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                             <span style="font-weight: normal; font-size: ${getPrefTitleFontSizeFS(song.title)}pt;">${song.title.toUpperCase()}</span>
                         </div>
-                        <div style="font-size: ${prefArtistFontSize}pt; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${song.artist.toUpperCase()}</div>
+                        <div style="font-size: ${prefArtistFontSize}pt; color: #666; font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${song.artist.toUpperCase()}</div>
                     </div>
                 `;
             }
@@ -7860,7 +7860,7 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
                 const pages = distributeItems(items, prefMaxHeightFirst, prefMaxHeightOther);
                 
                 pages.forEach((page, pageIdx) => {
-                    const columnsHtml = page.cols.map(col => `<div>${col.map(renderItem).join('')}</div>`).join('');
+                    const columnsHtml = page.cols.map(col => `<div style="min-width: 0; overflow: hidden;">${col.map(renderItem).join('')}</div>`).join('');
                     
                     const headerHtml = page.isFirst ? `
                         <div style="text-align: center; font-size: ${prefTitleFontSize}pt; font-weight: bold; border-top: 2px solid black; border-bottom: 2px solid black; padding: 10px 0; margin-bottom: 5px;">PREFERITI</div>
