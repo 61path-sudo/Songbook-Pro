@@ -7626,6 +7626,7 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
             inPreferitiFullscreen = true;
             if (filterCategoryId !== 'all') filterCategoryId = parseInt(filterCategoryId);
             const previewContent = document.getElementById('preview-content');
+            const isMobilePrefFS = window.innerWidth <= 768;  // ✅ solo iPhone: stile compatto come ELENCO CANTANTI
             
             // Salva posizione scroll pillole prima del re-render
             const existingScroll = previewContent.querySelector('.hide-scrollbar');
@@ -7650,18 +7651,19 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
             });
             
             // Crea pulsanti filtro categorie (solo una riga)
+            const prefPillFontSize = isMobilePrefFS ? 12 : 14;
             const filterButtons = `
                 <div style="margin-bottom: 10px;">
                     <div style="overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch; scrollbar-width: none; -ms-overflow-style: none;" class="hide-scrollbar">
                         <div style="display: inline-flex; background: #f0f0f0; border: 1px solid #ddd; border-radius: 8px; padding: 3px; gap: 0;">
-                            <div style="padding: 6px 18px; font-size: 14pt; cursor: pointer; white-space: nowrap; border-radius: 5px;
+                            <div style="padding: 6px 18px; font-size: ${prefPillFontSize}pt; cursor: pointer; white-space: nowrap; border-radius: 5px;
                                 ${filterCategoryId === 'all' ? 'background: #e0e0e0; color: #333; font-weight: 600;' : 'color: #666; font-weight: 600;'}"
                                 data-action="preferiti-filter" data-filter="all"
                                 ontouchstart="void(0)" onclick="showPreferitiInFullscreen('all')">Tutti</div>
                             ${categories.map(cat => {
                                 const color = cat.color || '#f39c12';
                                 const isActive = filterCategoryId === cat.id;
-                                return `<div style="padding: 6px 18px; font-size: 14pt; cursor: pointer; white-space: nowrap; border-radius: 5px;
+                                return `<div style="padding: 6px 18px; font-size: ${prefPillFontSize}pt; cursor: pointer; white-space: nowrap; border-radius: 5px;
                                     ${isActive ? `background: ${color}; color: white; font-weight: 600;` : `color: ${color}; font-weight: 600;`}"
                                     data-action="preferiti-filter" data-filter="${cat.id}"
                                     ontouchstart="void(0)" onclick="showPreferitiInFullscreen(${cat.id})">${cat.name}</div>`;
@@ -7673,6 +7675,7 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
             
             // Font dinamico per titoli
             function getPrefTitleFontSizeFS(title) {
+                if (isMobilePrefFS) return 12;  // ✅ come i nomi cantante in ELENCO CANTANTI
                 const len = title.length;
                 if (len > 35) return 15;
                 if (len > 28) return 16;
@@ -7681,30 +7684,43 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
                 return 19;
             }
             
+            const prefRowHeight = isMobilePrefFS ? 24 : 62;  // ✅ come le righe di ELENCO CANTANTI
+            const prefArtistFontSize = isMobilePrefFS ? 10 : 13;
+            const prefLetterFontSize = isMobilePrefFS ? 14 : 20;
+            
             // ITEM: modalità A-Z Titolo (titolo + cantante sotto)
             function renderPrefSongItemFS(song) {
+                if (isMobilePrefFS) {
+                    // ✅ Su iPhone, una sola riga compatta (titolo soltanto), come ELENCO CANTANTI
+                    return `
+                        <div class="song-link artist-item" data-song-id="${song.id}"
+                            style="cursor: pointer; padding-left: 8px; border-left: 2px solid #cccccc; height: ${prefRowHeight}px; line-height: ${prefRowHeight}px;">
+                            <span class="artist-link" style="font-weight: normal; font-size: ${getPrefTitleFontSizeFS(song.title)}pt;">${song.title.toUpperCase()}</span>
+                        </div>
+                    `;
+                }
                 return `
                     <div class="song-link" data-song-id="${song.id}"
                         style="cursor: pointer; padding-left: 8px; border-left: 2px solid #cccccc; display: block; width: 100%; box-sizing: border-box; height: 62px; overflow: hidden;">
                         <div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                             <span style="font-weight: normal; font-size: ${getPrefTitleFontSizeFS(song.title)}pt;">${song.title.toUpperCase()}</span>
                         </div>
-                        <div style="font-size: 13pt; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${song.artist.toUpperCase()}</div>
+                        <div style="font-size: ${prefArtistFontSize}pt; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${song.artist.toUpperCase()}</div>
                     </div>
                 `;
             }
             
             // SEPARATORE lettera alfabetica
             function renderLetterSeparator(letter) {
-                return `<div style="background: #cccccc; padding: 2px 0 2px 8px; font-weight: bold; font-size: 20pt; height: 62px; line-height: 62px; display: flex; align-items: center; box-sizing: border-box;">${letter}</div>`;
+                return `<div style="background: #cccccc; padding: 2px 0 2px 8px; font-weight: bold; font-size: ${prefLetterFontSize}pt; height: ${prefRowHeight}px; line-height: ${prefRowHeight}px; display: flex; align-items: center; box-sizing: border-box;">${letter}</div>`;
             }
             
             // Calcola righe per pagina usando altezza reale schermo
             const screenHeight = window.innerHeight;
-            const prefItemHeight = 62;
-            const prefLetterHeight = 62;  // uguale a prefItemHeight per allineamento perfetto
-            const prefHeaderFirst = 178;  // spazio header prima pagina
-            const prefHeaderOther = 58;   // spazio header pagine successive
+            const prefItemHeight = prefRowHeight;
+            const prefLetterHeight = prefRowHeight;  // uguale a prefItemHeight per allineamento perfetto
+            const prefHeaderFirst = isMobilePrefFS ? 110 : 178;  // spazio header prima pagina
+            const prefHeaderOther = isMobilePrefFS ? 20 : 58;   // spazio header pagine successive
             const prefMaxHeightFirst = screenHeight - prefHeaderFirst;
             const prefMaxHeightOther = screenHeight - prefHeaderOther;
             
@@ -7798,13 +7814,13 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
                     return renderPrefSongItemFS(item.song);
                 }
                 if (item.type === 'artist') {
-                    return `<div style="padding-left: 8px; border-left: 2px solid #cccccc; height: 62px; display: flex; align-items: center; box-sizing: border-box;">
-                        <span style="font-size: 17pt; font-weight: 600;">${item.artistSort.toUpperCase()}</span>
+                    return `<div style="padding-left: 8px; border-left: 2px solid #cccccc; height: ${prefRowHeight}px; display: flex; align-items: center; box-sizing: border-box;">
+                        <span style="font-size: ${isMobilePrefFS ? 12 : 17}pt; font-weight: 600;">${item.artistSort.toUpperCase()}</span>
                     </div>`;
                 }
                 if (item.type === 'song-indented') {
                     return `<div class="song-link" data-song-id="${item.song.id}"
-                        style="cursor: pointer; padding-left: 24px; border-left: 2px solid #cccccc; display: block; width: 100%; box-sizing: border-box; height: 62px; overflow: hidden; display: flex; align-items: center;">
+                        style="cursor: pointer; padding-left: ${isMobilePrefFS ? 16 : 24}px; border-left: 2px solid #cccccc; display: block; width: 100%; box-sizing: border-box; height: ${prefRowHeight}px; overflow: hidden; display: flex; align-items: center;">
                         <span style="font-size: ${getPrefTitleFontSizeFS(item.song.title)}pt; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.song.title.toUpperCase()}</span>
                     </div>`;
                 }
@@ -7816,13 +7832,17 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
             // =============================================
             const prefPages = [];
             
+            const prefTitleFontSize = isMobilePrefFS ? 22 : 26;  // ✅ come il titolo di ELENCO CANTANTI
+            const prefFooterFontSize = isMobilePrefFS ? 13 : 18;
+            const prefFooterLabel = isMobilePrefFS ? 'Elenco cantanti' : 'Torna ad Elenco cantanti';
+            
             if (preferitiSongs.length === 0) {
                 prefPages.push(`
-                    <div style="text-align: center; font-size: 26pt; font-weight: bold; border-top: 2px solid black; border-bottom: 2px solid black; padding: 10px 0; margin-bottom: 5px;">PREFERITI</div>
+                    <div style="text-align: center; font-size: ${prefTitleFontSize}pt; font-weight: bold; border-top: 2px solid black; border-bottom: 2px solid black; padding: 10px 0; margin-bottom: 5px;">PREFERITI</div>
                     ${filterButtons}
                     <div style="text-align: center; color: #999; font-size: 16pt; margin-top: 30px;">Nessuna canzone trovata</div>
                     <div style="position: absolute; bottom: 20px; left: 0; right: 0; border-top: 1px solid black; padding-top: 15px; text-align: center;">
-                        <span style="cursor: pointer; font-size: 16pt;" data-action="index">Torna ad Elenco cantanti</span>
+                        <span style="cursor: pointer; font-size: ${prefFooterFontSize}pt; white-space: nowrap;" data-action="index">${prefFooterLabel}</span>
                     </div>
                 `);
             } else {
@@ -7834,18 +7854,18 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
                     const col1Html = page.cols[1].map(renderItem).join('');
                     
                     const headerHtml = page.isFirst ? `
-                        <div style="text-align: center; font-size: 26pt; font-weight: bold; border-top: 2px solid black; border-bottom: 2px solid black; padding: 10px 0; margin-bottom: 5px;">PREFERITI</div>
+                        <div style="text-align: center; font-size: ${prefTitleFontSize}pt; font-weight: bold; border-top: 2px solid black; border-bottom: 2px solid black; padding: 10px 0; margin-bottom: 5px;">PREFERITI</div>
                         ${filterButtons}
                     ` : '';
                     
                     prefPages.push(`
                         ${headerHtml}
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; column-gap: 30px; width: 100%; box-sizing: border-box;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; column-gap: ${isMobilePrefFS ? 12 : 30}px; width: 100%; box-sizing: border-box;">
                             <div>${col0Html}</div>
                             <div>${col1Html}</div>
                         </div>
                         <div style="position: absolute; bottom: 20px; left: 0; right: 0; border-top: 1px solid black; padding-top: 15px; text-align: center;">
-                            <span style="cursor: pointer; font-size: 18pt;" data-action="index">Torna ad Elenco cantanti</span>
+                            <span style="cursor: pointer; font-size: ${prefFooterFontSize}pt; white-space: nowrap;" data-action="index">${prefFooterLabel}</span>
                         </div>
                     `);
                 });
