@@ -6595,6 +6595,13 @@ function useCloudOnly() {
     
     saveData();
     
+    // ✅ Rigenera le pagine di Fullscreen con i dati appena arrivati: altrimenti
+    // icone come la matita delle note restano "congelate" alla versione di
+    // prima del salvataggio, finché non si chiude e riapre l'app.
+    if (typeof generateAllPagesForBook === 'function') {
+        try { generateAllPagesForBook(); } catch (e) { console.warn('Rigenerazione Fullscreen fallita:', e); }
+    }
+    
     // Aggiorna interfaccia PRIMA di chiudere il modal
     if (document.getElementById('manage-tab').classList.contains('active')) {
         updateManage();
@@ -6712,6 +6719,11 @@ if (diff.localOnly.length > 0) {
         saveToFirebaseImmediate();
     }, 1000);
 }
+    
+    // ✅ Stessa correzione di "Usa cloud": rigenera Fullscreen con i dati nuovi
+    if (typeof generateAllPagesForBook === 'function') {
+        try { generateAllPagesForBook(); } catch (e) { console.warn('Rigenerazione Fullscreen fallita:', e); }
+    }
     
     closeMergeModal();
     
