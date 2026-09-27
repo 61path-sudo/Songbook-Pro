@@ -6182,12 +6182,29 @@ function saveToFirebase() {
 }
 
 function saveToFirebaseImmediate() {
-    if (!syncEnabled || !currentUser || isSavingToCloud) {
+    // ✅ FIX: se "isSavingToCloud" resta vero per troppo tempo (un salvataggio
+    // precedente rimasto "appeso" senza mai completarsi, per un errore di rete
+    // o altro), i salvataggi successivi venivano ignorati IN SILENZIO — nessun
+    // errore, nessun avviso: le modifiche restavano solo in locale. Ora, se il
+    // blocco dura da più di 8 secondi, lo consideriamo bloccato e procediamo
+    // comunque invece di rinunciare.
+    const now = Date.now();
+    const stuckTooLong = window.savingToCloudStartedAt && (now - window.savingToCloudStartedAt > 8000);
+    if (!syncEnabled || !currentUser) {
         return;
+    }
+    if (isSavingToCloud && !stuckTooLong) {
+        // Salvataggio già in corso da poco: riprova tra un secondo invece di perdere questa modifica
+        setTimeout(saveToFirebaseImmediate, 1000);
+        return;
+    }
+    if (stuckTooLong) {
+        console.warn('⚠️ Salvataggio precedente rimasto bloccato: forzo comunque il nuovo salvataggio.');
     }
 
     isSavingToCloud = true;
     window.isSavingToCloud = true;
+    window.savingToCloudStartedAt = now;
     const timestamp = new Date().toISOString();
     localStorage.setItem('lastModified', timestamp);
     
@@ -6215,12 +6232,14 @@ function saveToFirebaseImmediate() {
         setSyncStatus('synced');
         isSavingToCloud = false;
         window.isSavingToCloud = false;
+        window.savingToCloudStartedAt = null;
     })
     .catch((error) => {
         console.error('❌ Errore salvataggio Firebase:', error);
         setSyncStatus('offline');
         isSavingToCloud = false;
         window.isSavingToCloud = false;
+        window.savingToCloudStartedAt = null;
     });
 }
 
