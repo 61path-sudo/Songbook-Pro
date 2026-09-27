@@ -7352,7 +7352,8 @@ function updateStarOnly(songId, isPref) {
 function updateNoteIconOnly(songId, hasNote) {
     const noteBtn = document.getElementById(`note-btn-${songId}`);
     if (!noteBtn) return;
-    noteBtn.style.color = hasNote ? '#3498db' : '#aaa';
+    noteBtn.textContent = hasNote ? '✏️' : '✎';
+    noteBtn.style.color = hasNote ? '' : '#aaa';
 }
 
 function showPerformanceNotePopup(songId) {
@@ -7441,12 +7442,13 @@ function generateSongPagesForBook(song) {
         const starIcon = isPref ? '⭐' : '☆';
         const starStyle = isPref ? 'color: #f39c12;' : 'color: #aaa;';
         const hasNote = !!(song.performanceNote && song.performanceNote.trim());
-        const noteStyle = hasNote ? 'color: #3498db;' : 'color: #aaa;';
+        const noteIcon = hasNote ? '✏️' : '✎';
+        const noteStyle = hasNote ? '' : 'color: #aaa;';
         
         notesHtml = `<div style="font-size: ${detailsFontSize}pt; margin-top: 2px; margin-bottom: 2px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: ${detailsGap}px; white-space: nowrap;">
             <span>${parts.join(' <span style="color: black;">|</span> ')}</span>
             <span id="star-btn-${song.id}" data-action="star" data-song-id="${song.id}" style="cursor: pointer; font-size: ${detailsIconSize}pt; ${starStyle} line-height: 1;">${starIcon}</span>
-            <span id="note-btn-${song.id}" data-action="perfnote" data-song-id="${song.id}" style="cursor: pointer; font-size: ${detailsIconSize}pt; ${noteStyle} line-height: 1;">📝</span>
+            <span id="note-btn-${song.id}" data-action="perfnote" data-song-id="${song.id}" style="cursor: pointer; font-size: ${detailsIconSize}pt; ${noteStyle} line-height: 1;">${noteIcon}</span>
             <span data-action="audio" style="cursor: pointer; font-size: ${detailsIconSize}pt; line-height: 1;">🎵</span>
         </div>`;
     } else {
@@ -7454,12 +7456,13 @@ function generateSongPagesForBook(song) {
         const starIcon = isPref ? '⭐' : '☆';
         const starStyle = isPref ? 'color: #f39c12;' : 'color: #aaa;';
         const hasNote = !!(song.performanceNote && song.performanceNote.trim());
-        const noteStyle = hasNote ? 'color: #3498db;' : 'color: #aaa;';
+        const noteIcon = hasNote ? '✏️' : '✎';
+        const noteStyle = hasNote ? '' : 'color: #aaa;';
         
         notesHtml = `<div style="font-size: ${detailsFontSize}pt; margin-top: 2px; margin-bottom: 2px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: ${detailsGap}px; white-space: nowrap;">
             <span style="color: #999;">[ Dettagli da aggiungere ]</span>
             <span id="star-btn-${song.id}" data-action="star" data-song-id="${song.id}" style="cursor: pointer; font-size: ${detailsIconSize}pt; ${starStyle} line-height: 1;">${starIcon}</span>
-            <span id="note-btn-${song.id}" data-action="perfnote" data-song-id="${song.id}" style="cursor: pointer; font-size: ${detailsIconSize}pt; ${noteStyle} line-height: 1;">📝</span>
+            <span id="note-btn-${song.id}" data-action="perfnote" data-song-id="${song.id}" style="cursor: pointer; font-size: ${detailsIconSize}pt; ${noteStyle} line-height: 1;">${noteIcon}</span>
             <span data-action="audio" style="cursor: pointer; font-size: ${detailsIconSize}pt; line-height: 1;">🎵</span>
         </div>`;
     }
