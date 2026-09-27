@@ -7725,8 +7725,13 @@ const pagination = calculateSongPagination(song, pageFormat, false, true);
             const prefLetterHeight = prefRowHeight;  // uguale a prefItemHeight per allineamento perfetto
             const prefHeaderFirst = isMobilePrefFS ? 110 : 178;  // spazio header prima pagina
             const prefHeaderOther = isMobilePrefFS ? 20 : 58;   // spazio header pagine successive
-            const prefMaxHeightFirst = screenHeight - prefHeaderFirst;
-            const prefMaxHeightOther = screenHeight - prefHeaderOther;
+            // ✅ Riserva per il footer (mai considerata finora): la prima pagina
+            // si sovrapponeva di poco (~1mm = circa 1 riga), le successive di più
+            // (~2-3mm), quindi qui la riserva è maggiore.
+            const prefFooterReserveFirst = isMobilePrefFS ? 55 : 0;
+            const prefFooterReserveOther = isMobilePrefFS ? 75 : 0;
+            const prefMaxHeightFirst = screenHeight - prefHeaderFirst - prefFooterReserveFirst;
+            const prefMaxHeightOther = screenHeight - prefHeaderOther - prefFooterReserveOther;
             
             // Estrae la prima lettera ignorando simboli non alfabetici ('O → O)
             function getFirstLetter(title) {
